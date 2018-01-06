@@ -265,7 +265,7 @@ static GPTimerCC26XX_Handle tim_hdl = NULL;
 //static PWM_Handle pwm_hdl = NULL;
 //static PWM_Params pwm_params;
 
-static Mailbox_Handle mailbox;
+//static Mailbox_Handle mailbox;
 
 static CryptoCC26XX_Handle crypto_handle;
 //static CryptoCC26XX_AESECB_Transaction trans;
@@ -275,6 +275,7 @@ static uint8_t key[] = {0x2C, 0x7E, 0x15, 0x16, 0x28, 0xAD, 0xD2, 0xA6,
 //static int32_t crypto_status;
 
 #include <math.h>
+#include <ti/drivers/I2C.h>
 #include "I2S/I2SCC26XX.h"
 #define M_PI        3.14159265358979323846
 #define I2S_SAMP_PER_FRAME    80
@@ -289,9 +290,8 @@ static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotificatio
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM              AUDIO_DUPLEX_CMD_START
 static void AudioDuplex_disableCache();
 static I2SCC26XX_StreamNotification i2sStream;
-static void AudioDuplex_i2sCallbackFxn(I2SCC26XX_Handle handle,
-                                    I2SCC26XX_StreamNotification *notification);
 
+static void I2C_Init(void);
 static I2SCC26XX_BufferRequest bufferRequest;
 static I2SCC26XX_BufferRelease bufferRelease;
 static I2SCC26XX_StreamNotification i2sStream;
@@ -299,7 +299,7 @@ static I2SCC26XX_Params i2sParams =
 {
     .requestMode            = I2SCC26XX_CALLBACK_MODE,
     .ui32requestTimeout     = BIOS_WAIT_FOREVER,
-    .callbackFxn            = bufRdy_callback,//AudioDuplex_i2sCallbackFxn,
+    .callbackFxn            = bufRdy_callback,
     .blockSize              = 0,
     .pvContBuffer           = NULL,
     .ui32conBufTotalSize    = 0,
@@ -333,10 +333,6 @@ static int stream_on = 0;
 
 static uint32_t green_counter = 0;
 static uint32_t red_counter = 0;
-
-static uint32_t tmr_counter = 0;
-static uint32_t i2s_counter = 0;
-
 
 //#define BT_PACKET_DEBUG
 #ifdef BT_PACKET_DEBUG
@@ -396,21 +392,19 @@ static void timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask in
 static void start_voice_handle(void);
 static void stop_voice_handle(void);
 //static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification);
-static void *SA_audioMalloc(uint_least16_t size);
-static void SA_audioFree(void *msg, size_t size);
 static void pdm_samp_hdl(void);
 
-
-#define ADCBUFSIZE      I2S_SAMP_PER_FRAME//80
-#define SAMPFREQ        8000
+#define EXTRAPOLATE_FACTOR 2
+#define ADCBUFSIZE      I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
+#define SAMPFREQ        8000*EXTRAPOLATE_FACTOR
 
 static ADCBuf_Handle adc_hdl;
 static ADCBuf_Params adc_params;
 static ADCBuf_Conversion adc_conversion;
 static int16_t samp_buf1[ADCBUFSIZE];
 static int16_t samp_buf2[ADCBUFSIZE];
-static int16_t adc_data[ADCBUFSIZE];
-static Bool adc_buf_ready = false;
+//static int16_t adc_data[ADCBUFSIZE];
+static int16_t decimated_data[ADCBUFSIZE/EXTRAPOLATE_FACTOR];
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
                   void *completedADCBuffer, uint32_t completedChannel);
@@ -1517,27 +1511,18 @@ static char *Util_getLocalNameStr(const uint8_t *data) {
   return localNameStr;
 }
 
-static void *SA_audioMalloc(uint_least16_t size)
-{
-    Error_Block eb;
-    Error_init(&eb);
-    return Memory_alloc(NULL, size, 0, &eb);
-}
 
-static void SA_audioFree(void *msg, size_t size)
-{
-    Memory_free(NULL, msg, size);
-}
+
 
 
 /* Functions for handle tx/rx packets of voice samples */
 static void voice_hdl_init(void)
 {
-    mailbox = Mailbox_create(BUFFERSIZE / 2, 2, NULL, NULL);
-    if (mailbox == NULL) {
-        while (1);
-    }
-
+//    mailbox = Mailbox_create(BUFFERSIZE / 2, 2, NULL, NULL);
+//    if (mailbox == NULL) {
+//        while (1);
+//    }
+    I2C_Init();
     GPTimerCC26XX_Params_init(&tim_params);
     tim_params.width = GPT_CONFIG_16BIT;
     tim_params.mode = GPT_MODE_PERIODIC_UP;
@@ -1645,6 +1630,64 @@ static void voice_hdl_init(void)
     //i2sStreamInProgress = I2SCC26XX_startStream(i2sHandle);
 }
 
+static void I2C_Init(void){
+    uint8_t         i2cTxBuffer[15];
+     uint8_t         i2cRxBuffer[18];
+     I2C_Handle      i2c;
+     I2C_Params      i2cParams;
+     I2C_Transaction i2cTransaction;
+
+     //GPIO_init();
+     I2C_init();
+     /* Create I2C for usage */
+     I2C_Params_init(&i2cParams);
+     //i2cParams.transferMode  = I2C_MODE_CALLBACK;
+     i2cParams.bitRate = I2C_400kHz;
+     i2c = I2C_open(Board_I2C0, &i2cParams);
+     if (i2c == NULL) {
+       //  Display_printf(display, 0, 0, "Error Initializing I2C\n");
+         while (1);
+     }
+     else {
+       //  Display_printf(display, 0, 0, "I2C Initialized!\n");
+     }
+
+     /* Point to the T ambient register and read its 2 bytes */
+     i2cTxBuffer[0]  = 0x03;//!addr reg
+     i2cTxBuffer[1]  = 0x10;//!system clock                       //clock control            0x03
+     i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
+     i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
+     i2cTxBuffer[4]  = 0x00;//!interface                          //digital audio interface  0x06
+     i2cTxBuffer[5]  = 0x02;//!interface                                                     0x07
+     i2cTxBuffer[6]  = 0x00;//!voice filter                       //digital filtering        0x08
+     i2cTxBuffer[7]  = 0x06;//!DAC att                            //digital level control    0x09
+     i2cTxBuffer[8]  = 0x00;//!ADC output levels                                             0x0A
+     i2cTxBuffer[9]  = 0x40;//!DAC gain and sidetone                                         0x0B
+     i2cTxBuffer[10] = 0x00;//!microphone gain                    //MIC level control        0x0C
+     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
+     i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
+     i2cTxBuffer[13] = 0x00;//!Noise gate, mic AGC                                           0x0F
+     i2cTxBuffer[14] = 0x88;//!System shutdown                    //POWER MANAGEMENT         0x10
+
+
+     volatile static uint32_t delay = 10000;
+     while(delay>0){
+         delay--;
+     }
+     i2cTransaction.slaveAddress = 0x10;
+     i2cTransaction.writeBuf = i2cTxBuffer;
+     i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
+
+     i2cTransaction.writeCount = 15;
+     i2cTransaction.readCount = 0;
+     I2C_transfer(i2c, &i2cTransaction);
+     //delay_tick(1000000);
+     //i2cTransaction.writeCount = 0;
+     //i2cTransaction.readCount = 18;
+     //I2C_transfer(i2c, &i2cTransaction);
+     //delay_tick(1000000);
+     I2C_close(i2c);
+}
 //static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification)
 //{
 //  PDMCC26XX_Status streamStatus = pStreamNotification->status;
@@ -1659,8 +1702,16 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
 
     int16_t *buf_ptr = (int16_t*)completedADCBuffer;
     /* handle receive data */
-    for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
-        adc_data[i] = (buf_ptr[i] - 1550);
+
+    for(uint32_t i = 0 ; i < ADCBUFSIZE/EXTRAPOLATE_FACTOR; i++){
+        //decimated_data[i]=buf_ptr[i*EXTRAPOLATE_FACTOR]-1600;
+        decimated_data[i]=0;
+        for(uint16_t j = 0;j<EXTRAPOLATE_FACTOR;j++){
+
+            decimated_data[i] += ((buf_ptr[i*EXTRAPOLATE_FACTOR+j])-1600);
+        }
+        decimated_data[i]=decimated_data[i]/EXTRAPOLATE_FACTOR;
+    }
 
     if(stream_on)
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
@@ -1677,32 +1728,32 @@ static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotificatio
 
 static void timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
-    static Bool ready = FALSE;
-    //static uint32_t counter = 0;
-    static int16_t raw_data_tmr[I2S_SAMP_PER_FRAME];
-
-    tmr_counter++;
-
-    if (!ready) {
-        ready = Mailbox_pend(mailbox, raw_data_tmr, BIOS_NO_WAIT);
-    }
-
-    if(ready)
-    {
-        //bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
-        i2s_counter++;
-        bool gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-        if (gotBuffer)
-        {
-            //memset(bufferRequest.bufferOut, &data[0], 96);
-            memcpy(bufferRequest.bufferOut, raw_data_tmr, sizeof(raw_data_tmr));
-            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
-            bufferRelease.bufferHandleIn = NULL;
-            I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-            gotBuffer = 0;
-        }
-        ready = false;
-    }
+//    static Bool ready = FALSE;
+//    //static uint32_t counter = 0;
+//    static int16_t raw_data_tmr[I2S_SAMP_PER_FRAME];
+//
+//    tmr_counter++;
+//
+//    if (!ready) {
+//        ready = Mailbox_pend(mailbox, raw_data_tmr, BIOS_NO_WAIT);
+//    }
+//
+//    if(ready)
+//    {
+//        //bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
+//        i2s_counter++;
+//        bool gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+//        if (gotBuffer)
+//        {
+//            //memset(bufferRequest.bufferOut, &data[0], 96);
+//            memcpy(bufferRequest.bufferOut, raw_data_tmr, sizeof(raw_data_tmr));
+//            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+//            bufferRelease.bufferHandleIn = NULL;
+//            I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+//            gotBuffer = 0;
+//        }
+//        ready = false;
+//    }
 
 }
 
@@ -1766,7 +1817,7 @@ static void pdm_samp_hdl(void)
     uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
     //uint8_t encrypted[16] = {0};
     //uint8_t decrypted[16] = {0};
-    static uint8_t counter = 0;
+
 
     //memset(&encode_buf[10], 0, 6);
 
@@ -1782,7 +1833,7 @@ static void pdm_samp_hdl(void)
     //encoder_adpcm.previndex = 0;
     //encoder_adpcm.prevsample = 0;
     //ADPCMEncoderBuf(raw_data, encode_buf, &encoder_adpcm);
-    ADPCMEncoderBuf(adc_data, encode_buf, &encoder_adpcm);
+    ADPCMEncoderBuf(decimated_data, encode_buf, &encoder_adpcm);
     /*
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *) &trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex         = key_index;
@@ -1808,6 +1859,7 @@ static void pdm_samp_hdl(void)
 
     //Mailbox_post(mailbox, raw_data_send, BIOS_NO_WAIT);
 #ifdef BT_PACKET_DEBUG
+    static uint8_t counter = 0;
     encode_buf[0] = counter;
     counter++;
 #endif
