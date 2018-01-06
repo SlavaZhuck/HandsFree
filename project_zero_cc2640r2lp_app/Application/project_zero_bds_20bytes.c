@@ -137,8 +137,6 @@
                                               PRZ_CONN_EVT_END_EVT)
 
 #define BUFFERSIZE                            320
-#define SAMP_FREQ                             8000
-//#define PWM_PERIOD                            32000
 
 #define LED_COUNTER                           10
 
@@ -719,7 +717,7 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
         char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-        int16_t raw_data_send[BUFFERSIZE / 4];
+        int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 
   switch (pMsg->type)
   {
@@ -960,7 +958,7 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
               PIN_setOutputValue(ledPinHandle, Board_GLED, !PIN_getOutputValue(Board_GLED));
               green_counter = 0;
           }
-          user_enqueueRawAppMsg(APP_MSG_SEND_VOICE_SAMP, pCharData->data, 20);
+          user_enqueueRawAppMsg(APP_MSG_SEND_VOICE_SAMP, pCharData->data, V_STREAM_INPUT_LEN);
 
       // -------------------------
       break;
@@ -1681,7 +1679,7 @@ static void timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask in
 {
     static Bool ready = FALSE;
     //static uint32_t counter = 0;
-    static int16_t raw_data_tmr[BUFFERSIZE / 4];
+    static int16_t raw_data_tmr[I2S_SAMP_PER_FRAME];
 
     tmr_counter++;
 
@@ -1765,7 +1763,7 @@ static void stop_voice_handle(void)
 static void pdm_samp_hdl(void)
 {
     //PDMCC26XX_requestBuffer(pdmHandle, &bufferRequest);
-    uint8_t encode_buf[20];
+    uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
     //uint8_t encrypted[16] = {0};
     //uint8_t decrypted[16] = {0};
     static uint8_t counter = 0;
@@ -1813,7 +1811,7 @@ static void pdm_samp_hdl(void)
     encode_buf[0] = counter;
     counter++;
 #endif
-    Vogatt_SetParameter(V_STREAM_OUTPUT_ID, 20, encode_buf);
+    Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
 
 //    if(counter == 32)
 //    {
