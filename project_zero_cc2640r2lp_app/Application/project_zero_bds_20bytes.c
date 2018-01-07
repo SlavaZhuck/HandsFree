@@ -316,12 +316,23 @@ static uint8_t *i2sContMgtBuffer = NULL;
 static bool i2sStreamInProgress = false;
 Bool bufferReady = false;
 
+/* Pin driver handles */
+static PIN_Handle buttonPinHandle;
+
+/* Global memory storage for a PIN_Config table */
+static PIN_State buttonPinState;
+
+void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId);
+void button_processing (void);
 /*
-static PDMCC26XX_BufferRequest bufferRequest;
-static PDMCC26XX_Params pdmParams;
-static PDMCC26XX_Handle pdmHandle = (PDMCC26XX_Handle)&(PDMCC26XX_config);
-static const uint16_t returnBufferSize = 320;
-*/
+ * Application button pin configuration table:
+ *   - Buttons interrupts are configured to trigger on falling edge.
+ */
+PIN_Config buttonPinTable[] = {
+    CC2640R2_LAUNCHXL_PIN_BTN1  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
+    CC2640R2_LAUNCHXL_PIN_BTN2  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
+    PIN_TERMINATE
+};
 
 //static bool status_pdm;
 static unsigned char pdm_val = 1;
@@ -394,7 +405,7 @@ static void stop_voice_handle(void);
 //static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification);
 static void pdm_samp_hdl(void);
 
-#define EXTRAPOLATE_FACTOR 2
+#define EXTRAPOLATE_FACTOR 8
 #define ADCBUFSIZE      I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
 #define SAMPFREQ        8000*EXTRAPOLATE_FACTOR
 
@@ -685,6 +696,11 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
       }
 
     }
+
+
+    button_processing();
+
+
   }
 }
 
@@ -1563,28 +1579,26 @@ static void voice_hdl_init(void)
     if (key_index == CRYPTOCC26XX_STATUS_ERROR) {
        while(1);
     }
-
-    /*
-    PDMCC26XX_init(pdmHandle);
-
-    // Set up parameters for PDM streaming without compression
-    PDMCC26XX_Params_init(&pdmParams);
-    pdmParams.callbackFxn = bufRdy_callback;
-    pdmParams.micPowerActiveHigh = true;
-    pdmParams.applyCompression = false;
-    pdmParams.retBufSizeInBytes = returnBufferSize + 4;
-    pdmParams.mallocFxn = (PDMCC26XX_MallocFxn) SA_audioMalloc;
-    pdmParams.freeFxn = SA_audioFree;
-    pdmParams.useDefaultFilter = true;
-    pdmParams.decimationFilter = NULL;
-    pdmParams.micGain = PDMCC26XX_GAIN_N6;
-
-    // Try to open the PDM driver
-    pdmHandle = PDMCC26XX_open(&pdmParams);
-    if(!pdmHandle){
+///////////////////////////////////
+    buttonPinHandle = PIN_open(&buttonPinState, buttonPinTable);
+    if(!buttonPinHandle) {
+        /* Error initializing button pins */
         while(1);
     }
-    */
+//    buttonLowPinHandle = PIN_open(&buttonLowPinState, buttonPinTable);
+//    if(!buttonLowPinHandle) {
+//        /* Error initializing button pins */
+//        while(1);
+//    }
+    /* Setup callback for button pins */
+    if (PIN_registerIntCb(buttonPinHandle, &buttonCallbackFxn) != 0) {
+        /* Error registering button callback function */
+        while(1);
+    }
+//    if (PIN_registerIntCb(buttonLowPinHandle, &buttonCallbackFxn) != 0) {
+//        /* Error registering button callback function */
+//        while(1);
+//    }    ///////////////////////////////////////////////////////
     /* ADC init */
     ADCBuf_init();
 
@@ -1630,12 +1644,14 @@ static void voice_hdl_init(void)
     //i2sStreamInProgress = I2SCC26XX_startStream(i2sHandle);
 }
 
+static I2C_Handle      i2c;
+static I2C_Params      i2cParams;
+static I2C_Transaction i2cTransaction;
+
 static void I2C_Init(void){
     uint8_t         i2cTxBuffer[15];
      uint8_t         i2cRxBuffer[18];
-     I2C_Handle      i2c;
-     I2C_Params      i2cParams;
-     I2C_Transaction i2cTransaction;
+
 
      //GPIO_init();
      I2C_init();
@@ -1659,10 +1675,10 @@ static void I2C_Init(void){
      i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
      i2cTxBuffer[4]  = 0x00;//!interface                          //digital audio interface  0x06
      i2cTxBuffer[5]  = 0x02;//!interface                                                     0x07
-     i2cTxBuffer[6]  = 0x00;//!voice filter                       //digital filtering        0x08
-     i2cTxBuffer[7]  = 0x06;//!DAC att                            //digital level control    0x09
+     i2cTxBuffer[6]  = 0x05;//!voice filter                       //digital filtering        0x08
+     i2cTxBuffer[7]  = 0x00;//!DAC att                            //digital level control    0x09
      i2cTxBuffer[8]  = 0x00;//!ADC output levels                                             0x0A
-     i2cTxBuffer[9]  = 0x40;//!DAC gain and sidetone                                         0x0B
+     i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
      i2cTxBuffer[10] = 0x00;//!microphone gain                    //MIC level control        0x0C
      i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
      i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
@@ -1670,10 +1686,7 @@ static void I2C_Init(void){
      i2cTxBuffer[14] = 0x88;//!System shutdown                    //POWER MANAGEMENT         0x10
 
 
-     volatile static uint32_t delay = 10000;
-     while(delay>0){
-         delay--;
-     }
+
      i2cTransaction.slaveAddress = 0x10;
      i2cTransaction.writeBuf = i2cTxBuffer;
      i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
@@ -1686,16 +1699,110 @@ static void I2C_Init(void){
      //i2cTransaction.readCount = 18;
      //I2C_transfer(i2c, &i2cTransaction);
      //delay_tick(1000000);
-     I2C_close(i2c);
+     //I2C_close(i2c);
+     volatile static uint32_t delay = 4800000;
+     while(delay>0){
+         delay--;
+     }
 }
-//static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification)
-//{
-//  PDMCC26XX_Status streamStatus = pStreamNotification->status;
-//
-//  if (streamStatus == PDMCC26XX_STREAM_BLOCK_READY || streamStatus == PDMCC26XX_STREAM_BLOCK_READY_BUT_PDM_OVERFLOW) {
-//      user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);// TODO
-//  }
-//}
+/*
+*  ======== buttonCallbackFxn ========
+*  Pin interrupt Callback function board buttons configured in the pinTable.
+*  If Board_PIN_LED3 and Board_PIN_LED4 are defined, then we'll add them to the PIN
+*  callback function.
+*/
+
+static Bool button1_pressed = false;
+static Bool button2_pressed = false;
+
+void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
+
+   //CPUdelay(8000*50);
+   if (!PIN_getInputValue(pinId)) {
+       /* Toggle LED based on the button pressed */
+       switch (pinId) {
+           case CC2640R2_LAUNCHXL_PIN_BTN1:
+               button1_pressed = true;
+               button2_pressed = false;
+               break;
+
+           case CC2640R2_LAUNCHXL_PIN_BTN2:
+               button1_pressed = false;
+               button2_pressed = true;
+               break;
+
+           default:
+               button1_pressed = false;
+               button2_pressed = false;
+               /* Do nothing */
+               break;
+       }
+   }
+
+   //delay_tick(1000000);
+   //i2cTransaction.writeCount = 0;
+   //i2cTransaction.readCount = 18;
+   //I2C_transfer(i2c, &i2cTransaction);
+   //delay_tick(1000000);
+   //I2C_close(i2c);
+   //volatile static uint32_t delay = 48000;
+   //while(delay>0){
+   //    delay--;
+   //}
+}
+void button_processing(void){
+    static uint16_t x = 0;
+    static uint16_t z = 0;
+    static uint8_t current_volume = 0;
+//    I2C_Handle      i2c;
+//    I2C_Params      i2cParams;
+//    I2C_Transaction i2cTransaction;
+    uint8_t         i2cTxBuffer[3];
+    i2cTxBuffer[0]  = 0x09;//!addr reg
+    i2cTransaction.slaveAddress = 0x10;
+    i2cTransaction.writeBuf = i2cTxBuffer;
+    //i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
+
+    i2cTransaction.writeCount = 2;
+    i2cTransaction.readCount = 0;
+   /* Debounce logic, only toggle if the button is still pushed (low) */
+   //CPUdelay(8000*50);
+
+    if(button1_pressed)
+    {
+        if(current_volume<=0)
+        {
+           current_volume = 0;
+        }else{
+           current_volume-=2;
+        }
+        i2cTxBuffer[1]  = current_volume;//!DAC att                            //digital level control    0x09
+
+        x++;
+        I2C_transfer(i2c, &i2cTransaction);
+        button1_pressed = false;
+    } else if(button2_pressed)
+    {
+        if(current_volume>=126) //188 - MUTE
+        {
+           current_volume = 126;
+        }else{
+           current_volume+=2;
+        }
+        i2cTxBuffer[1]  = current_volume;//!DAC att                            //digital level control    0x09
+
+        z++;
+        I2C_transfer(i2c, &i2cTransaction);
+        button2_pressed = false;
+    } else
+    {
+        button1_pressed = false;
+        button2_pressed = false;
+    }
+}
+
+
+
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
@@ -1710,12 +1817,14 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
 
             decimated_data[i] += ((buf_ptr[i*EXTRAPOLATE_FACTOR+j])-1600);
         }
-        decimated_data[i]=decimated_data[i]/EXTRAPOLATE_FACTOR;
+        decimated_data[i]=decimated_data[i];///EXTRAPOLATE_FACTOR;
     }
 
     if(stream_on)
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
 }
+
+
 
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
 {

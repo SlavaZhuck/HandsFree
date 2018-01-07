@@ -136,8 +136,8 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_DIO22                 IOID_22
 
 /* Discrete Inputs */
-#define CC2640R2_LAUNCHXL_PIN_BTN1              PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_PIN_BTN2              PIN_UNASSIGNED
+#define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_13 //PIN_UNASSIGNED
+#define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_14 //PIN_UNASSIGNED
 
 /* GPIO */
 #define CC2640R2_LAUNCHXL_GPIO_LED_ON           1
