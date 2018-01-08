@@ -217,7 +217,7 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_24//IOID_29
 #else
     #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_3//IOID_0
-    #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_24//IOID_1 IOID_26
+    #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_26//IOID_1 IOID_26
     /* I2S */
     #define CC2640R2_LAUNCHXL_I2S_BCLK              IOID_23//IOID_30
     #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_22//(PIN_Id)IOID_UNUSED

@@ -405,10 +405,11 @@ static void stop_voice_handle(void);
 //static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification);
 static void pdm_samp_hdl(void);
 
-#define EXTRAPOLATE_FACTOR 8
+#define EXTRAPOLATE_FACTOR 4
 #define ADCBUFSIZE      I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
 #define SAMPFREQ        8000*EXTRAPOLATE_FACTOR
 
+static int16_t mic_data[I2S_SAMP_PER_FRAME];
 static ADCBuf_Handle adc_hdl;
 static ADCBuf_Params adc_params;
 static ADCBuf_Conversion adc_conversion;
@@ -419,6 +420,10 @@ static int16_t decimated_data[ADCBUFSIZE/EXTRAPOLATE_FACTOR];
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
                   void *completedADCBuffer, uint32_t completedChannel);
+
+static I2C_Handle      i2c;
+static I2C_Params      i2cParams;
+static I2C_Transaction i2cTransaction;
 /*********************************************************************
  * PROFILE CALLBACKS
  */
@@ -628,6 +633,7 @@ static void ProjectZero_init(void)
  *
  * @return  None.
  */
+static uint8_t         i2cRxBuffer[5];
 static void ProjectZero_taskFxn(UArg a0, UArg a1)
 {
   // Initialize application
@@ -700,6 +706,12 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
 
     button_processing();
 
+    i2cTransaction.slaveAddress = 0x10;
+    i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
+
+    i2cTransaction.writeCount = 0;
+    i2cTransaction.readCount = 5;
+    I2C_transfer(i2c, &i2cTransaction);
 
   }
 }
@@ -724,11 +736,12 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
  *
  * @return  None.
  */
+
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
         char_data_t *pCharData = (char_data_t *)pMsg->pdu;
         int16_t raw_data_send[I2S_SAMP_PER_FRAME];
-
+        bool gotBuffer = false;
   switch (pMsg->type)
   {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -793,12 +806,13 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                  raw_data_send[i] = data[i];
             }
 #endif
-            bool gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;//I2SCC26XX_BUFFER_OUT;
+            gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBuffer)
             {
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
-                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
-                bufferRelease.bufferHandleIn = NULL;
+               bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+                bufferRelease.bufferHandleIn =NULL;// NULL;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
                 gotBuffer = 0;
             }
@@ -810,7 +824,16 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
-
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN;
+            gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBuffer)
+            {
+                memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
+                bufferRelease.bufferHandleOut = NULL;
+                bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
+                I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+                gotBuffer = 0;
+            }
             pdm_samp_hdl();
 
             if(red_counter++ > LED_COUNTER)
@@ -1639,14 +1662,12 @@ static void voice_hdl_init(void)
         while(1);
     }
 
-    bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
+    //I2SCC26XX_BUFFER_OUT;
 
     //i2sStreamInProgress = I2SCC26XX_startStream(i2sHandle);
 }
 
-static I2C_Handle      i2c;
-static I2C_Params      i2cParams;
-static I2C_Transaction i2cTransaction;
+
 
 static void I2C_Init(void){
     uint8_t         i2cTxBuffer[15];
@@ -1670,20 +1691,20 @@ static void I2C_Init(void){
 
      /* Point to the T ambient register and read its 2 bytes */
      i2cTxBuffer[0]  = 0x03;//!addr reg
-     i2cTxBuffer[1]  = 0x10;//!system clock                       //clock control            0x03
+     i2cTxBuffer[1]  = 0x12;//!system clock                       //clock control            0x03
      i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
      i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
-     i2cTxBuffer[4]  = 0x00;//!interface                          //digital audio interface  0x06
-     i2cTxBuffer[5]  = 0x02;//!interface                                                     0x07
-     i2cTxBuffer[6]  = 0x05;//!voice filter                       //digital filtering        0x08
+     i2cTxBuffer[4]  = 0x50;//!interface                          //digital audio interface  0x06   !!!falling edge for DAC when adc works
+     i2cTxBuffer[5]  = 0x10;//!interface                                                     0x07
+     i2cTxBuffer[6]  = 0x22;//!voice filter    0x05               //digital filtering        0x08
      i2cTxBuffer[7]  = 0x00;//!DAC att                            //digital level control    0x09
      i2cTxBuffer[8]  = 0x00;//!ADC output levels                                             0x0A
      i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
-     i2cTxBuffer[10] = 0x00;//!microphone gain                    //MIC level control        0x0C
+     i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
      i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
      i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
      i2cTxBuffer[13] = 0x00;//!Noise gate, mic AGC                                           0x0F
-     i2cTxBuffer[14] = 0x88;//!System shutdown                    //POWER MANAGEMENT         0x10
+     i2cTxBuffer[14] = 0x8A;//!System shutdown                    //POWER MANAGEMENT         0x10
 
 
 
@@ -1942,8 +1963,9 @@ static void pdm_samp_hdl(void)
     //encoder_adpcm.previndex = 0;
     //encoder_adpcm.prevsample = 0;
     //ADPCMEncoderBuf(raw_data, encode_buf, &encoder_adpcm);
-    ADPCMEncoderBuf(decimated_data, encode_buf, &encoder_adpcm);
-    /*
+    //ADPCMEncoderBuf(decimated_data, encode_buf, &encoder_adpcm);
+    ADPCMEncoderBuf(mic_data, encode_buf, &encoder_adpcm);
+        /*
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *) &trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex         = key_index;
     trans.msgIn            = (uint32_t *)encode_buf;
