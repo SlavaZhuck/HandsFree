@@ -736,12 +736,13 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
  *
  * @return  None.
  */
-
+   static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
         char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-        int16_t raw_data_send[I2S_SAMP_PER_FRAME];
-        bool gotBuffer = false;
+
+        bool gotBufferIn = false;
+        bool gotBufferOut = false;
   switch (pMsg->type)
   {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -807,14 +808,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             }
 #endif
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;//I2SCC26XX_BUFFER_OUT;
-            gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-            if (gotBuffer)
+            gotBufferOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferOut)
             {
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn =NULL;// NULL;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-                gotBuffer = 0;
+                gotBufferOut = 0;
             }
             /*
             for(uint32_t i = 0; i < 80; i++)
@@ -825,14 +826,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_GET_VOICE_SAMP:
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN;
-            gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-            if (gotBuffer)
+            gotBufferIn = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferIn)
             {
                 memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
                 bufferRelease.bufferHandleOut = NULL;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-                gotBuffer = 0;
+                gotBufferIn = 0;
             }
             pdm_samp_hdl();
 
@@ -1733,8 +1734,8 @@ static void I2C_Init(void){
 *  callback function.
 */
 
-static Bool button1_pressed = false;
-static Bool button2_pressed = false;
+static Bool buttonVol_UP_pressed = false;
+static Bool buttonVol_DOWN_pressed = false;
 
 void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
 
@@ -1743,33 +1744,22 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
        /* Toggle LED based on the button pressed */
        switch (pinId) {
            case CC2640R2_LAUNCHXL_PIN_BTN1:
-               button1_pressed = true;
-               button2_pressed = false;
+               buttonVol_UP_pressed = true;
+               buttonVol_DOWN_pressed = false;
                break;
 
            case CC2640R2_LAUNCHXL_PIN_BTN2:
-               button1_pressed = false;
-               button2_pressed = true;
+               buttonVol_UP_pressed = false;
+               buttonVol_DOWN_pressed = true;
                break;
 
            default:
-               button1_pressed = false;
-               button2_pressed = false;
+               buttonVol_UP_pressed = false;
+               buttonVol_DOWN_pressed = false;
                /* Do nothing */
                break;
        }
    }
-
-   //delay_tick(1000000);
-   //i2cTransaction.writeCount = 0;
-   //i2cTransaction.readCount = 18;
-   //I2C_transfer(i2c, &i2cTransaction);
-   //delay_tick(1000000);
-   //I2C_close(i2c);
-   //volatile static uint32_t delay = 48000;
-   //while(delay>0){
-   //    delay--;
-   //}
 }
 void button_processing(void){
     static uint16_t x = 0;
@@ -1789,7 +1779,7 @@ void button_processing(void){
    /* Debounce logic, only toggle if the button is still pushed (low) */
    //CPUdelay(8000*50);
 
-    if(button1_pressed)
+    if(buttonVol_UP_pressed)
     {
         if(current_volume<=0)
         {
@@ -1801,8 +1791,8 @@ void button_processing(void){
 
         x++;
         I2C_transfer(i2c, &i2cTransaction);
-        button1_pressed = false;
-    } else if(button2_pressed)
+        buttonVol_UP_pressed = false;
+    } else if(buttonVol_DOWN_pressed)
     {
         if(current_volume>=126) //188 - MUTE
         {
@@ -1814,11 +1804,11 @@ void button_processing(void){
 
         z++;
         I2C_transfer(i2c, &i2cTransaction);
-        button2_pressed = false;
+        buttonVol_DOWN_pressed = false;
     } else
     {
-        button1_pressed = false;
-        button2_pressed = false;
+        buttonVol_UP_pressed = false;
+        buttonVol_DOWN_pressed = false;
     }
 }
 
