@@ -136,9 +136,13 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_DIO22                 IOID_22
 
 /* Discrete Inputs */
-#define CC2640R2_LAUNCHXL_PIN_BTN1              PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_PIN_BTN2              PIN_UNASSIGNED
-
+#ifdef HANDS_FREE_NOT_BOARD
+    #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_29 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_30 //PIN_UNASSIGNED
+#else
+    #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_13 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_14 //PIN_UNASSIGNED
+#endif
 /* GPIO */
 #define CC2640R2_LAUNCHXL_GPIO_LED_ON           1
 #define CC2640R2_LAUNCHXL_GPIO_LED_OFF          0
@@ -217,7 +221,7 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_24//IOID_29
 #else
     #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_3//IOID_0
-    #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_24//IOID_1 IOID_26
+    #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_26//IOID_1 IOID_26
     /* I2S */
     #define CC2640R2_LAUNCHXL_I2S_BCLK              IOID_23//IOID_30
     #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_22//(PIN_Id)IOID_UNUSED

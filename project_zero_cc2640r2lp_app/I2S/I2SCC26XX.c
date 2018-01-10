@@ -202,7 +202,7 @@ I2SCC26XX_Handle I2SCC26XX_open(I2SCC26XX_Handle handle, I2SCC26XX_Params *param
     object->audioClkCfg.wclkPhase = I2SCC26XX_WordClockPhase_Dual;           /* I2S Word Clock Phase */
     object->audioClkCfg.wclkInverted = I2SCC26XX_ClockSource_Normal;         /* I2S Invert Word Clock */
     object->audioClkCfg.wclkSource = I2SCC26XX_WordClockSource_Int;          /* I2S Word Clock source */
-    object->audioClkCfg.bclkDiv = 375/2;//375;94; 750                                   /* I2S Bit Clock divider override */
+    object->audioClkCfg.bclkDiv = 188;//375/2;//375;94; 750                                   /* I2S Bit Clock divider override */
     object->audioClkCfg.reserved = 0;
     object->audioClkCfg.bclkSource = I2SCC26XX_BitClockSource_Int;           /* I2S Bit Clock source */
     object->audioClkCfg.mclkDiv = 4;                                         /* I2S Master Clock divider override */
@@ -221,7 +221,7 @@ I2SCC26XX_Handle I2SCC26XX_open(I2SCC26XX_Handle handle, I2SCC26XX_Params *param
     object->audioFmtCfg.sampleEdge = I2SCC26XX_PositiveEdge;                 /* Data and Word clock is samples, and clocked out, on opposite edges of BCLK */
     object->audioFmtCfg.dualPhase = I2SCC26XX_DualPhase;                     /* Selects dual- or single phase format (0: Single, 1: Dual) */
     object->audioFmtCfg.memLen = I2SCC26XX_MemLen16bit;                      /* Size of each word stored to or loaded from memory (0: 16, 1: 24) */
-    object->audioFmtCfg.dataDelay = I2SCC26XX_FormatLJF;//I2SCC26XX_FormatI2SandDSP;               /* Number of BCLK perids between a WCLK edge and MSB of the first word in a phase */
+    object->audioFmtCfg.dataDelay = I2SCC26XX_FormatI2SandDSP;//I2SCC26XX_FormatI2SandDSP;  I2SCC26XX_FormatLJF              /* Number of BCLK perids between a WCLK edge and MSB of the first word in a phase */
 
     // Find out how many channels are In and Out respectively
     uint8_t ui8TotalNumberOfChannelsIn = 0;

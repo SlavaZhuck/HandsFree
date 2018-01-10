@@ -265,7 +265,7 @@ static GPTimerCC26XX_Handle tim_hdl = NULL;
 //static PWM_Handle pwm_hdl = NULL;
 //static PWM_Params pwm_params;
 
-static Mailbox_Handle mailbox;
+//static Mailbox_Handle mailbox;
 
 static CryptoCC26XX_Handle crypto_handle;
 //static CryptoCC26XX_AESECB_Transaction trans;
@@ -275,6 +275,7 @@ static uint8_t key[] = {0x2C, 0x7E, 0x15, 0x16, 0x28, 0xAD, 0xD2, 0xA6,
 //static int32_t crypto_status;
 
 #include <math.h>
+#include <ti/drivers/I2C.h>
 #include "I2S/I2SCC26XX.h"
 #define M_PI        3.14159265358979323846
 #define I2S_SAMP_PER_FRAME    80
@@ -289,9 +290,8 @@ static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotificatio
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM              AUDIO_DUPLEX_CMD_START
 static void AudioDuplex_disableCache();
 static I2SCC26XX_StreamNotification i2sStream;
-static void AudioDuplex_i2sCallbackFxn(I2SCC26XX_Handle handle,
-                                    I2SCC26XX_StreamNotification *notification);
 
+static void I2C_Init(void);
 static I2SCC26XX_BufferRequest bufferRequest;
 static I2SCC26XX_BufferRelease bufferRelease;
 static I2SCC26XX_StreamNotification i2sStream;
@@ -299,7 +299,7 @@ static I2SCC26XX_Params i2sParams =
 {
     .requestMode            = I2SCC26XX_CALLBACK_MODE,
     .ui32requestTimeout     = BIOS_WAIT_FOREVER,
-    .callbackFxn            = bufRdy_callback,//AudioDuplex_i2sCallbackFxn,
+    .callbackFxn            = bufRdy_callback,
     .blockSize              = 0,
     .pvContBuffer           = NULL,
     .ui32conBufTotalSize    = 0,
@@ -316,12 +316,23 @@ static uint8_t *i2sContMgtBuffer = NULL;
 static bool i2sStreamInProgress = false;
 Bool bufferReady = false;
 
+/* Pin driver handles */
+static PIN_Handle buttonPinHandle;
+
+/* Global memory storage for a PIN_Config table */
+static PIN_State buttonPinState;
+
+void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId);
+void button_processing (void);
 /*
-static PDMCC26XX_BufferRequest bufferRequest;
-static PDMCC26XX_Params pdmParams;
-static PDMCC26XX_Handle pdmHandle = (PDMCC26XX_Handle)&(PDMCC26XX_config);
-static const uint16_t returnBufferSize = 320;
-*/
+ * Application button pin configuration table:
+ *   - Buttons interrupts are configured to trigger on falling edge.
+ */
+PIN_Config buttonPinTable[] = {
+    CC2640R2_LAUNCHXL_PIN_BTN1  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
+    CC2640R2_LAUNCHXL_PIN_BTN2  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
+    PIN_TERMINATE
+};
 
 //static bool status_pdm;
 static unsigned char pdm_val = 1;
@@ -333,10 +344,6 @@ static int stream_on = 0;
 
 static uint32_t green_counter = 0;
 static uint32_t red_counter = 0;
-
-static uint32_t tmr_counter = 0;
-static uint32_t i2s_counter = 0;
-
 
 //#define BT_PACKET_DEBUG
 #ifdef BT_PACKET_DEBUG
@@ -396,24 +403,27 @@ static void timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask in
 static void start_voice_handle(void);
 static void stop_voice_handle(void);
 //static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification);
-static void *SA_audioMalloc(uint_least16_t size);
-static void SA_audioFree(void *msg, size_t size);
 static void pdm_samp_hdl(void);
 
+#define EXTRAPOLATE_FACTOR 4
+#define ADCBUFSIZE      I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
+#define SAMPFREQ        8000*EXTRAPOLATE_FACTOR
 
-#define ADCBUFSIZE      I2S_SAMP_PER_FRAME//80
-#define SAMPFREQ        8000
-
+static int16_t mic_data[I2S_SAMP_PER_FRAME];
 static ADCBuf_Handle adc_hdl;
 static ADCBuf_Params adc_params;
 static ADCBuf_Conversion adc_conversion;
 static int16_t samp_buf1[ADCBUFSIZE];
 static int16_t samp_buf2[ADCBUFSIZE];
-static int16_t adc_data[ADCBUFSIZE];
-static Bool adc_buf_ready = false;
+//static int16_t adc_data[ADCBUFSIZE];
+static int16_t decimated_data[ADCBUFSIZE/EXTRAPOLATE_FACTOR];
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
                   void *completedADCBuffer, uint32_t completedChannel);
+
+static I2C_Handle      i2c;
+static I2C_Params      i2cParams;
+static I2C_Transaction i2cTransaction;
 /*********************************************************************
  * PROFILE CALLBACKS
  */
@@ -623,6 +633,7 @@ static void ProjectZero_init(void)
  *
  * @return  None.
  */
+static uint8_t         i2cRxBuffer[5];
 static void ProjectZero_taskFxn(UArg a0, UArg a1)
 {
   // Initialize application
@@ -691,6 +702,17 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
       }
 
     }
+
+
+    button_processing();
+
+    i2cTransaction.slaveAddress = 0x10;
+    i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
+
+    i2cTransaction.writeCount = 0;
+    i2cTransaction.readCount = 5;
+    I2C_transfer(i2c, &i2cTransaction);
+
   }
 }
 
@@ -714,11 +736,13 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
  *
  * @return  None.
  */
+   static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
         char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-        int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 
+        bool gotBufferIn = false;
+        bool gotBufferOut = false;
   switch (pMsg->type)
   {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -783,14 +807,15 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                  raw_data_send[i] = data[i];
             }
 #endif
-            bool gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-            if (gotBuffer)
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;//I2SCC26XX_BUFFER_OUT;
+            gotBufferOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferOut)
             {
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
-                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
-                bufferRelease.bufferHandleIn = NULL;
+               bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+                bufferRelease.bufferHandleIn =NULL;// NULL;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-                gotBuffer = 0;
+                gotBufferOut = 0;
             }
             /*
             for(uint32_t i = 0; i < 80; i++)
@@ -800,7 +825,16 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
-
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN;
+            gotBufferIn = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferIn)
+            {
+                memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
+                bufferRelease.bufferHandleOut = NULL;
+                bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
+                I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+                gotBufferIn = 0;
+            }
             pdm_samp_hdl();
 
             if(red_counter++ > LED_COUNTER)
@@ -1517,27 +1551,18 @@ static char *Util_getLocalNameStr(const uint8_t *data) {
   return localNameStr;
 }
 
-static void *SA_audioMalloc(uint_least16_t size)
-{
-    Error_Block eb;
-    Error_init(&eb);
-    return Memory_alloc(NULL, size, 0, &eb);
-}
 
-static void SA_audioFree(void *msg, size_t size)
-{
-    Memory_free(NULL, msg, size);
-}
+
 
 
 /* Functions for handle tx/rx packets of voice samples */
 static void voice_hdl_init(void)
 {
-    mailbox = Mailbox_create(BUFFERSIZE / 2, 2, NULL, NULL);
-    if (mailbox == NULL) {
-        while (1);
-    }
-
+//    mailbox = Mailbox_create(BUFFERSIZE / 2, 2, NULL, NULL);
+//    if (mailbox == NULL) {
+//        while (1);
+//    }
+    I2C_Init();
     GPTimerCC26XX_Params_init(&tim_params);
     tim_params.width = GPT_CONFIG_16BIT;
     tim_params.mode = GPT_MODE_PERIODIC_UP;
@@ -1578,28 +1603,26 @@ static void voice_hdl_init(void)
     if (key_index == CRYPTOCC26XX_STATUS_ERROR) {
        while(1);
     }
-
-    /*
-    PDMCC26XX_init(pdmHandle);
-
-    // Set up parameters for PDM streaming without compression
-    PDMCC26XX_Params_init(&pdmParams);
-    pdmParams.callbackFxn = bufRdy_callback;
-    pdmParams.micPowerActiveHigh = true;
-    pdmParams.applyCompression = false;
-    pdmParams.retBufSizeInBytes = returnBufferSize + 4;
-    pdmParams.mallocFxn = (PDMCC26XX_MallocFxn) SA_audioMalloc;
-    pdmParams.freeFxn = SA_audioFree;
-    pdmParams.useDefaultFilter = true;
-    pdmParams.decimationFilter = NULL;
-    pdmParams.micGain = PDMCC26XX_GAIN_N6;
-
-    // Try to open the PDM driver
-    pdmHandle = PDMCC26XX_open(&pdmParams);
-    if(!pdmHandle){
+///////////////////////////////////
+    buttonPinHandle = PIN_open(&buttonPinState, buttonPinTable);
+    if(!buttonPinHandle) {
+        /* Error initializing button pins */
         while(1);
     }
-    */
+//    buttonLowPinHandle = PIN_open(&buttonLowPinState, buttonPinTable);
+//    if(!buttonLowPinHandle) {
+//        /* Error initializing button pins */
+//        while(1);
+//    }
+    /* Setup callback for button pins */
+    if (PIN_registerIntCb(buttonPinHandle, &buttonCallbackFxn) != 0) {
+        /* Error registering button callback function */
+        while(1);
+    }
+//    if (PIN_registerIntCb(buttonLowPinHandle, &buttonCallbackFxn) != 0) {
+//        /* Error registering button callback function */
+//        while(1);
+//    }    ///////////////////////////////////////////////////////
     /* ADC init */
     ADCBuf_init();
 
@@ -1640,31 +1663,179 @@ static void voice_hdl_init(void)
         while(1);
     }
 
-    bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
+    //I2SCC26XX_BUFFER_OUT;
 
     //i2sStreamInProgress = I2SCC26XX_startStream(i2sHandle);
 }
 
-//static void bufRdy_callback(PDMCC26XX_Handle handle, PDMCC26XX_StreamNotification *pStreamNotification)
-//{
-//  PDMCC26XX_Status streamStatus = pStreamNotification->status;
-//
-//  if (streamStatus == PDMCC26XX_STREAM_BLOCK_READY || streamStatus == PDMCC26XX_STREAM_BLOCK_READY_BUT_PDM_OVERFLOW) {
-//      user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);// TODO
-//  }
-//}
+
+
+static void I2C_Init(void){
+    uint8_t         i2cTxBuffer[15];
+     uint8_t         i2cRxBuffer[18];
+
+
+     //GPIO_init();
+     I2C_init();
+     /* Create I2C for usage */
+     I2C_Params_init(&i2cParams);
+     //i2cParams.transferMode  = I2C_MODE_CALLBACK;
+     i2cParams.bitRate = I2C_400kHz;
+     i2c = I2C_open(Board_I2C0, &i2cParams);
+     if (i2c == NULL) {
+       //  Display_printf(display, 0, 0, "Error Initializing I2C\n");
+         while (1);
+     }
+     else {
+       //  Display_printf(display, 0, 0, "I2C Initialized!\n");
+     }
+
+     /* Point to the T ambient register and read its 2 bytes */
+     i2cTxBuffer[0]  = 0x03;//!addr reg
+     i2cTxBuffer[1]  = 0x12;//!system clock                       //clock control            0x03
+     i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
+     i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
+     i2cTxBuffer[4]  = 0x50;//!interface                          //digital audio interface  0x06   !!!falling edge for DAC when adc works
+     i2cTxBuffer[5]  = 0x10;//!interface                                                     0x07
+     i2cTxBuffer[6]  = 0x22;//!voice filter    0x05               //digital filtering        0x08
+     i2cTxBuffer[7]  = 0x00;//!DAC att                            //digital level control    0x09
+     i2cTxBuffer[8]  = 0x00;//!ADC output levels                                             0x0A
+     i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
+     i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
+     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
+     i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
+     i2cTxBuffer[13] = 0x00;//!Noise gate, mic AGC                                           0x0F
+     i2cTxBuffer[14] = 0x8A;//!System shutdown                    //POWER MANAGEMENT         0x10
+
+
+
+     i2cTransaction.slaveAddress = 0x10;
+     i2cTransaction.writeBuf = i2cTxBuffer;
+     i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
+
+     i2cTransaction.writeCount = 15;
+     i2cTransaction.readCount = 0;
+     I2C_transfer(i2c, &i2cTransaction);
+     //delay_tick(1000000);
+     //i2cTransaction.writeCount = 0;
+     //i2cTransaction.readCount = 18;
+     //I2C_transfer(i2c, &i2cTransaction);
+     //delay_tick(1000000);
+     //I2C_close(i2c);
+     volatile static uint32_t delay = 4800000;
+     while(delay>0){
+         delay--;
+     }
+}
+/*
+*  ======== buttonCallbackFxn ========
+*  Pin interrupt Callback function board buttons configured in the pinTable.
+*  If Board_PIN_LED3 and Board_PIN_LED4 are defined, then we'll add them to the PIN
+*  callback function.
+*/
+
+static Bool buttonVol_UP_pressed = false;
+static Bool buttonVol_DOWN_pressed = false;
+
+void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
+
+   //CPUdelay(8000*50);
+   if (!PIN_getInputValue(pinId)) {
+       /* Toggle LED based on the button pressed */
+       switch (pinId) {
+           case CC2640R2_LAUNCHXL_PIN_BTN1:
+               buttonVol_UP_pressed = true;
+               buttonVol_DOWN_pressed = false;
+               break;
+
+           case CC2640R2_LAUNCHXL_PIN_BTN2:
+               buttonVol_UP_pressed = false;
+               buttonVol_DOWN_pressed = true;
+               break;
+
+           default:
+               buttonVol_UP_pressed = false;
+               buttonVol_DOWN_pressed = false;
+               /* Do nothing */
+               break;
+       }
+   }
+}
+void button_processing(void){
+    static uint16_t x = 0;
+    static uint16_t z = 0;
+    static uint8_t current_volume = 0;
+//    I2C_Handle      i2c;
+//    I2C_Params      i2cParams;
+//    I2C_Transaction i2cTransaction;
+    uint8_t         i2cTxBuffer[3];
+    i2cTxBuffer[0]  = 0x09;//!addr reg
+    i2cTransaction.slaveAddress = 0x10;
+    i2cTransaction.writeBuf = i2cTxBuffer;
+    //i2cTransaction.readBuf = i2cRxBuffer;//rxBuffer;
+
+    i2cTransaction.writeCount = 2;
+    i2cTransaction.readCount = 0;
+   /* Debounce logic, only toggle if the button is still pushed (low) */
+   //CPUdelay(8000*50);
+
+    if(buttonVol_UP_pressed)
+    {
+        if(current_volume<=0)
+        {
+           current_volume = 0;
+        }else{
+           current_volume-=2;
+        }
+        i2cTxBuffer[1]  = current_volume;//!DAC att                            //digital level control    0x09
+
+        x++;
+        I2C_transfer(i2c, &i2cTransaction);
+        buttonVol_UP_pressed = false;
+    } else if(buttonVol_DOWN_pressed)
+    {
+        if(current_volume>=126) //188 - MUTE
+        {
+           current_volume = 126;
+        }else{
+           current_volume+=2;
+        }
+        i2cTxBuffer[1]  = current_volume;//!DAC att                            //digital level control    0x09
+
+        z++;
+        I2C_transfer(i2c, &i2cTransaction);
+        buttonVol_DOWN_pressed = false;
+    } else
+    {
+        buttonVol_UP_pressed = false;
+        buttonVol_DOWN_pressed = false;
+    }
+}
+
+
+
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
 
     int16_t *buf_ptr = (int16_t*)completedADCBuffer;
     /* handle receive data */
-    for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
-        adc_data[i] = (buf_ptr[i] - 1550);
+
+    for(uint32_t i = 0 ; i < ADCBUFSIZE/EXTRAPOLATE_FACTOR; i++){
+        //decimated_data[i]=buf_ptr[i*EXTRAPOLATE_FACTOR]-1600;
+        decimated_data[i]=0;
+        for(uint16_t j = 0;j<EXTRAPOLATE_FACTOR;j++){
+
+            decimated_data[i] += ((buf_ptr[i*EXTRAPOLATE_FACTOR+j])-1600);
+        }
+        decimated_data[i]=decimated_data[i];///EXTRAPOLATE_FACTOR;
+    }
 
     if(stream_on)
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
 }
+
+
 
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
 {
@@ -1677,32 +1848,32 @@ static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotificatio
 
 static void timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
-    static Bool ready = FALSE;
-    //static uint32_t counter = 0;
-    static int16_t raw_data_tmr[I2S_SAMP_PER_FRAME];
-
-    tmr_counter++;
-
-    if (!ready) {
-        ready = Mailbox_pend(mailbox, raw_data_tmr, BIOS_NO_WAIT);
-    }
-
-    if(ready)
-    {
-        //bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
-        i2s_counter++;
-        bool gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-        if (gotBuffer)
-        {
-            //memset(bufferRequest.bufferOut, &data[0], 96);
-            memcpy(bufferRequest.bufferOut, raw_data_tmr, sizeof(raw_data_tmr));
-            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
-            bufferRelease.bufferHandleIn = NULL;
-            I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-            gotBuffer = 0;
-        }
-        ready = false;
-    }
+//    static Bool ready = FALSE;
+//    //static uint32_t counter = 0;
+//    static int16_t raw_data_tmr[I2S_SAMP_PER_FRAME];
+//
+//    tmr_counter++;
+//
+//    if (!ready) {
+//        ready = Mailbox_pend(mailbox, raw_data_tmr, BIOS_NO_WAIT);
+//    }
+//
+//    if(ready)
+//    {
+//        //bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
+//        i2s_counter++;
+//        bool gotBuffer = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+//        if (gotBuffer)
+//        {
+//            //memset(bufferRequest.bufferOut, &data[0], 96);
+//            memcpy(bufferRequest.bufferOut, raw_data_tmr, sizeof(raw_data_tmr));
+//            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+//            bufferRelease.bufferHandleIn = NULL;
+//            I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+//            gotBuffer = 0;
+//        }
+//        ready = false;
+//    }
 
 }
 
@@ -1766,7 +1937,7 @@ static void pdm_samp_hdl(void)
     uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
     //uint8_t encrypted[16] = {0};
     //uint8_t decrypted[16] = {0};
-    static uint8_t counter = 0;
+
 
     //memset(&encode_buf[10], 0, 6);
 
@@ -1782,8 +1953,9 @@ static void pdm_samp_hdl(void)
     //encoder_adpcm.previndex = 0;
     //encoder_adpcm.prevsample = 0;
     //ADPCMEncoderBuf(raw_data, encode_buf, &encoder_adpcm);
-    ADPCMEncoderBuf(adc_data, encode_buf, &encoder_adpcm);
-    /*
+    //ADPCMEncoderBuf(decimated_data, encode_buf, &encoder_adpcm);
+    ADPCMEncoderBuf(mic_data, encode_buf, &encoder_adpcm);
+        /*
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *) &trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex         = key_index;
     trans.msgIn            = (uint32_t *)encode_buf;
@@ -1808,6 +1980,7 @@ static void pdm_samp_hdl(void)
 
     //Mailbox_post(mailbox, raw_data_send, BIOS_NO_WAIT);
 #ifdef BT_PACKET_DEBUG
+    static uint8_t counter = 0;
     encode_buf[0] = counter;
     counter++;
 #endif

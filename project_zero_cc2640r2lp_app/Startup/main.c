@@ -61,7 +61,7 @@
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/display/Display.h>
-#include <ti/drivers/I2C.h>
+//#include <ti/drivers/I2C.h>
 
 #include <icall.h>
 #include "hal_assert.h"
@@ -177,7 +177,7 @@ int main()
   /* Kick off profile - Priority 3 */
   GAPRole_createTask();
 
-  I2C_createTask();
+  //I2C_createTask();
   ProjectZero_createTask();
  // I2S_createTask();
     /* enable interrupts and start SYS/BIOS */

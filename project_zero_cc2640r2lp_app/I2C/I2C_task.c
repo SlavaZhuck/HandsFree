@@ -85,8 +85,6 @@ void delay_tick(uint32_t count){
 
 static void I2C_taskFxn(UArg a0, UArg a1)
 {
-    unsigned int    i;
-        uint16_t        temperature;
         uint8_t         i2cTxBuffer[15];
         uint8_t         i2cRxBuffer[18];
         I2C_Handle      i2c;
