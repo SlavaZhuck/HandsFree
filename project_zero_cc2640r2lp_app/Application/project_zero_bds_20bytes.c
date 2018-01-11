@@ -161,7 +161,7 @@
 
 #define SAMP_TIME                           479999UL
 
-#define BAT_LOW_VOLTAGE                     3500
+#define BAT_LOW_VOLTAGE                     3000
 
 /*********************************************************************
  * TYPEDEFS
@@ -312,9 +312,6 @@ static void start_voice_handle(void);
 static void stop_voice_handle(void);
 static void pdm_samp_hdl(void);
 
-void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
-                  void *completedADCBuffer, uint32_t completedChannel);
-
 static void encrypt_packet(uint8_t *packet);
 static void decrypt_packet(uint8_t *packet);
 
@@ -358,7 +355,6 @@ static uint8_t *i2sContMgtBuffer = NULL;
 Bool bufferReady = false;
 
 static int16_t mic_data[I2S_SAMP_PER_FRAME];
-static int16_t decimated_data[ADCBUFSIZE/EXTRAPOLATE_FACTOR];
 
 static I2C_Handle      i2c;
 static I2C_Params      i2cParams;
@@ -1708,28 +1704,6 @@ void button_processing(void){
     }
 }
 
-
-void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
-    void *completedADCBuffer, uint32_t completedChannel) {
-
-    int16_t *buf_ptr = (int16_t*)completedADCBuffer;
-    /* handle receive data */
-
-    for(uint32_t i = 0 ; i < ADCBUFSIZE/EXTRAPOLATE_FACTOR; i++){
-        decimated_data[i]=0;
-        for(uint16_t j = 0;j<EXTRAPOLATE_FACTOR;j++){
-
-            decimated_data[i] += ((buf_ptr[i*EXTRAPOLATE_FACTOR+j])-1600);
-        }
-        decimated_data[i]=decimated_data[i];///EXTRAPOLATE_FACTOR;
-    }
-
-    if(stream_on)
-        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
-}
-
-
-
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
 {
     I2SCC26XX_Status streamStatus = pStreamNotification->status;
@@ -1782,7 +1756,8 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
-    user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+    if(stream_on)
+        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
 }
 
 static void start_voice_handle(void)
