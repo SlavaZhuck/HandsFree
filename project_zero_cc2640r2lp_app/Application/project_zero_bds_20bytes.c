@@ -1533,6 +1533,11 @@ static void voice_hdl_init(void)
         while(1);
     }
 
+    if (PIN_registerIntCb(buttonPinHandle, &buttonCallbackFxn) != 0) {
+         /* Error registering button callback function */
+         while(1);
+     }
+
     I2SCC26XX_init(i2sHandle);
     I2SCC26XX_Handle i2sHandleTmp = NULL;
     AudioDuplex_disableCache();
@@ -1595,13 +1600,13 @@ static void I2C_Init(void){
     i2cTxBuffer[4]  = 0x50;//!interface                          //digital audio interface  0x06   !!!falling edge for DAC when adc works
     i2cTxBuffer[5]  = 0x10;//!interface                                                     0x07
     i2cTxBuffer[6]  = 0x22;//!voice filter    0x05               //digital filtering        0x08
-    i2cTxBuffer[7]  = 0x00;//!DAC att                            //digital level control    0x09
-    i2cTxBuffer[8]  = 0x00;//!ADC output levels                                             0x0A
+    i2cTxBuffer[7]  = 0x28;//!DAC att                            //digital level control    0x09
+    i2cTxBuffer[8]  = 0x66;//!ADC output levels                                             0x0A
     i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
     i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
     i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
-    i2cTxBuffer[13] = 0x00;//!Noise gate, mic AGC                                           0x0F
+    i2cTxBuffer[13] = 0xFF;//!Noise gate, mic AGC                                           0x0F
     i2cTxBuffer[14] = 0x8A;//!System shutdown                    //POWER MANAGEMENT         0x10
 
     i2cTransaction.slaveAddress = 0x10;
@@ -1652,10 +1657,13 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
        }
    }
 }
+
+static uint16_t x = 0;
+static uint16_t z = 0;
+static uint8_t current_volume = 0;
+
 void button_processing(void){
-    static uint16_t x = 0;
-    static uint16_t z = 0;
-    static uint8_t current_volume = 0;
+
 
     uint8_t         i2cTxBuffer[3];
     i2cTxBuffer[0]  = 0x09;//!addr reg
