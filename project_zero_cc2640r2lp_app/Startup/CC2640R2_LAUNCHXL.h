@@ -200,8 +200,8 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_SPI1_CSN              PIN_UNASSIGNED
 
 /* UART Board */
-#define CC2640R2_LAUNCHXL_UART_RX               PIN_UNASSIGNED//IOID_2          /* RXD */
-#define CC2640R2_LAUNCHXL_UART_TX               IOID_3          /* TXD */
+#define CC2640R2_LAUNCHXL_UART_RX               IOID_8//IOID_2          /* RXD */
+#define CC2640R2_LAUNCHXL_UART_TX               IOID_9          /* TXD */
 #define CC2640R2_LAUNCHXL_UART_CTS              PIN_UNASSIGNED         /* CTS */
 #define CC2640R2_LAUNCHXL_UART_RTS              PIN_UNASSIGNED         /* RTS */
 
