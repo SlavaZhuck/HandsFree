@@ -1610,7 +1610,7 @@ static void voice_hdl_init(void)
     AONBatMonEnable();
 }
 
-#define INIT_GAIN 0x20
+#define INIT_GAIN 0x12
 
 static void I2C_Init(void){
     uint8_t         i2cTxBuffer[15];
