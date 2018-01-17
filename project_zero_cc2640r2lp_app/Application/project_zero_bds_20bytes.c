@@ -1825,7 +1825,8 @@ static void start_voice_handle(void)
     PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
     GPTimerCC26XX_start(samp_tim_hdl);
     I2SCC26XX_startStream(i2sHandle);
-    //HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
+    HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
+    HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
 }
 
@@ -1840,7 +1841,8 @@ static void stop_voice_handle(void)
     }
 
     PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
-    //HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);
+    HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);
+    HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_STD);
     stream_on = 0;
 }
 
