@@ -186,9 +186,37 @@ void ADPCMDecoderBuf(char *u, short *y,	struct ADPCMstate *state_ptr) {
         y[(i<<2)+2] = (short)ADPCMDecoder(smp, state_ptr);
 	}
     
-    for( i = 1; i < 79; i+=2) y[i] = (short)(((int)((int)y[i-1] + (int)y[i+1]))>>1);
+    for( i = 1; i < 79; i+=2)
+        y[i] = (short)(((int)((int)y[i-1] + (int)y[i+1]))>>1);
     y[79] = y[78];
     
+}
+
+void ADPCMEncoderBuf2(short *u, char *y, struct ADPCMstate *state_ptr)
+{
+    int i;
+    char smp;
+
+    for( i = 0; i < 80; i+=2){
+        smp = (char)ADPCMEncoder(u[i], state_ptr);
+        smp |=(((char)ADPCMEncoder(u[i+1], state_ptr)) << 4);
+        y[i>>1] = smp;
+    }
+}
+
+void ADPCMDecoderBuf2(char *u, short *y, struct ADPCMstate *state_ptr) {
+
+    int i;
+    char smp;
+
+    for( i = 0; i < 40; i++){
+
+        smp = u[i] & 0x0F;
+        y[(i<<1)] = (short)ADPCMDecoder(smp, state_ptr);
+
+        smp = (u[i] >> 4) & 0x0F;
+        y[(i<<1)+1] = (short)ADPCMDecoder(smp, state_ptr);
+    }
 }
 
 /*void ADPCMEncoderBuf(short *u, char *y,	struct ADPCMstate *state_ptr){

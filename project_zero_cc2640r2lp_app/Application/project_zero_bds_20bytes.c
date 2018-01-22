@@ -163,6 +163,8 @@
 
 #define BAT_LOW_VOLTAGE                     3000
 
+#define TIMEOUT                             100
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -384,6 +386,8 @@ static int32_t status;
 static CryptoCC26XX_AESECB_Transaction trans;
 
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
+
+uint32_t packet_counter = 0;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -779,8 +783,13 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_SEND_VOICE_SAMP:
 
-            decrypt_packet(pMsg->pdu);
-            ADPCMDecoderBuf((char*)(pMsg->pdu), raw_data_send, &decoder_adpcm);
+            //decrypt_packet(pMsg->pdu);
+            decoder_adpcm.prevsample = ((int16_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 7]) << 8) |
+                    (int16_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 6]);
+
+            decoder_adpcm.previndex = ((int32_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 5]));
+
+            ADPCMDecoderBuf2((char*)(pMsg->pdu), raw_data_send, &decoder_adpcm);
 
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;//I2SCC26XX_BUFFER_OUT;
             gotBufferOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
@@ -1032,7 +1041,7 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       // ... In the generated example we turn periodic clocks on/off
       if (configValue) // 0x0001 and 0x0002 both indicate turned on.
       {
-        GAPRole_SendUpdateParam(8, 8, 0, 100, GAPROLE_RESEND_PARAM_UPDATE);
+        GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
         start_voice_handle();
       }
       else
@@ -1828,6 +1837,7 @@ static void start_voice_handle(void)
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
+    packet_counter = 0;
 }
 
 static void stop_voice_handle(void)
@@ -1850,8 +1860,17 @@ static void pdm_samp_hdl(void)
 {
     uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
-    ADPCMEncoderBuf(mic_data, (char*)(encode_buf), &encoder_adpcm);
-    encrypt_packet(encode_buf);
+    encode_buf[V_STREAM_OUTPUT_LEN - 7] = encoder_adpcm.prevsample >> 8;
+    encode_buf[V_STREAM_OUTPUT_LEN - 6] = encoder_adpcm.prevsample;
+    encode_buf[V_STREAM_OUTPUT_LEN - 5] = encoder_adpcm.previndex;
+
+    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
+    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
+    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
+    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
+
+    ADPCMEncoderBuf2(mic_data, (char*)(encode_buf), &encoder_adpcm);
+    //encrypt_packet(encode_buf);
 #ifdef BT_PACKET_DEBUG
      static uint8_t counter = 0;
      encode_buf[0] = counter;
