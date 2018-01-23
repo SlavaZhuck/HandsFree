@@ -277,7 +277,7 @@ const CryptoCC26XX_Config CryptoCC26XX_config[CC2640R2_LAUNCHXL_CRYPTOCOUNT] = {
 #include <ti/display/DisplaySharp.h>
 
 #ifndef BOARD_DISPLAY_UART_STRBUF_SIZE
-#define BOARD_DISPLAY_UART_STRBUF_SIZE    128
+#define BOARD_DISPLAY_UART_STRBUF_SIZE    1024
 #endif
 
 #ifndef BOARD_DISPLAY_SHARP_SIZE

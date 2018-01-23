@@ -47,6 +47,7 @@
  * INCLUDES
  */
 #include <string.h>
+#include <math.h>
 
 //#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
 
@@ -120,7 +121,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1300
+#define PRZ_TASK_STACK_SIZE                   1700
 #endif
 
 // Internal Events for RTOS application
@@ -364,7 +365,7 @@ static I2SCC26XX_Params i2sParams =
  static unsigned char button_val = 1;
  static unsigned char i2c_val = 1;
 
-static struct ADPCMstate encoder_adpcm, decoder_adpcm;
+static struct ADPCMstate encoder_adpcm, decoder_adpcm, encoder_adpcm1, decoder_adpcm1;
 static int stream_on = 0;
 
 static int16_t *audio_decoded = NULL;
@@ -388,7 +389,9 @@ static CryptoCC26XX_AESECB_Transaction trans;
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
 uint32_t packet_counter = 0;
-
+static UART_Handle uart;
+static UART_Params uartParams;
+static const char  echoPrompt[] = "55AA\r\n";
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -497,6 +500,30 @@ void ProjectZero_createTask(void)
  */
 static void ProjectZero_init(void)
 {
+    uint_least16_t hwiKey = Hwi_disable();
+
+
+    voice_hdl_init();
+#if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) || defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
+    UART_init();
+   // UartLog_init(UART_open(Board_UART0, NULL));
+    /* Create a UART with data processing off. */
+    UART_Params_init(&uartParams);
+    uartParams.writeDataMode = UART_DATA_BINARY;
+    uartParams.readDataMode = UART_DATA_BINARY;
+    uartParams.readReturnMode = UART_RETURN_FULL;
+    uartParams.readEcho = UART_ECHO_OFF;
+    uartParams.baudRate = 230400;
+
+    uart = UART_open(Board_UART0, &uartParams);
+
+    if (uart == NULL) {
+        /* UART_open() failed */
+        while (1);
+    }
+    UART_write(uart, echoPrompt, sizeof(echoPrompt));
+    Hwi_restore(hwiKey);
+#endif
   // ******************************************************************
   // NO STACK API CALLS CAN OCCUR BEFORE THIS CALL TO ICall_registerApp
   // ******************************************************************
@@ -621,7 +648,7 @@ static void ProjectZero_init(void)
 
   PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
 
-  voice_hdl_init();
+
 
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
 }
@@ -738,9 +765,10 @@ static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-
+	int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
     bool gotBufferIn = false;
     bool gotBufferOut = false;
+	static uint8_t          coded_data[20];
     switch (pMsg->type)
     {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -802,6 +830,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
                 gotBufferOut = 0;
                 i2c_read_delay++;
+#ifdef  UART_DEBUG_BLUETOOTH_NOT_ADC
+                for(uint16_t i = 1; i<I2S_SAMP_PER_FRAME+1;i++)
+                    uart_data_send[i] = raw_data_send[i-1];
+                uart_data_send[0]=40*pow(2,8)+41;
+                ////ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
+               // //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
+                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+#endif
             }
 
             #ifdef BT_PACKET_DEBUG
@@ -832,6 +868,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
                 gotBufferIn = 0;
                 i2c_read_delay++;
+#if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) //|| defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
+                for(uint16_t i = 1; i<I2S_SAMP_PER_FRAME+1;i++)
+                    uart_data_send[i] = mic_data[i-1];
+                uart_data_send[0]=40*pow(2,8)+41;
+                //ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
+                //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
+                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+#endif
             }
             pdm_samp_hdl();
 
