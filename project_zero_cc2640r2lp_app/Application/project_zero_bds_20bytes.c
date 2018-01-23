@@ -1869,6 +1869,8 @@ static void pdm_samp_hdl(void)
     encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
     encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
 
+    packet_counter++;
+
     ADPCMEncoderBuf2(mic_data, (char*)(encode_buf), &encoder_adpcm);
     //encrypt_packet(encode_buf);
 #ifdef BT_PACKET_DEBUG
