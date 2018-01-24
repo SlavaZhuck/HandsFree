@@ -164,7 +164,7 @@
 
 #define BAT_LOW_VOLTAGE                     3000
 
-#define TIMEOUT                             100
+#define TIMEOUT                             2000
 
 /*********************************************************************
  * TYPEDEFS
