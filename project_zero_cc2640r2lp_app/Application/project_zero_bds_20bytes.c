@@ -146,8 +146,9 @@
 #define AUDIO_DUPLEX_STREAM_TYPE_NONE       AUDIO_DUPLEX_CMD_STOP
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM      AUDIO_DUPLEX_CMD_START
 #define I2S_SAMP_PER_FRAME                  80
+#define NUM_OF_CHANNELS                     3
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
-                                            I2SCC26XX_QUEUE_SIZE * 2)
+                                            I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
 #define EXTRAPOLATE_FACTOR                  4
 #define ADCBUFSIZE                          I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
@@ -372,7 +373,9 @@ static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
 Bool bufferReady = false;
 
-static int16_t mic_data[I2S_SAMP_PER_FRAME];
+static int16_t mic_data[I2S_SAMP_PER_FRAME*2];
+static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
+static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
 
 static I2C_Handle      i2c;
 static I2C_Params      i2cParams;
@@ -389,9 +392,11 @@ static CryptoCC26XX_AESECB_Transaction trans;
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
 uint32_t packet_counter = 0;
+#if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) || defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
 static UART_Handle uart;
 static UART_Params uartParams;
 static const char  echoPrompt[] = "55AA\r\n";
+#endif
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -489,6 +494,32 @@ void ProjectZero_createTask(void)
   Task_construct(&przTask, ProjectZero_taskFxn, &taskParams, NULL);
 }
 
+#define MAX_NUM_RX_BYTES    100   // Maximum RX bytes to receive in one go
+#define MAX_NUM_TX_BYTES    100   // Maximum TX bytes to send in one go
+#define WANTED_RX_BYTES    1   // Maximum TX bytes to send in one go
+static uint32_t wantedRxBytes = WANTED_RX_BYTES;            // Number of bytes received so far
+static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
+static uint8_t txBuf[MAX_NUM_TX_BYTES];   // Transmit buffer
+// Callback function
+static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
+{
+    static uint16_t num = 0;
+    // Copy bytes from RX buffer to TX buffer
+//    for(size_t i = 0; i < size; i++)
+//        txBuf[i] = ((uint8_t*)rxBuf)[i];
+    txBuf[num] = ((uint8_t*)rxBuf)[0];
+
+    // Echo the bytes received back to transmitter
+    //UART_write(handle, txBuf, size);
+    // Start another read, with size the same as it was during first call to
+    // UART_read()
+    num++;
+    if(num == MAX_NUM_TX_BYTES-1){
+        num = 0;
+    }
+    UART_read(handle, rxBuf, wantedRxBytes);
+}
+
 /*
  * @brief   Called before the task loop and contains application-specific
  *          initialization of the BLE stack, hardware setup, power-state
@@ -504,26 +535,27 @@ static void ProjectZero_init(void)
 
 
     voice_hdl_init();
-#if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) || defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
     UART_init();
    // UartLog_init(UART_open(Board_UART0, NULL));
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
     uartParams.writeDataMode = UART_DATA_BINARY;
+    uartParams.readMode      = UART_MODE_CALLBACK;
+    uartParams.readCallback  = readCallback;
     uartParams.readDataMode = UART_DATA_BINARY;
     uartParams.readReturnMode = UART_RETURN_FULL;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 230400;
 
     uart = UART_open(Board_UART0, &uartParams);
-
     if (uart == NULL) {
         /* UART_open() failed */
         while (1);
     }
+    int rxBytes = UART_read(uart, rxBuf, wantedRxBytes);
+
     UART_write(uart, echoPrompt, sizeof(echoPrompt));
     Hwi_restore(hwiKey);
-#endif
   // ******************************************************************
   // NO STACK API CALLS CAN OCCUR BEFORE THIS CALL TO ICall_registerApp
   // ******************************************************************
@@ -863,6 +895,12 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             if (gotBufferIn)
             {
                 memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
+                for(uint16_t i = 0; i<I2S_SAMP_PER_FRAME;i++)
+                {
+                    mic_data_1ch[i] = mic_data[i*2];
+                    mic_data_2ch[i] = mic_data[i*2+1];
+                }
+
                 bufferRelease.bufferHandleOut = NULL;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
@@ -870,7 +908,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 i2c_read_delay++;
 #if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) //|| defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
                 for(uint16_t i = 1; i<I2S_SAMP_PER_FRAME+1;i++)
-                    uart_data_send[i] = mic_data[i-1];
+                    uart_data_send[i] = mic_data_1ch[i-1];
                 uart_data_send[0]=40*pow(2,8)+41;
                 //ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
                 //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
@@ -1642,7 +1680,7 @@ static void voice_hdl_init(void)
 
     i2sParams.ui32conBufTotalSize    =  sizeof(int16_t) * (I2S_SAMP_PER_FRAME * \
                                         I2SCC26XX_QUEUE_SIZE \
-                                        * 2);
+                                        * NUM_OF_CHANNELS);
     // Reset I2S handle and attempt to open
     i2sHandle = (I2SCC26XX_Handle)&(I2SCC26XX_config);
     i2sHandleTmp = I2SCC26XX_open(i2sHandle, &i2sParams);
@@ -1685,8 +1723,8 @@ static void I2C_Init(void){
     i2cTxBuffer[1]  = 0x12;//!system clock                       //clock control            0x03
     i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
     i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
-    i2cTxBuffer[4]  = 0x50;//!interface                          //digital audio interface  0x06   !!!falling edge for DAC when adc works
-    i2cTxBuffer[5]  = 0x10;//!interface                                                     0x07
+    i2cTxBuffer[4]  = 0x50;//!interface  0x50                        //digital audio interface  0x06   !!!falling edge for DAC when adc works
+    i2cTxBuffer[5]  = 0x10;//!interface  0x10                                                   0x07
     i2cTxBuffer[6]  = 0x33;//!voice filter    0x33               //digital filtering        0x08
     i2cTxBuffer[7]  = INIT_GAIN;//!DAC att                       //digital level control    0x09
     i2cTxBuffer[8]  = 0x99;//!ADC output levels                                             0x0A
@@ -1695,7 +1733,7 @@ static void I2C_Init(void){
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
     i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
     i2cTxBuffer[13] = 0x0F;//!Noise gate, mic AGC  0xFF                                     0x0F
-    i2cTxBuffer[14] = 0x8A;//!System shutdown                    //POWER MANAGEMENT         0x10
+    i2cTxBuffer[14] = 0x8B;//!System shutdown                    //POWER MANAGEMENT         0x10
 
     i2cTransaction.slaveAddress = 0x10;
     i2cTransaction.writeBuf = i2cTxBuffer;
@@ -1915,7 +1953,7 @@ static void pdm_samp_hdl(void)
 
     packet_counter++;
 
-    ADPCMEncoderBuf2(mic_data, (char*)(encode_buf), &encoder_adpcm);
+    ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
     //encrypt_packet(encode_buf);
 #ifdef BT_PACKET_DEBUG
      static uint8_t counter = 0;
