@@ -48,7 +48,6 @@
  */
 #include <string.h>
 #include <math.h>
-
 //#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
 
 #include <ti/sysbios/knl/Task.h>
@@ -76,6 +75,7 @@
 #include "util.h"
 
 #include "Board.h"
+#include "Uart_Parser.h"
 #include "project_zero.h"
 #include "GeneralDef.h"
 // Bluetooth Developer Studio services
@@ -392,11 +392,10 @@ static CryptoCC26XX_AESECB_Transaction trans;
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
 uint32_t packet_counter = 0;
-#if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) || defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
 static UART_Handle uart;
 static UART_Params uartParams;
 static const char  echoPrompt[] = "55AA\r\n";
-#endif
+
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -499,22 +498,21 @@ void ProjectZero_createTask(void)
 #define WANTED_RX_BYTES    1   // Maximum TX bytes to send in one go
 static uint32_t wantedRxBytes = WANTED_RX_BYTES;            // Number of bytes received so far
 static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
-static uint8_t txBuf[MAX_NUM_TX_BYTES];   // Transmit buffer
+//static uint8_t txBuf[MAX_NUM_TX_BYTES];   // Transmit buffer
+static uint32_t timestamp_Buf[32];
 // Callback function
 static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
 {
     static uint16_t num = 0;
-    // Copy bytes from RX buffer to TX buffer
-//    for(size_t i = 0; i < size; i++)
-//        txBuf[i] = ((uint8_t*)rxBuf)[i];
-    txBuf[num] = ((uint8_t*)rxBuf)[0];
-
-    // Echo the bytes received back to transmitter
+    //txBuf[num] = ((uint8_t*)rxBuf)[0];
+    OnRxByte(((unsigned char*)rxBuf)[0]);
+    PackProcessing();
+    timestamp_Buf[num] = Clock_getTicks(); // fd = 100kHz
+        // Echo the bytes received back to transmitter
     //UART_write(handle, txBuf, size);
     // Start another read, with size the same as it was during first call to
-    // UART_read()
     num++;
-    if(num == MAX_NUM_TX_BYTES-1){
+    if(num == 32-1){
         num = 0;
     }
     UART_read(handle, rxBuf, wantedRxBytes);
@@ -536,6 +534,7 @@ static void ProjectZero_init(void)
 
     voice_hdl_init();
     UART_init();
+    parser_init();
    // UartLog_init(UART_open(Board_UART0, NULL));
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
