@@ -392,7 +392,7 @@ static CryptoCC26XX_AESECB_Transaction trans;
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
 uint32_t packet_counter = 0;
-static UART_Handle uart;
+ UART_Handle uart;
 static UART_Params uartParams;
 static const char  echoPrompt[] = "55AA\r\n";
 
@@ -499,23 +499,53 @@ void ProjectZero_createTask(void)
 static uint32_t wantedRxBytes = WANTED_RX_BYTES;            // Number of bytes received so far
 static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
 //static uint8_t txBuf[MAX_NUM_TX_BYTES];   // Transmit buffer
-static uint32_t timestamp_Buf[32];
 // Callback function
+
+extern Serial_Rx_Data_Packet Tx_Data;
+extern Serial_Rx_Data_Packet Rx_Data;
+static unsigned char test_CRC[262] ;
+
+uint64_t macAddress;
+
+static void writeCallback(UART_Handle handle_uart, void *rxBuf, size_t size)
+{
+//SPPBLEServer_enqueueUARTMsg(SBC_UART_CHANGE_EVT,rxBuf,size);
+}
+
 static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
 {
-    static uint16_t num = 0;
+    //uint_least16_t hwiKey = Hwi_disable();
+    memset(&test_CRC,0,sizeof(test_CRC));
+    macAddress = *((uint64_t *)(0x500012F0)) & 0xFFFFFFFFFFFFFF;
+    //uint_least16_t hwiKey = Hwi_disable();
+    //static uint16_t num = 0;
     //txBuf[num] = ((uint8_t*)rxBuf)[0];
     OnRxByte(((unsigned char*)rxBuf)[0]);
-    PackProcessing();
-    timestamp_Buf[num] = Clock_getTicks(); // fd = 100kHz
+    if(PackProcessing()){
+        test_CRC[0] = Rx_Data.header;
+        test_CRC[1] = Rx_Data.addr;
+        test_CRC[2] = Rx_Data.data_lenght;
+        test_CRC[3] = Rx_Data.command;
+        for(uint16_t i = 0 ; i<Rx_Data.data_lenght;i++){
+            test_CRC[4+i] = Rx_Data.data[i];
+        }
+        test_CRC[4+Rx_Data.data_lenght] = Rx_Data.CRC>>8;
+        test_CRC[4+Rx_Data.data_lenght+1] = Rx_Data.CRC&0x00FF;
+        UART_writeCancel(uart);
+        UART_write(uart, &test_CRC, Rx_Data.data_lenght+6);
+    }
+   // CRC = Crc16(test_CRC,sizeof(test_CRC));
+    //timestamp_Buf[num] = Clock_getTicks(); // fd = 100kHz
         // Echo the bytes received back to transmitter
     //UART_write(handle, txBuf, size);
     // Start another read, with size the same as it was during first call to
-    num++;
-    if(num == 32-1){
-        num = 0;
-    }
+//    num++;
+//    if(num == 32-1){
+//        num = 0;
+//    }
+    wantedRxBytes = 1;
     UART_read(handle, rxBuf, wantedRxBytes);
+    //Hwi_restore(hwiKey);
 }
 
 /*
@@ -531,29 +561,33 @@ static void ProjectZero_init(void)
 {
     uint_least16_t hwiKey = Hwi_disable();
 
-
-    voice_hdl_init();
     UART_init();
     parser_init();
+    voice_hdl_init();
+
    // UartLog_init(UART_open(Board_UART0, NULL));
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_BINARY;
-    uartParams.readMode      = UART_MODE_CALLBACK;
-    uartParams.readCallback  = readCallback;
-    uartParams.readDataMode = UART_DATA_BINARY;
-    uartParams.readReturnMode = UART_RETURN_FULL;
-    uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.baudRate = 230400;
+    uartParams.writeDataMode    = UART_DATA_BINARY;
+    uartParams.readDataMode     = UART_DATA_BINARY;
+    uartParams.readMode         = UART_MODE_CALLBACK;
+    uartParams.writeMode        = UART_MODE_CALLBACK;
+    //uartParams.writeTimeout      = 0; //UART_WAIT_FOREVER
+    uartParams.readCallback     = readCallback;
+    uartParams.writeCallback    = writeCallback;
+    uartParams.readReturnMode   = UART_RETURN_FULL;
+    uartParams.readEcho         = UART_ECHO_OFF;
+    uartParams.baudRate         = 115200;
 
     uart = UART_open(Board_UART0, &uartParams);
     if (uart == NULL) {
         /* UART_open() failed */
         while (1);
     }
-    int rxBytes = UART_read(uart, rxBuf, wantedRxBytes);
 
     UART_write(uart, echoPrompt, sizeof(echoPrompt));
+    int rxBytes = UART_read(uart, rxBuf, wantedRxBytes);
+
     Hwi_restore(hwiKey);
   // ******************************************************************
   // NO STACK API CALLS CAN OCCUR BEFORE THIS CALL TO ICall_registerApp
@@ -2072,7 +2106,7 @@ static uint8_t read_aes_key(uint8_t *key)
 
 static uint8_t write_aes_key(uint8_t *key)
 {
-    return (osal_snv_write(KEY_SNV_ID, sizeof(key), key));
+    return (osal_snv_write(KEY_SNV_ID, KEY_SIZE, key));
 }
 
 static uint16_t get_bat_voltage(void)

@@ -6,37 +6,51 @@
  */
 #include <string.h>
 #include "Uart_Parser.h"
+
 #define SYNC_FRAME   0xAA
 
-enum State{ stHEADER = 0,
-            stAddr,
-            stDL,
-            stCtrl,
-            stDATA,
-            stCRC} uiState;
-
+//enum State{ stHEADER = 0,
+//            stAddr,
+//            stDL,
+//            stCtrl,
+//            stDATA,
+//            stCRC} uiState;
+State uiState;
 Serial_Rx_Data_Packet Rx_Data;
+Serial_Rx_Data_Packet Tx_Data = {
+                     .header = SYNC_FRAME,
+                     .addr = 0x13,
+                     .data_lenght = 0x01,
+                     .command = 0x00,
+                     .data[0] = 0xAB,
+                     .CRC = 0xFF   };
+
 unsigned char uiHeader;
 uint16_t CRC16    ;       //начальное значение CRC
 uint16_t ByteCntR ;       //ничего не прин€то
 uint16_t ByteCntT ;       //ничего не отправлено
 uint16_t NewPack  ;       //пакте не прин€т
-unsigned char Address = 0x13  ;       //addr
+unsigned char Address = (ADR_TX(ADR_LZO) | ADR_REC(ADR_PC))  ;       //addr
 unsigned char current_data_lenght = 0x0  ;       //addr
 unsigned short calculated_CRC = 0;
-void set_Myaddr(unsigned char addr){
-    Address&= addr ;
-}
-void set_Masteraddr(unsigned char addr){
-    Address&= addr<<4 ;
-}
+
+//void set_Myaddr(unsigned char addr){
+//
+//    Address&= 0xF0 | addr;
+//
+//}
+//void set_Masteraddr(unsigned char addr){
+//    Address&= (addr<<4) | 0x0F ;
+//    //Address = ADR_TX(addr);
+//}
 
 
 
 void parser_init(void){
    // IUsartInterface::init(cfg, fnWriteBuf);
-
-    CRC16       = 0xFFFF;       //начальное значение CRC
+//    set_Myaddr(3);
+//    set_Masteraddr(1);
+   // CRC16       = 0xFFFF;       //начальное значение CRC
     ByteCntR    = 0;            //ничего не прин€то
     ByteCntT    = 0;            //ничего не отправлено
     NewPack     = 0;            //пакте не прин€т
@@ -90,7 +104,12 @@ void OnRxByte( unsigned char Chr){
         case stCtrl:{
            // __byte((int*)(&(m_pcPacketRx.ucCmd)), ByteCntR++) = Chr;
             Rx_Data.command = Chr;
-            uiState = stDATA;
+            if(Rx_Data.data_lenght==0){
+                uiState = stCRC;
+            }else{
+                uiState = stDATA;
+            }
+
             ByteCntR = 0;
         break;}
 
@@ -99,6 +118,7 @@ void OnRxByte( unsigned char Chr){
             Rx_Data.data[ByteCntR] = Chr;
             ByteCntR++;
             if(ByteCntR == Rx_Data.data_lenght){
+                Rx_Data.CRC = 0;
                 uiState = stCRC;
                 ByteCntR = 0;
             }
@@ -111,7 +131,7 @@ void OnRxByte( unsigned char Chr){
                 ByteCntR++;
             }else if(1 == ByteCntR){
                 Rx_Data.CRC |= Chr;
-                calculated_CRC = Crc16((unsigned char*)(&Rx_Data+1),Rx_Data.data_lenght+2);
+                calculated_CRC = Crc16((unsigned char*)(&Rx_Data)+1,(unsigned short)(Rx_Data.data_lenght)+3);
                 // 2 bytes of CRC received
                 uiState = stHEADER;
 
@@ -119,7 +139,7 @@ void OnRxByte( unsigned char Chr){
                     NewPack = 1;
                 }else{
                     NewPack = 0;
-                    memset(&Rx_Data.data_lenght,0,sizeof(Rx_Data.data_lenght)+sizeof(Rx_Data.command)+sizeof(Rx_Data.data));
+                    memset(&Rx_Data.data_lenght,0,sizeof(Rx_Data.data_lenght)+sizeof(Rx_Data.command)+sizeof(Rx_Data.data)+sizeof(Rx_Data.CRC));
                 }
                 ByteCntR = 0x00;
             }
@@ -134,16 +154,19 @@ void OnRxByte( unsigned char Chr){
     };
 }
 
-void PackProcessing(void){
+//extern UART_Handle uart;
+
+uint16_t PackProcessing(void){
     if(!NewPack){
 
 
-        return;         //Ќичего не делать
+        return 0;         //Ќичего не делать
     }
 //    statusRx.Word = m_pcPacketRx.ucCmd;
 //    last_time = CSystemCore::getSysTick();
 
 
     // „топ не принимал новые данные пока не обработал старые, чистим этот флаг только в конце обработки
-    NewPack = 0;                                                // ”же пакета нет
+    NewPack = 0;
+    return 1;// ”же пакета нет
 }
