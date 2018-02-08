@@ -66,7 +66,9 @@ extern "C"
  * Task creation function for the Simple BLE Peripheral.
  */
 extern void ProjectZero_createTask(void);
+//uint8_t read_aes_key(uint8_t *key);
 
+//uint8_t write_aes_key(uint8_t *key);
 
 /*********************************************************************
 *********************************************************************/

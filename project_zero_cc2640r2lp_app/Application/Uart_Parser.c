@@ -6,6 +6,7 @@
  */
 #include <string.h>
 #include "Uart_Parser.h"
+#include "Uart_commands.h"
 
 #define SYNC_FRAME   0xAA
 
@@ -16,14 +17,18 @@
 //            stDATA,
 //            stCRC} uiState;
 State uiState;
-Serial_Rx_Data_Packet Rx_Data;
-Serial_Rx_Data_Packet Tx_Data = {
+
+Serial_Data_Packet Rx_Data;
+
+Serial_Data_Packet Tx_Data = {
                      .header = SYNC_FRAME,
                      .addr = 0x13,
-                     .data_lenght = 0x01,
+                     .data_lenght = 0x00,
                      .command = 0x00,
-                     .data[0] = 0xAB,
+                     .data[0] = 0x00,
                      .CRC = 0xFF   };
+
+
 
 unsigned char uiHeader;
 uint16_t CRC16    ;       //начальное значение CRC
@@ -164,7 +169,63 @@ uint16_t PackProcessing(void){
     }
 //    statusRx.Word = m_pcPacketRx.ucCmd;
 //    last_time = CSystemCore::getSysTick();
+    uint16_t receive_command = Rx_Data.command;
+    switch(receive_command){
 
+        case GET_STATUS:{//we should send our status
+
+            if(1){
+                send_answer_for_command(STATUS_OK);
+            }else{
+                send_answer_for_command(STATUS_BAD);
+            }
+        break;}
+
+        case SEND_DATA :{//we receive data from host
+
+            if(send_data()){
+                send_answer_for_command(REC_OK);
+            }else{
+                send_answer_for_command(REC_ERROR) ;
+            }
+
+        break;}
+
+        case SEND_FH_KEY :{//send encryption key
+
+            send_fh_key();
+
+        break;}
+
+        case SEND_FH_CR_TP :{//send encription type
+
+            send_fh_cr_tp();
+
+        break;}
+
+        case GET_FH_PARAM :{//get mac address
+            get_fh_param();
+
+        break;}
+
+        case GET_FH_KEY :{//get encryption key
+
+            get_fh_key();
+
+        break;}
+
+        case GET_FH_CR_TP :{//get encryption type
+
+            get_fh_cr_tp();
+
+        break;}
+
+        default:{
+
+            no_command();
+        break;}
+
+    }
 
     // Чтоп не принимал новые данные пока не обработал старые, чистим этот флаг только в конце обработки
     NewPack = 0;

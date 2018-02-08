@@ -322,8 +322,8 @@ static void pdm_samp_hdl(void);
 static void encrypt_packet(uint8_t *packet);
 static void decrypt_packet(uint8_t *packet);
 
-static uint8_t write_aes_key(uint8_t *key);
-static uint8_t read_aes_key(uint8_t *key);
+uint8_t write_aes_key(uint8_t *key);
+uint8_t read_aes_key(uint8_t *key);
 
 static uint16_t get_bat_voltage(void);
 
@@ -392,7 +392,7 @@ static CryptoCC26XX_AESECB_Transaction trans;
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
 uint32_t packet_counter = 0;
- UART_Handle uart;
+UART_Handle uart;
 static UART_Params uartParams;
 static const char  echoPrompt[] = "55AA\r\n";
 
@@ -501,11 +501,11 @@ static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
 //static uint8_t txBuf[MAX_NUM_TX_BYTES];   // Transmit buffer
 // Callback function
 
-extern Serial_Rx_Data_Packet Tx_Data;
-extern Serial_Rx_Data_Packet Rx_Data;
+extern Serial_Data_Packet Tx_Data;
+extern Serial_Data_Packet Rx_Data;
 static unsigned char test_CRC[262] ;
 
-uint64_t macAddress;
+
 
 static void writeCallback(UART_Handle handle_uart, void *rxBuf, size_t size)
 {
@@ -516,33 +516,22 @@ static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
 {
     //uint_least16_t hwiKey = Hwi_disable();
     memset(&test_CRC,0,sizeof(test_CRC));
-    macAddress = *((uint64_t *)(0x500012F0)) & 0xFFFFFFFFFFFFFF;
-    //uint_least16_t hwiKey = Hwi_disable();
-    //static uint16_t num = 0;
-    //txBuf[num] = ((uint8_t*)rxBuf)[0];
+
     OnRxByte(((unsigned char*)rxBuf)[0]);
     if(PackProcessing()){
-        test_CRC[0] = Rx_Data.header;
-        test_CRC[1] = Rx_Data.addr;
-        test_CRC[2] = Rx_Data.data_lenght;
-        test_CRC[3] = Rx_Data.command;
-        for(uint16_t i = 0 ; i<Rx_Data.data_lenght;i++){
-            test_CRC[4+i] = Rx_Data.data[i];
-        }
-        test_CRC[4+Rx_Data.data_lenght] = Rx_Data.CRC>>8;
-        test_CRC[4+Rx_Data.data_lenght+1] = Rx_Data.CRC&0x00FF;
-        UART_writeCancel(uart);
-        UART_write(uart, &test_CRC, Rx_Data.data_lenght+6);
+//        test_CRC[0] = Rx_Data.header;
+//        test_CRC[1] = Rx_Data.addr;
+//        test_CRC[2] = Rx_Data.data_lenght;
+//        test_CRC[3] = Rx_Data.command;
+//        for(uint16_t i = 0 ; i<Rx_Data.data_lenght;i++){
+//            test_CRC[4+i] = Rx_Data.data[i];
+//        }
+//        test_CRC[4+Rx_Data.data_lenght] = Rx_Data.CRC>>8;
+//        test_CRC[4+Rx_Data.data_lenght+1] = Rx_Data.CRC&0x00FF;
+//        UART_writeCancel(uart);
+//        UART_write(uart, &test_CRC, Rx_Data.data_lenght+6);
     }
-   // CRC = Crc16(test_CRC,sizeof(test_CRC));
-    //timestamp_Buf[num] = Clock_getTicks(); // fd = 100kHz
-        // Echo the bytes received back to transmitter
-    //UART_write(handle, txBuf, size);
-    // Start another read, with size the same as it was during first call to
-//    num++;
-//    if(num == 32-1){
-//        num = 0;
-//    }
+
     wantedRxBytes = 1;
     UART_read(handle, rxBuf, wantedRxBytes);
     //Hwi_restore(hwiKey);
@@ -557,6 +546,9 @@ static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
  *
  * @return  None.
  */
+uint8_t macAddress[6];
+
+
 static void ProjectZero_init(void)
 {
     uint_least16_t hwiKey = Hwi_disable();
@@ -585,7 +577,13 @@ static void ProjectZero_init(void)
         while (1);
     }
 
-    UART_write(uart, echoPrompt, sizeof(echoPrompt));
+    uint64_t temp = *((uint64_t *)(0x500012E8)) & 0xFFFFFFFFFFFFFF;
+    for(uint8_t i = 0 ; i < 6 ; i++){
+        macAddress[i]=*(((uint8_t *)&temp)+i);
+    }
+    //macAddress = *((uint64_t *)(0x500012E8)) & 0xFFFFFFFFFFFFFF;
+
+    UART_write(uart, macAddress, sizeof(macAddress));
     int rxBytes = UART_read(uart, rxBuf, wantedRxBytes);
 
     Hwi_restore(hwiKey);
@@ -2088,7 +2086,7 @@ static void decrypt_packet(uint8_t *packet)
     }
 }
 
-static uint8_t read_aes_key(uint8_t *key)
+uint8_t read_aes_key(uint8_t *key)
 {
     uint8_t status;
     static uint8_t default_key[] =
@@ -2104,7 +2102,7 @@ static uint8_t read_aes_key(uint8_t *key)
     return status;
 }
 
-static uint8_t write_aes_key(uint8_t *key)
+uint8_t write_aes_key(uint8_t *key)
 {
     return (osal_snv_write(KEY_SNV_ID, KEY_SIZE, key));
 }
