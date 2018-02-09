@@ -874,7 +874,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_SEND_VOICE_SAMP:
 
-            //decrypt_packet(pMsg->pdu);
+            decrypt_packet(pMsg->pdu);
             decoder_adpcm.prevsample = ((int16_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 7]) << 8) |
                     (int16_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 6]);
 
@@ -1985,7 +1985,7 @@ static void pdm_samp_hdl(void)
     packet_counter++;
 
     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-    //encrypt_packet(encode_buf);
+    encrypt_packet(encode_buf);
 #ifdef BT_PACKET_DEBUG
      static uint8_t counter = 0;
      encode_buf[0] = counter;
@@ -2018,14 +2018,14 @@ static void AudioDuplex_disableCache()
 
 static void encrypt_packet(uint8_t *packet)
 {
-    uint8_t tmp_packet[V_STREAM_OUTPUT_LEN];
+    uint8_t tmp_packet[V_STREAM_OUTPUT_LEN - 4];
     status = CryptoCC26XX_loadKey(crypto_hdl, key_index, (const uint32_t*)key);
     if(status != CRYPTOCC26XX_STATUS_SUCCESS)
     {
         while(1);
     }
 
-    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_LEN);
+    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_LEN - 4);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex = key_index;
@@ -2038,12 +2038,23 @@ static void encrypt_packet(uint8_t *packet)
         while(1);
     }
 
-    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_LEN);
+    CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
+    trans.keyIndex = key_index;
+    trans.msgIn = &packet[16];
+    trans.msgOut = &tmp_packet[16];
+
+    status = CryptoCC26XX_transact(crypto_hdl, (CryptoCC26XX_Transaction *) &trans);
+    if(status != CRYPTOCC26XX_STATUS_SUCCESS)
+    {
+        while(1);
+    }
+
+    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_LEN - 4);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex = key_index;
-    trans.msgIn = &tmp_packet[4];
-    trans.msgOut = &packet[4];
+    trans.msgIn = &tmp_packet[27];
+    trans.msgOut = &packet[27];
 
     status = CryptoCC26XX_transact(crypto_hdl, (CryptoCC26XX_Transaction *) &trans);
     if(status != CRYPTOCC26XX_STATUS_SUCCESS)
@@ -2054,26 +2065,36 @@ static void encrypt_packet(uint8_t *packet)
 
 static void decrypt_packet(uint8_t *packet)
 {
-    uint8_t tmp_packet[V_STREAM_INPUT_LEN];
+    uint8_t tmp_packet[V_STREAM_INPUT_LEN - 4];
     status = CryptoCC26XX_loadKey(crypto_hdl, key_index, (const uint32_t*)key);
     if(status != CRYPTOCC26XX_STATUS_SUCCESS)
     {
         while(1);
     }
 
-    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_LEN);
+    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_LEN - 4);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_DECRYPT);
     trans.keyIndex = key_index;
-    trans.msgIn = &packet[4];
-    trans.msgOut = &tmp_packet[4];
+    trans.msgIn = &packet[27];
+    trans.msgOut = &tmp_packet[27];
     status = CryptoCC26XX_transact(crypto_hdl, (CryptoCC26XX_Transaction *) &trans);
     if(status != CRYPTOCC26XX_STATUS_SUCCESS)
     {
         while(1);
     }
 
-    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_LEN);
+    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_LEN - 4);
+
+    CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_DECRYPT);
+    trans.keyIndex = key_index;
+    trans.msgIn = &tmp_packet[16];
+    trans.msgOut = &packet[16];
+    status = CryptoCC26XX_transact(crypto_hdl, (CryptoCC26XX_Transaction *) &trans);
+    if(status != CRYPTOCC26XX_STATUS_SUCCESS)
+    {
+        while(1);
+    }
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_DECRYPT);
     trans.keyIndex = key_index;
