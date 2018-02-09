@@ -210,8 +210,8 @@ I2SCC26XX_Handle I2SCC26XX_open(I2SCC26XX_Handle handle, I2SCC26XX_Params *param
     object->audioPinCfg.bitFields.ad1Usage = I2SCC26XX_ADUsageInput;         /* I2S AD1 usage (0: Disabled, 1: Input, 2: Output) */
     object->audioPinCfg.bitFields.enableMclkPin = I2SCC26XX_GENERIC_ENABLED;//I2SCC26XX_GENERIC_DISABLED;/* I2S Enable Master clock output on pin */
     object->audioPinCfg.bitFields.reserved = 0;
-    object->audioPinCfg.bitFields.ad1NumOfChannels = 1;                      /* I2S AD1 number of channels (1 - 8). !Must match channel mask */
-    object->audioPinCfg.bitFields.ad1ChannelMask = I2SCC26XX_MONO_MODE;      /* I2S AD1 Channel Mask */
+    object->audioPinCfg.bitFields.ad1NumOfChannels = 2;                      /* I2S AD1 number of channels (1 - 8). !Must match channel mask */
+    object->audioPinCfg.bitFields.ad1ChannelMask = I2SCC26XX_STEREO_MODE;      /* I2S AD1 Channel Mask */
     object->audioPinCfg.bitFields.ad0Usage = I2SCC26XX_ADUsageOutput;        /* I2S AD0 usage (0: Disabled, 1: Input, 2: Output) */
     object->audioPinCfg.bitFields.enableWclkPin = I2SCC26XX_GENERIC_ENABLED; /* I2S Enable Word clock output on pin */
     object->audioPinCfg.bitFields.enableBclkPin = I2SCC26XX_GENERIC_ENABLED; /* I2S Enable Bit clock output on pin */
