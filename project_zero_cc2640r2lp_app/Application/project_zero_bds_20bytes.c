@@ -103,6 +103,7 @@
 #include "bcomdef.h"
 
 #include "driverlib/aon_batmon.h"
+#include "Uart_commands.h"
 
 /*********************************************************************
  * CONSTANTS
@@ -172,20 +173,7 @@
  */
 // Types of messages that can be sent to the user application task from other
 // tasks or interrupts. Note: Messages from BLE Stack are sent differently.
-typedef enum
-{
-  APP_MSG_SERVICE_WRITE = 0,   /* A characteristic value has been written       */
-  APP_MSG_SERVICE_CFG,         /* A characteristic configuration has changed    */
-  APP_MSG_UPDATE_CHARVAL,      /* Request from ourselves to update a value      */
-  APP_MSG_GAP_STATE_CHANGE,    /* The GAP / connection state has changed        */
-  APP_MSG_BUTTON_DEBOUNCED,    /* A button has been debounced with new value    */
-  APP_MSG_SEND_PASSCODE,       /* A pass-code/PIN is requested during pairing   */
-  APP_MSG_SEND_VOICE_SAMP,     /* Request from app to send voice samples to BLE */
-  APP_MSG_GET_VOICE_SAMP,
-  APP_MSG_Buttons,
-  APP_MSG_I2C_Read_Status,
 
-} app_msg_types_t;
 
 // Struct for messages sent to the application task
 typedef struct
@@ -431,7 +419,7 @@ static void user_Vogatt_CfgChangeHandler(char_data_t *pCharData);
 static void user_updateCharVal(char_data_t *pCharData);
 
 // Utility functions
-static void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData, uint16_t len );
+void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData, uint16_t len );
 static void user_enqueueCharDataMsg( app_msg_types_t appMsgType, uint16_t connHandle,
                                        uint16_t serviceUUID, uint8_t paramID,
                                        uint8_t *pValue, uint16_t len );
@@ -958,6 +946,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
         case APP_MSG_I2C_Read_Status:
             I2C_Read_Status();
+        break;
+
+        case APP_MSG_Read_key:
+            get_fh_key();
+        break;
+
+        case APP_MSG_Write_key:
+            send_fh_key();
         break;
 
     }
@@ -1552,7 +1548,7 @@ static void user_enqueueCharDataMsg( app_msg_types_t appMsgType,
  * @oaram  *pValue       Pointer to characteristic value
  * @param  len           Length of characteristic data
  */
-static void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData,
+void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData,
                                   uint16_t len)
 {
   // Allocate memory for the message.

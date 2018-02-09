@@ -66,9 +66,6 @@ extern "C"
  * Task creation function for the Simple BLE Peripheral.
  */
 extern void ProjectZero_createTask(void);
-//uint8_t read_aes_key(uint8_t *key);
-
-//uint8_t write_aes_key(uint8_t *key);
 
 /*********************************************************************
 *********************************************************************/
@@ -76,5 +73,25 @@ extern void ProjectZero_createTask(void);
 #ifdef __cplusplus
 }
 #endif
+
+typedef enum
+{
+  APP_MSG_SERVICE_WRITE = 0,   /* A characteristic value has been written       */
+  APP_MSG_SERVICE_CFG,         /* A characteristic configuration has changed    */
+  APP_MSG_UPDATE_CHARVAL,      /* Request from ourselves to update a value      */
+  APP_MSG_GAP_STATE_CHANGE,    /* The GAP / connection state has changed        */
+  APP_MSG_BUTTON_DEBOUNCED,    /* A button has been debounced with new value    */
+  APP_MSG_SEND_PASSCODE,       /* A pass-code/PIN is requested during pairing   */
+  APP_MSG_SEND_VOICE_SAMP,     /* Request from app to send voice samples to BLE */
+  APP_MSG_GET_VOICE_SAMP,
+  APP_MSG_Buttons,
+  APP_MSG_I2C_Read_Status,
+  APP_MSG_Read_key,
+  APP_MSG_Write_key,
+
+} app_msg_types_t;
+
+void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData,
+                                  uint16_t len);
 
 #endif /* PROJECTZERO_H */

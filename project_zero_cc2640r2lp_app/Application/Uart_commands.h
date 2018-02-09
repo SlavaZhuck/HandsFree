@@ -8,7 +8,7 @@
 #ifndef APPLICATION_UART_COMMANDS_H_
 #define APPLICATION_UART_COMMANDS_H_
 
-#include "Uart_Parser.h"
+#include "Uart_parser.h"
 
 void get_status(void);
 uint8_t send_data(void);

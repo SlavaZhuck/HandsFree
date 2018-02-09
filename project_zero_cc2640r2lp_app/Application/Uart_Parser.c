@@ -7,6 +7,7 @@
 #include <string.h>
 #include "Uart_Parser.h"
 #include "Uart_commands.h"
+#include "project_zero.h"
 
 #define SYNC_FRAME   0xAA
 
@@ -38,6 +39,7 @@ uint16_t NewPack  ;       //пакте не принят
 unsigned char Address = (ADR_TX(ADR_LZO) | ADR_REC(ADR_PC))  ;       //addr
 unsigned char current_data_lenght = 0x0  ;       //addr
 unsigned short calculated_CRC = 0;
+static unsigned char uart_val = 1;
 
 //void set_Myaddr(unsigned char addr){
 //
@@ -192,8 +194,8 @@ uint16_t PackProcessing(void){
         break;}
 
         case SEND_FH_KEY :{//send encryption key
+			user_enqueueRawAppMsg(APP_MSG_Write_key, &uart_val, 1);
 
-            send_fh_key();
 
         break;}
 
@@ -209,8 +211,8 @@ uint16_t PackProcessing(void){
         break;}
 
         case GET_FH_KEY :{//get encryption key
+            user_enqueueRawAppMsg(APP_MSG_Read_key, &uart_val, 1);
 
-            get_fh_key();
 
         break;}
 
