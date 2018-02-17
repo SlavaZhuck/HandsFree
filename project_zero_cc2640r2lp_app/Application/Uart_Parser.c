@@ -85,13 +85,24 @@ unsigned short Crc16(unsigned char*pcBlock, unsigned short len)
     return crc;
 }
 
+extern GPTimerCC26XX_Value system_tick;
+extern GPTimerCC26XX_Handle system_time;
+
 void OnRxByte( unsigned char Chr){
+
+    static GPTimerCC26XX_Value timestamp = 0;
+
+    if(GPTimerCC26XX_getValue(system_time)-timestamp > UART_BYTE_DELAY_TIME){
+        uiState = stHEADER;
+    }
+
     switch (uiState){
          case stHEADER:{
 
           if(SYNC_FRAME == Chr && !NewPack){
               Rx_Data.header = Chr;
-
+              GPTimerCC26XX_setLoadValue(system_time, 0);
+              timestamp = GPTimerCC26XX_getValue(system_time);
               uiState = stAddr;
            }
 
@@ -146,6 +157,7 @@ void OnRxByte( unsigned char Chr){
                     NewPack = 1;
                 }else{
                     NewPack = 0;
+                    bad_crc();
                     memset(&Rx_Data.data_lenght,0,sizeof(Rx_Data.data_lenght)+sizeof(Rx_Data.command)+sizeof(Rx_Data.data)+sizeof(Rx_Data.CRC));
                 }
                 ByteCntR = 0x00;
@@ -161,7 +173,7 @@ void OnRxByte( unsigned char Chr){
     };
 }
 
-//extern UART_Handle uart;
+
 
 uint16_t PackProcessing(void){
     if(!NewPack){

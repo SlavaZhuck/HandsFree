@@ -117,6 +117,12 @@ void no_command (void){
     calcCRC_andSend();
 }
 
+void bad_crc(void){
+    clear_Tx_packet();
+    Tx_Data.data_lenght = 0;
+    Tx_Data.command = BAD_CRC;
+    calcCRC_andSend();
+}
 
 void clear_Tx_packet(void){
     memset(&Tx_Data.data_lenght,0,sizeof(Tx_Data.data_lenght)+sizeof(Tx_Data.command)+sizeof(Tx_Data.data)+sizeof(Tx_Data.CRC));

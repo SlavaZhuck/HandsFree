@@ -20,6 +20,7 @@ void get_fh_param(void);
 void get_fh_key(void);
 void get_fh_cr_tp(void);
 void no_command(void);
+void bad_crc(void);
 
 void send_answer_for_command(uint8_t request);
 

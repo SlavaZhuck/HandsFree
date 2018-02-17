@@ -321,6 +321,7 @@ static PIN_State ledPinState;
 
 static GPTimerCC26XX_Params tim_params;
 static GPTimerCC26XX_Handle blink_tim_hdl = NULL;
+GPTimerCC26XX_Handle system_time = NULL;
 static GPTimerCC26XX_Handle samp_tim_hdl = NULL;
 
 static I2SCC26XX_StreamNotification i2sStream;
@@ -1654,7 +1655,7 @@ static char *Util_getLocalNameStr(const uint8_t *data) {
   return localNameStr;
 }
 
-
+GPTimerCC26XX_Value system_tick = 0;
 /* Functions for handle tx/rx packets of voice samples */
 static void voice_hdl_init(void)
 {
@@ -1665,6 +1666,9 @@ static void voice_hdl_init(void)
     tim_params.mode = GPT_MODE_PERIODIC_UP;
     tim_params.debugStallMode = GPTimerCC26XX_DEBUG_STALL_OFF;
     blink_tim_hdl = GPTimerCC26XX_open(Board_GPTIMER2A, &tim_params);
+    system_time = GPTimerCC26XX_open(Board_GPTIMER1A, &tim_params);
+    GPTimerCC26XX_start(system_time);
+
     if (blink_tim_hdl == NULL) {
         while (1);
     }

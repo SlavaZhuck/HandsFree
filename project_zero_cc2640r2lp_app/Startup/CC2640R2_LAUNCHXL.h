@@ -140,8 +140,13 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_29 //PIN_UNASSIGNED
     #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_30 //PIN_UNASSIGNED
 #else
+#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_30 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_29 //PIN_UNASSIGNED
+#else
     #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_13 //PIN_UNASSIGNED
     #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_14 //PIN_UNASSIGNED
+#endif
 #endif
 /* GPIO */
 #define CC2640R2_LAUNCHXL_GPIO_LED_ON           1
@@ -152,8 +157,13 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_10//IOID_4
     #define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_8//IOID_5
 #else
+#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    #define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_19//IOID_4
+    #define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_18//IOID_5
+#else
     #define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_2//IOID_4
     #define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_27//IOID_5
+#endif
 #endif
 /* LCD (430BOOST - Sharp96 Rev 1.1) */
 #define CC2640R2_LAUNCHXL_LCD_CS                IOID_24 /* SPI chip select */
@@ -168,11 +178,16 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_PIN_LED_OFF           0
 
 #ifdef HANDS_FREE_NOT_BOARD
-#define CC2640R2_LAUNCHXL_PIN_RLED              IOID_0
-#define CC2640R2_LAUNCHXL_PIN_GLED              IOID_1
+    #define CC2640R2_LAUNCHXL_PIN_RLED              IOID_0
+    #define CC2640R2_LAUNCHXL_PIN_GLED              IOID_1
 #else
-#define CC2640R2_LAUNCHXL_PIN_RLED              IOID_6
-#define CC2640R2_LAUNCHXL_PIN_GLED              IOID_7
+#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    #define CC2640R2_LAUNCHXL_PIN_RLED              IOID_11
+    #define CC2640R2_LAUNCHXL_PIN_GLED              IOID_9
+#else
+    #define CC2640R2_LAUNCHXL_PIN_RLED              IOID_6
+    #define CC2640R2_LAUNCHXL_PIN_GLED              IOID_7
+#endif
 #endif
 /* PWM Outputs */
 #define CC2640R2_LAUNCHXL_PWMPIN0               CC2640R2_LAUNCHXL_PIN_RLED
@@ -200,8 +215,13 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_SPI1_CSN              PIN_UNASSIGNED
 
 /* UART Board */
-#define CC2640R2_LAUNCHXL_UART_RX               IOID_8//IOID_2          /* RXD */
-#define CC2640R2_LAUNCHXL_UART_TX               IOID_9          /* TXD */
+#ifndef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    #define CC2640R2_LAUNCHXL_UART_RX               IOID_8//IOID_2          /* RXD */
+    #define CC2640R2_LAUNCHXL_UART_TX               IOID_9          /* TXD */
+#else
+    #define CC2640R2_LAUNCHXL_UART_RX               IOID_2//IOID_2          /* RXD */
+    #define CC2640R2_LAUNCHXL_UART_TX               IOID_3          /* TXD */
+#endif
 #define CC2640R2_LAUNCHXL_UART_CTS              PIN_UNASSIGNED         /* CTS */
 #define CC2640R2_LAUNCHXL_UART_RTS              PIN_UNASSIGNED         /* RTS */
 
@@ -220,12 +240,21 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_19//(PIN_Id)IOID_UNUSED
     #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_24//IOID_29
 #else
+#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_13//IOID_0
+    #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_14//IOID_1
+    /* I2S */
+    #define CC2640R2_LAUNCHXL_I2S_BCLK              IOID_8//IOID_30
+    #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_15//(PIN_Id)IOID_UNUSED
+    #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_12//IOID_29
+#else
     #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_3//IOID_0
     #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_26//IOID_1 IOID_26
     /* I2S */
     #define CC2640R2_LAUNCHXL_I2S_BCLK              IOID_23//IOID_30
     #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_22//(PIN_Id)IOID_UNUSED
     #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_25//IOID_29
+#endif
 #endif
 
 /*!
