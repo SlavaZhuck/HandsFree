@@ -92,9 +92,9 @@ void OnRxByte( unsigned char Chr){
 
     static GPTimerCC26XX_Value timestamp = 0;
 
-    if(GPTimerCC26XX_getValue(system_time)-timestamp > UART_BYTE_DELAY_TIME){
-        uiState = stHEADER;
-    }
+//    if(GPTimerCC26XX_getValue(system_time)-timestamp > UART_BYTE_DELAY_TIME){
+//        uiState = stHEADER;
+//    }
 
     switch (uiState){
          case stHEADER:{

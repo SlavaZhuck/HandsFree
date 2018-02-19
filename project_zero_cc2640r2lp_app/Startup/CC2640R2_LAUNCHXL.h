@@ -141,8 +141,8 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_30 //PIN_UNASSIGNED
 #else
 #ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
-    #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_30 //PIN_UNASSIGNED
-    #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_29 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_29 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_30 //PIN_UNASSIGNED
 #else
     #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_13 //PIN_UNASSIGNED
     #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_14 //PIN_UNASSIGNED
@@ -219,8 +219,8 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_UART_RX               IOID_8//IOID_2          /* RXD */
     #define CC2640R2_LAUNCHXL_UART_TX               IOID_9          /* TXD */
 #else
-    #define CC2640R2_LAUNCHXL_UART_RX               IOID_2//IOID_2          /* RXD */
-    #define CC2640R2_LAUNCHXL_UART_TX               IOID_3          /* TXD */
+    #define CC2640R2_LAUNCHXL_UART_RX               IOID_3//IOID_2          /* RXD */
+    #define CC2640R2_LAUNCHXL_UART_TX               IOID_2          /* TXD */
 #endif
 #define CC2640R2_LAUNCHXL_UART_CTS              PIN_UNASSIGNED         /* CTS */
 #define CC2640R2_LAUNCHXL_UART_RTS              PIN_UNASSIGNED         /* RTS */
