@@ -70,10 +70,14 @@ void get_fh_param(void){
     //hciStatus_t HCI_ReadBDADDRCmd
 
     clear_Tx_packet();
-    Tx_Data.data_lenght = 6;//MAClenght
-    for(uint8_t i = 0 ;i<Tx_Data.data_lenght;i++){
+    Tx_Data.data_lenght = 8;//MAClenght + battery
+    for(uint8_t i = 0 ;i < 6;i++){
         Tx_Data.data[i]=macAddress[i];
     }
+    uint16_t voltage = get_bat_voltage();
+    Tx_Data.data[6]= voltage>>8;
+    Tx_Data.data[7]= voltage & 0x00ff;
+
     Tx_Data.command = SEND_FH_PARAM ;
     calcCRC_andSend();
 }

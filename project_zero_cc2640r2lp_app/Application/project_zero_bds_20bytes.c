@@ -313,7 +313,7 @@ static void decrypt_packet(uint8_t *packet);
 uint8_t write_aes_key(uint8_t *key);
 uint8_t read_aes_key(uint8_t *key);
 
-static uint16_t get_bat_voltage(void);
+uint16_t get_bat_voltage(void);
 
 /*********************************** USER'S VARIABLES ****************************************************/
 static PIN_Handle ledPinHandle;
@@ -811,13 +811,13 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
  *
  * @return  None.
  */
-
+int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
 static uint16_t i2c_read_delay = 0;
 static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-	int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+
     bool gotBufferIn = false;
     bool gotBufferOut = false;
 	static uint8_t          coded_data[20];
@@ -870,7 +870,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             decoder_adpcm.previndex = ((int32_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 5]));
 
             ADPCMDecoderBuf2((char*)(pMsg->pdu), raw_data_send, &decoder_adpcm);
-
+           // memset(raw_data_send,0,sizeof(raw_data_send));
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;//I2SCC26XX_BUFFER_OUT;
             gotBufferOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
 
@@ -1732,7 +1732,7 @@ static void voice_hdl_init(void)
     AONBatMonEnable();
 }
 
-#define INIT_GAIN 0x12
+#define INIT_GAIN 0x10
 
 static void I2C_Init(void){
     uint8_t         i2cTxBuffer[15];
@@ -1759,11 +1759,11 @@ static void I2C_Init(void){
     i2cTxBuffer[6]  = 0x33;//!voice filter    0x33               //digital filtering        0x08
     i2cTxBuffer[7]  = INIT_GAIN;//!DAC att                       //digital level control    0x09
     i2cTxBuffer[8]  = 0x99;//!ADC output levels                                             0x0A
-    i2cTxBuffer[9]  = 0x40;//!DAC gain and sidetone                                         0x0B
+    i2cTxBuffer[9]  = 0x00;//!DAC gain and sidetone                                         0x0B
     i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
-    i2cTxBuffer[12] = 0x00;//!microphone AGC                   //MIC automatic gain control 0x0E
-    i2cTxBuffer[13] = 0x0F;//!Noise gate, mic AGC  0xFF                                     0x0F
+    i2cTxBuffer[12] = 0x01;//!microphone AGC                   //MIC automatic gain control 0x0E
+    i2cTxBuffer[13] = 0x4F;//!Noise gate, mic AGC  0xFF                                     0x0F
     i2cTxBuffer[14] = 0x8B;//!System shutdown                    //POWER MANAGEMENT         0x10
 
     i2cTransaction.slaveAddress = 0x10;
@@ -1849,9 +1849,9 @@ void button_processing(void){
 
     if(buttonVol_UP_pressed)
     {
-        if(current_volume<=4)
+        if(current_volume<=0)
         {
-           current_volume = 4;
+           current_volume = 0;
         }
         else
         {
@@ -2128,7 +2128,7 @@ uint8_t write_aes_key(uint8_t *key)
     return (osal_snv_write(KEY_SNV_ID, KEY_SIZE, key));
 }
 
-static uint16_t get_bat_voltage(void)
+uint16_t get_bat_voltage(void)
 {
     return ((AONBatMonBatteryVoltageGet() * 125) >> 5);
 }
