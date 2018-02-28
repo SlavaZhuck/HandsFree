@@ -157,6 +157,7 @@
 
 #define KEY_SNV_ID                          BLE_NVID_CUST_START
 #define KEY_SIZE                            16
+#define INIT_VOL_ADDR                       BLE_NVID_CUST_START+1
 
 #define TMR_PERIOD                          96000000UL
 #define LOW_STATE_TIME                      ((TMR_PERIOD / 10) * 9)
@@ -266,6 +267,8 @@ static uint8_t rspTxRetry = 0;
 // Global display handle
 Display_Handle dispHandle;
 
+static Bool buttonVol_UP_pressed = false;
+static Bool buttonVol_DOWN_pressed = false;
 /*
  * Application button pin configuration table:
  *   - Buttons interrupts are configured to trigger on falling edge.
@@ -316,12 +319,14 @@ uint8_t read_aes_key(uint8_t *key);
 uint16_t get_bat_voltage(void);
 
 /*********************************** USER'S VARIABLES ****************************************************/
+
+
 static PIN_Handle ledPinHandle;
 static PIN_State ledPinState;
 
 static GPTimerCC26XX_Params tim_params;
 static GPTimerCC26XX_Handle blink_tim_hdl = NULL;
-GPTimerCC26XX_Handle system_time = NULL;
+//GPTimerCC26XX_Handle system_time = NULL;
 static GPTimerCC26XX_Handle samp_tim_hdl = NULL;
 
 static I2SCC26XX_StreamNotification i2sStream;
@@ -342,6 +347,10 @@ static I2SCC26XX_Params i2sParams =
     .currentStream          = &i2sStream
 };
 
+int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+static uint16_t i2c_read_delay = 0;
+static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
+
 //#define BT_PACKET_DEBUG
  #ifdef BT_PACKET_DEBUG
      #define TEST_SIZE 255
@@ -353,14 +362,18 @@ static I2SCC26XX_Params i2sParams =
 
  static unsigned char pdm_val = 1;
  static unsigned char button_val = 1;
+ static unsigned char vol_val = 1;
  static unsigned char i2c_val = 1;
+
+#define INIT_GAIN 0x00
+static uint8_t current_volume;
 
 static struct ADPCMstate encoder_adpcm, decoder_adpcm, encoder_adpcm1, decoder_adpcm1;
 static int stream_on = 0;
 
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
-Bool bufferReady = false;
+//Bool bufferReady = false;
 
 static int16_t mic_data[I2S_SAMP_PER_FRAME*2];
 static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
@@ -369,6 +382,7 @@ static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
 static I2C_Handle      i2c;
 static I2C_Params      i2cParams;
 static I2C_Transaction i2cTransaction;
+static uint8_t         i2cRxBuffer[17];
 
 static CryptoCC26XX_Handle crypto_hdl;
 static CryptoCC26XX_Params crypto_params;
@@ -482,6 +496,7 @@ void ProjectZero_createTask(void)
   Task_construct(&przTask, ProjectZero_taskFxn, &taskParams, NULL);
 }
 
+uint8_t macAddress[6];
 #define MAX_NUM_RX_BYTES    100   // Maximum RX bytes to receive in one go
 #define MAX_NUM_TX_BYTES    100   // Maximum TX bytes to send in one go
 #define WANTED_RX_BYTES    1   // Maximum TX bytes to send in one go
@@ -492,8 +507,7 @@ static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
 
 extern Serial_Data_Packet Tx_Data;
 extern Serial_Data_Packet Rx_Data;
-static unsigned char test_CRC[262] ;
-
+//static unsigned char test_CRC[262] ;
 
 
 static void writeCallback(UART_Handle handle_uart, void *rxBuf, size_t size)
@@ -503,27 +517,15 @@ static void writeCallback(UART_Handle handle_uart, void *rxBuf, size_t size)
 
 static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
 {
-    //uint_least16_t hwiKey = Hwi_disable();
-    memset(&test_CRC,0,sizeof(test_CRC));
+ //   memset(&test_CRC,0,sizeof(test_CRC));
 
     OnRxByte(((unsigned char*)rxBuf)[0]);
     if(PackProcessing()){
-//        test_CRC[0] = Rx_Data.header;
-//        test_CRC[1] = Rx_Data.addr;
-//        test_CRC[2] = Rx_Data.data_lenght;
-//        test_CRC[3] = Rx_Data.command;
-//        for(uint16_t i = 0 ; i<Rx_Data.data_lenght;i++){
-//            test_CRC[4+i] = Rx_Data.data[i];
-//        }
-//        test_CRC[4+Rx_Data.data_lenght] = Rx_Data.CRC>>8;
-//        test_CRC[4+Rx_Data.data_lenght+1] = Rx_Data.CRC&0x00FF;
-//        UART_writeCancel(uart);
-//        UART_write(uart, &test_CRC, Rx_Data.data_lenght+6);
+
     }
 
     wantedRxBytes = 1;
     UART_read(handle, rxBuf, wantedRxBytes);
-    //Hwi_restore(hwiKey);
 }
 
 /*
@@ -535,7 +537,6 @@ static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
  *
  * @return  None.
  */
-uint8_t macAddress[6];
 
 
 static void ProjectZero_init(void)
@@ -700,8 +701,6 @@ static void ProjectZero_init(void)
 
   PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
 
-
-
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
 }
 
@@ -791,9 +790,6 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
       }
 
     }
-
-//    button_processing();
-//
   }
 }
 
@@ -811,16 +807,14 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
  *
  * @return  None.
  */
-int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
-static uint16_t i2c_read_delay = 0;
-static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
+
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
 
     bool gotBufferIn = false;
     bool gotBufferOut = false;
-	static uint8_t          coded_data[20];
+	static uint8_t coded_data[20];
     switch (pMsg->type)
     {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -892,7 +886,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 #endif
             }
 
-            #ifdef BT_PACKET_DEBUG
+#ifdef BT_PACKET_DEBUG
 
                          rx_data[rx_counter++] = pMsg->pdu[0];
                          if(rx_counter == TEST_SIZE)
@@ -905,7 +899,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                                      i++;
                                  }
                          }
-             #endif
+#endif
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
@@ -955,6 +949,20 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_Write_key:
             send_fh_key();
+        break;
+        case APP_MSG_Load_vol:
+            uint8_t status;
+
+            status = osal_snv_read(INIT_VOL_ADDR, 1, &current_volume);
+                if(status != SUCCESS)
+                {
+                    current_volume = INIT_GAIN;
+                }
+                button_processing();
+        break;
+
+        case APP_MSG_Write_vol:
+            osal_snv_write(INIT_VOL_ADDR, 1, &current_volume);
         break;
 
     }
@@ -1655,7 +1663,7 @@ static char *Util_getLocalNameStr(const uint8_t *data) {
   return localNameStr;
 }
 
-GPTimerCC26XX_Value system_tick = 0;
+//GPTimerCC26XX_Value system_tick = 0;
 /* Functions for handle tx/rx packets of voice samples */
 static void voice_hdl_init(void)
 {
@@ -1666,8 +1674,8 @@ static void voice_hdl_init(void)
     tim_params.mode = GPT_MODE_PERIODIC_UP;
     tim_params.debugStallMode = GPTimerCC26XX_DEBUG_STALL_OFF;
     blink_tim_hdl = GPTimerCC26XX_open(Board_GPTIMER2A, &tim_params);
-    system_time = GPTimerCC26XX_open(Board_GPTIMER1A, &tim_params);
-    GPTimerCC26XX_start(system_time);
+    //system_time = GPTimerCC26XX_open(Board_GPTIMER1A, &tim_params);
+    //GPTimerCC26XX_start(system_time);
 
     if (blink_tim_hdl == NULL) {
         while (1);
@@ -1732,7 +1740,6 @@ static void voice_hdl_init(void)
     AONBatMonEnable();
 }
 
-#define INIT_GAIN 0x10
 
 static void I2C_Init(void){
     uint8_t         i2cTxBuffer[15];
@@ -1759,7 +1766,7 @@ static void I2C_Init(void){
     i2cTxBuffer[6]  = 0x33;//!voice filter    0x33               //digital filtering        0x08
     i2cTxBuffer[7]  = INIT_GAIN;//!DAC att                       //digital level control    0x09
     i2cTxBuffer[8]  = 0x99;//!ADC output levels                                             0x0A
-    i2cTxBuffer[9]  = 0x00;//!DAC gain and sidetone                                         0x0B
+    i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
     i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
     i2cTxBuffer[12] = 0x01;//!microphone AGC                   //MIC automatic gain control 0x0E
@@ -1782,7 +1789,6 @@ static void I2C_Init(void){
 }
 
 
-static uint8_t         i2cRxBuffer[17];
 
 static void I2C_Read_Status(void){
 
@@ -1794,8 +1800,6 @@ static void I2C_Read_Status(void){
     I2C_transfer(i2c, &i2cTransaction);
 }
 
-
-
 /*
 *  ======== buttonCallbackFxn ========
 *  Pin interrupt Callback function board buttons configured in the pinTable.
@@ -1803,8 +1807,7 @@ static void I2C_Read_Status(void){
 *  callback function.
 */
 
-static Bool buttonVol_UP_pressed = false;
-static Bool buttonVol_DOWN_pressed = false;
+
 
 void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
 
@@ -1830,23 +1833,12 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
        }
    }
    user_enqueueRawAppMsg(APP_MSG_Buttons, &button_val, 1);
+
 }
 
-static uint16_t x = 0;
-static uint16_t z = 0;
-static uint8_t current_volume = INIT_GAIN;
 
 void button_processing(void){
-
-
     uint8_t         i2cTxBuffer[3];
-    i2cTxBuffer[0]  = 0x09;//!addr reg
-    i2cTransaction.slaveAddress = 0x10;
-    i2cTransaction.writeBuf = i2cTxBuffer;
-
-    i2cTransaction.writeCount = 2;
-    i2cTransaction.readCount = 0;
-
     if(buttonVol_UP_pressed)
     {
         if(current_volume<=0)
@@ -1857,26 +1849,18 @@ void button_processing(void){
         {
            current_volume-=2;
         }
-        i2cTxBuffer[1]  = current_volume;//!DAC att digital level control    0x09
-
-        x++;
-        I2C_transfer(i2c, &i2cTransaction);
         buttonVol_UP_pressed = false;
     }
     else if(buttonVol_DOWN_pressed)
     {
-        if(current_volume>=126) //188 - MUTE
+        if(current_volume>=86) //188 - MUTE
         {
-           current_volume = 126;
+           current_volume = 86;
         }
         else
         {
            current_volume+=2;
         }
-        i2cTxBuffer[1]  = current_volume;//!DAC att  digital level control    0x09
-
-        z++;
-        I2C_transfer(i2c, &i2cTransaction);
         buttonVol_DOWN_pressed = false;
     }
     else
@@ -1884,6 +1868,14 @@ void button_processing(void){
         buttonVol_UP_pressed = false;
         buttonVol_DOWN_pressed = false;
     }
+
+    i2cTxBuffer[0]  = 0x09;//!addr reg
+    i2cTransaction.slaveAddress = 0x10;
+    i2cTransaction.writeBuf = i2cTxBuffer;
+    i2cTransaction.writeCount = 2;
+    i2cTransaction.readCount = 0;
+    i2cTxBuffer[1]  = current_volume;//!DAC att  digital level control    0x09
+    I2C_transfer(i2c, &i2cTransaction);
 }
 
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
@@ -1944,6 +1936,7 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 
 static void start_voice_handle(void)
 {
+    user_enqueueRawAppMsg(APP_MSG_Load_vol, &vol_val, 1); // read global vol level
     PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
     GPTimerCC26XX_start(samp_tim_hdl);
     I2SCC26XX_startStream(i2sHandle);
@@ -1967,6 +1960,7 @@ static void stop_voice_handle(void)
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_STD);
     stream_on = 0;
+    user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
 
 static void pdm_samp_hdl(void)

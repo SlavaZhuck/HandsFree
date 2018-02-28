@@ -85,8 +85,8 @@ unsigned short Crc16(unsigned char*pcBlock, unsigned short len)
     return crc;
 }
 
-extern GPTimerCC26XX_Value system_tick;
-extern GPTimerCC26XX_Handle system_time;
+//extern GPTimerCC26XX_Value system_tick;
+//extern GPTimerCC26XX_Handle system_time;
 
 void OnRxByte( unsigned char Chr){
 
@@ -101,26 +101,23 @@ void OnRxByte( unsigned char Chr){
 
           if(SYNC_FRAME == Chr && !NewPack){
               Rx_Data.header = Chr;
-              GPTimerCC26XX_setLoadValue(system_time, 0);
-              timestamp = GPTimerCC26XX_getValue(system_time);
+             // GPTimerCC26XX_setLoadValue(system_time, 0);
+             // timestamp = GPTimerCC26XX_getValue(system_time);
               uiState = stAddr;
            }
 
         break;}
         case stAddr:{
-           // __byte((int*)(&(m_pcPacketRx.ucCmd)), ByteCntR++) = Chr;
             if(Chr == Rx_Data.addr)
              uiState = stDL;
         break;}
 
         case stDL:{
-           // __byte((int*)(&(m_pcPacketRx.ucCmd)), ByteCntR++) = Chr;
             Rx_Data.data_lenght = Chr;
             uiState = stCtrl;
         break;}
 
         case stCtrl:{
-           // __byte((int*)(&(m_pcPacketRx.ucCmd)), ByteCntR++) = Chr;
             Rx_Data.command = Chr;
             if(Rx_Data.data_lenght==0){
                 uiState = stCRC;
@@ -132,7 +129,6 @@ void OnRxByte( unsigned char Chr){
         break;}
 
         case stDATA:{
-           // __byte((int*)(&(m_pcPacketRx.ucCmd)), ByteCntR++) = Chr;
             Rx_Data.data[ByteCntR] = Chr;
             ByteCntR++;
             if(ByteCntR == Rx_Data.data_lenght){
