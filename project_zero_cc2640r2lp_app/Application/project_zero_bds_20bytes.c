@@ -152,8 +152,8 @@
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
 #define EXTRAPOLATE_FACTOR                  4
-#define ADCBUFSIZE                          I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
-#define SAMPFREQ                            8000*EXTRAPOLATE_FACTOR
+//#define ADCBUFSIZE                          I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
+//#define SAMPFREQ                            8000*EXTRAPOLATE_FACTOR
 
 #define KEY_SNV_ID                          BLE_NVID_CUST_START
 #define KEY_SIZE                            16
@@ -296,6 +296,7 @@ static PIN_State buttonPinState;
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification);
 
 static void AudioDuplex_disableCache();
+static void AudioDuplex_enableCache();
 
 static void I2C_Init(void);
 static void I2C_Read_Status(void);
@@ -367,6 +368,20 @@ static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
 
 #define INIT_GAIN 0x00
 static uint8_t current_volume;
+
+#define ADCBUFSIZE      1
+#define SAMPFREQ        1000000
+
+ ADCBuf_Handle adc_hdl;
+static ADCBuf_Params adc_params;
+ ADCBuf_Conversion adc_conversion;
+int16_t adc_data[ADCBUFSIZE];
+static int16_t samp_buf1[ADCBUFSIZE];
+static int16_t samp_buf2[ADCBUFSIZE];
+static Bool adc_buf_ready = false;
+
+void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
+                  void *completedADCBuffer, uint32_t completedChannel);
 
 static struct ADPCMstate encoder_adpcm, decoder_adpcm, encoder_adpcm1, decoder_adpcm1;
 static int stream_on = 0;
@@ -965,6 +980,11 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             osal_snv_write(INIT_VOL_ADDR, 1, &current_volume);
         break;
 
+        case APP_MSG_Read_ADC_Voltage:
+            if (ADCBuf_convert(adc_hdl, &adc_conversion, 1) != ADCBuf_STATUS_SUCCESS) {
+                while(1);
+            }
+        break;
     }
 }
 
@@ -1164,6 +1184,7 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       }
       else
       {
+        GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_TERMINATE_LINK);
         stop_voice_handle();
       }
       break;
@@ -1738,8 +1759,42 @@ static void voice_hdl_init(void)
     }
 
     AONBatMonEnable();
+
+    /* ADC init */
+    ADCBuf_init();
+
+    ADCBuf_Params_init(&adc_params);
+    adc_params.callbackFxn = adc_callback;
+    adc_params.recurrenceMode = ADCBuf_RECURRENCE_MODE_ONE_SHOT;
+    adc_params.returnMode = ADCBuf_RETURN_MODE_CALLBACK;
+    adc_params.samplingFrequency = SAMPFREQ;
+//
+    adc_hdl = ADCBuf_open(Board_ADCBUF0, &adc_params);//Board_ADCBUF0
+//
+    adc_conversion.arg = NULL;
+    adc_conversion.adcChannel = CC2640R2_LAUNCHXL_ADCBUF0CHANNEL5;
+    adc_conversion.sampleBuffer = samp_buf1;
+    adc_conversion.sampleBufferTwo = samp_buf2;
+    adc_conversion.samplesRequestedCount = ADCBUFSIZE;
+    if (!adc_hdl){
+        while(1);
+    }
+    /* Start converting. */
 }
 
+static uint16_t countAdc = 0;
+Bool adc_convert_complete = false;
+
+void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
+    void *completedADCBuffer, uint32_t completedChannel) {
+    countAdc++;
+    int16_t *buf_ptr = (int16_t*)completedADCBuffer;
+    /* handle receive data */
+    for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
+        adc_data[i] = buf_ptr[i] ;
+   // ADCBuf_convertCancel(adc_hdl);
+    adc_convert_complete = true;
+}
 
 static void I2C_Init(void){
     uint8_t         i2cTxBuffer[15];
@@ -2007,6 +2062,25 @@ static void AudioDuplex_disableCache()
     Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
     Power_setConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
     VIMSModeSafeSet(VIMS_BASE, VIMS_MODE_DISABLED, true);
+    Hwi_restore(hwiKey);
+}
+
+/*********************************************************************
+ * @fn      AudioDuplex_enableCache
+ *
+ * @brief   Enables the instruction cache and releases power constaints
+ *          Allows device to sleep again
+ *
+ * @param   None.
+ *
+ * @return  None.
+ */
+static void AudioDuplex_enableCache()
+{
+    uint_least16_t hwiKey = Hwi_disable();
+    Power_releaseConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
+    Power_releaseConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
+    VIMSModeSafeSet(VIMS_BASE, VIMS_MODE_ENABLED, true);
     Hwi_restore(hwiKey);
 }
 

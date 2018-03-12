@@ -40,6 +40,7 @@ unsigned char Address = (ADR_TX(ADR_LZO) | ADR_REC(ADR_PC))  ;       //addr
 unsigned char current_data_lenght = 0x0  ;       //addr
 unsigned short calculated_CRC = 0;
 static unsigned char uart_val = 1;
+static unsigned char adc_val = 1;
 
 //void set_Myaddr(unsigned char addr){
 //
@@ -214,6 +215,7 @@ uint16_t PackProcessing(void){
         break;}
 
         case GET_FH_PARAM :{//get mac address
+            user_enqueueRawAppMsg(APP_MSG_Read_ADC_Voltage, &adc_val, 1);
             get_fh_param();
 
         break;}

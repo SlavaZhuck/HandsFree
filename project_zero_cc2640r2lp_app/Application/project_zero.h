@@ -90,6 +90,7 @@ typedef enum
   APP_MSG_Write_key,
   APP_MSG_Load_vol,
   APP_MSG_Write_vol,
+  APP_MSG_Read_ADC_Voltage,
 
 } app_msg_types_t;
 
