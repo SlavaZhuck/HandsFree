@@ -39,7 +39,7 @@ uint16_t NewPack  ;       //пакте не принят
 unsigned char Address = (ADR_TX(ADR_LZO) | ADR_REC(ADR_PC))  ;       //addr
 unsigned char current_data_lenght = 0x0  ;       //addr
 unsigned short calculated_CRC = 0;
-static unsigned char uart_val = 1;
+unsigned char uart_val = 1;
 static unsigned char adc_val = 1;
 
 //void set_Myaddr(unsigned char addr){

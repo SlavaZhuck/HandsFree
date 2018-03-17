@@ -378,7 +378,6 @@ static ADCBuf_Params adc_params;
 int16_t adc_data[ADCBUFSIZE];
 static int16_t samp_buf1[ADCBUFSIZE];
 static int16_t samp_buf2[ADCBUFSIZE];
-static Bool adc_buf_ready = false;
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
                   void *completedADCBuffer, uint32_t completedChannel);
@@ -401,7 +400,7 @@ static uint8_t         i2cRxBuffer[17];
 
 static CryptoCC26XX_Handle crypto_hdl;
 static CryptoCC26XX_Params crypto_params;
-static uint8_t key[] = {0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6,
+uint8_t key[] = {0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6,
                         0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C};
 static int32_t key_index = 0;
 static int32_t status;
@@ -413,6 +412,7 @@ uint32_t packet_counter = 0;
 UART_Handle uart;
 static UART_Params uartParams;
 static const char  echoPrompt[] = "55AA\r\n";
+unsigned char key_val;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -717,6 +717,8 @@ static void ProjectZero_init(void)
   PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
 
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
+  user_enqueueRawAppMsg(APP_MSG_Read_key, &key_val, 1);
+
 }
 
 
@@ -829,7 +831,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
     bool gotBufferIn = false;
     bool gotBufferOut = false;
-	static uint8_t coded_data[20];
+    static uint8_t coded_data[20];
     switch (pMsg->type)
     {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -1179,13 +1181,14 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       // ... In the generated example we turn periodic clocks on/off
       if (configValue) // 0x0001 and 0x0002 both indicate turned on.
       {
-        GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
-        start_voice_handle();
+          if(stream_on != 1){
+              GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
+              start_voice_handle();
+          }
       }
       else
       {
-        GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_TERMINATE_LINK);
-        stop_voice_handle();
+          stop_voice_handle();
       }
       break;
 
@@ -1686,8 +1689,11 @@ static char *Util_getLocalNameStr(const uint8_t *data) {
 
 //GPTimerCC26XX_Value system_tick = 0;
 /* Functions for handle tx/rx packets of voice samples */
+
+
 static void voice_hdl_init(void)
 {
+    //read_aes_key(&key);
     I2C_Init();
 
     GPTimerCC26XX_Params_init(&tim_params);
@@ -1783,7 +1789,6 @@ static void voice_hdl_init(void)
 }
 
 static uint16_t countAdc = 0;
-Bool adc_convert_complete = false;
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
@@ -1793,7 +1798,6 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
         adc_data[i] = buf_ptr[i] ;
    // ADCBuf_convertCancel(adc_hdl);
-    adc_convert_complete = true;
 }
 
 static void I2C_Init(void){

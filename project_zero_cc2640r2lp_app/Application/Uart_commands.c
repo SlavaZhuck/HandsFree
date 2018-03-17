@@ -45,16 +45,7 @@ uint8_t send_data(void){//here we receive data from host
 }
 
 
-void send_fh_key (void){
 
-    clear_Tx_packet();
-
-    if(!write_aes_key(&Rx_Data.data)){
-        send_answer_for_command(REC_OK);
-    }else{
-        send_answer_for_command(REC_ERROR) ;
-    }
-}
 
 void send_fh_cr_tp(void){   //TODO
     clear_Tx_packet();
@@ -86,16 +77,28 @@ void get_fh_param(void){
     calcCRC_andSend();
 }
 
-uint8_t read_key[KEY_SIZE];
+extern uint8_t key[];
+
+void send_fh_key (void){
+
+    clear_Tx_packet();
+
+    if(!write_aes_key(&Rx_Data.data)){
+        read_aes_key(&key);//read key to make it work at time of write action
+        send_answer_for_command(REC_OK);
+    }else{
+        send_answer_for_command(REC_ERROR) ;
+    }
+}
 
 void get_fh_key(void){
 
     clear_Tx_packet();
 
-    if(!read_aes_key(&read_key)){
+    if(!read_aes_key(&key)){
         Tx_Data.data_lenght = KEY_SIZE;
         for(uint8_t i = 0 ;i<KEY_SIZE;i++){
-            Tx_Data.data[i]=read_key[i];
+            Tx_Data.data[i]=key[i];
         }
         Tx_Data.command = SEND_FH_KEY ;
         calcCRC_andSend();
