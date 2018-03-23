@@ -122,7 +122,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1700
+#define PRZ_TASK_STACK_SIZE                   1300
 #endif
 
 // Internal Events for RTOS application
@@ -147,7 +147,7 @@
 #define AUDIO_DUPLEX_STREAM_TYPE_NONE       AUDIO_DUPLEX_CMD_STOP
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM      AUDIO_DUPLEX_CMD_START
 #define I2S_SAMP_PER_FRAME                  80
-#define NUM_OF_CHANNELS                     3
+#define NUM_OF_CHANNELS                     2
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
@@ -174,7 +174,12 @@
  */
 // Types of messages that can be sent to the user application task from other
 // tasks or interrupts. Note: Messages from BLE Stack are sent differently.
+static Mailbox_Handle mailbox;
+static int mailpost_usage = 0;
+static Bool buf_OK_flag = false;
 
+#define MAILBOX_DEPTH 3
+#define MIN_MAILBOX_USAGE 1
 
 // Struct for messages sent to the application task
 typedef struct
@@ -350,7 +355,9 @@ static I2SCC26XX_Params i2sParams =
 
 int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
 static uint16_t i2c_read_delay = 0;
-static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
+ int16_t raw_data_send[I2S_SAMP_PER_FRAME];
+ //uint8_t temp_data[V_STREAM_INPUT_LEN];
+ uint8_t packet_data[V_STREAM_INPUT_LEN];
 
 //#define BT_PACKET_DEBUG
  #ifdef BT_PACKET_DEBUG
@@ -362,6 +369,7 @@ static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
  #endif
 
  static unsigned char pdm_val = 1;
+ static unsigned char ble_val = 1;
  static unsigned char button_val = 1;
  static unsigned char vol_val = 1;
  static unsigned char i2c_val = 1;
@@ -382,16 +390,16 @@ static int16_t samp_buf2[ADCBUFSIZE];
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
                   void *completedADCBuffer, uint32_t completedChannel);
 
-static struct ADPCMstate encoder_adpcm, decoder_adpcm, encoder_adpcm1, decoder_adpcm1;
+static struct ADPCMstate encoder_adpcm, decoder_adpcm;
 static int stream_on = 0;
 
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
 //Bool bufferReady = false;
 
-static int16_t mic_data[I2S_SAMP_PER_FRAME*2];
+//static int16_t mic_data[I2S_SAMP_PER_FRAME];
 static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
-static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
+//static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
 
 static I2C_Handle      i2c;
 static I2C_Params      i2cParams;
@@ -718,7 +726,10 @@ static void ProjectZero_init(void)
 
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
   user_enqueueRawAppMsg(APP_MSG_Read_key, &key_val, 1);
-
+  mailbox = Mailbox_create(sizeof(packet_data), MAILBOX_DEPTH, NULL, NULL);
+  if (mailbox == NULL) {
+      while (1);
+  }
 }
 
 
@@ -828,10 +839,10 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-
+    int16_t temp1[I2S_SAMP_PER_FRAME];
     bool gotBufferIn = false;
     bool gotBufferOut = false;
-    static uint8_t coded_data[20];
+
     switch (pMsg->type)
     {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -874,77 +885,46 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_SEND_VOICE_SAMP:
 
-            decrypt_packet(pMsg->pdu);
-            decoder_adpcm.prevsample = ((int16_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 7]) << 8) |
-                    (int16_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 6]);
-
-            decoder_adpcm.previndex = ((int32_t)(pMsg->pdu[V_STREAM_OUTPUT_LEN - 5]));
-
-            ADPCMDecoderBuf2((char*)(pMsg->pdu), raw_data_send, &decoder_adpcm);
-           // memset(raw_data_send,0,sizeof(raw_data_send));
-            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;//I2SCC26XX_BUFFER_OUT;
-            gotBufferOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-
-            if (gotBufferOut)
-            {
-                memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
-                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
-                bufferRelease.bufferHandleIn = NULL;// NULL;
-                I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-                gotBufferOut = 0;
-                i2c_read_delay++;
-#ifdef  UART_DEBUG_BLUETOOTH_NOT_ADC
-                for(uint16_t i = 1; i<I2S_SAMP_PER_FRAME+1;i++)
-                    uart_data_send[i] = raw_data_send[i-1];
-                uart_data_send[0]=40*pow(2,8)+41;
-                ////ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
-               // //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
-                UART_write(uart, uart_data_send, sizeof(uart_data_send));
-#endif
-            }
-
-#ifdef BT_PACKET_DEBUG
-
-                         rx_data[rx_counter++] = pMsg->pdu[0];
-                         if(rx_counter == TEST_SIZE)
-                         { uint8_t temp =rx_data[0];
-                             rx_counter = 0;
-                             for(uint8_t i=0;i<TEST_SIZE-1;i++)
-                                 if((rx_data[i+1]) !=(uint8_t)(rx_data[i]+1)){
-                                     number_of_losts++;
-                                     packets_lost+= abs(rx_data[i+1]-rx_data[i]+1);
-                                     i++;
-                                 }
-                         }
-#endif
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
-
-            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN;
+            static Bool ready = FALSE;
+//            ready = Mailbox_pend(mailbox, temp1, BIOS_NO_WAIT);
+//            memcpy(temp1, packet_data, sizeof(packet_data));
+//            decrypt_packet(temp1);
+//            decoder_adpcm.prevsample = ((int16_t)(temp1[V_STREAM_OUTPUT_LEN - 7]) << 8) |
+//                    (int16_t)(temp1[V_STREAM_OUTPUT_LEN - 6]);
+//
+//            decoder_adpcm.previndex = ((int32_t)(temp1[V_STREAM_OUTPUT_LEN - 5]));
+//
+//            ADPCMDecoderBuf2((char*)(temp1), raw_data_send, &decoder_adpcm);
+//
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
             gotBufferIn = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferIn)
             {
-                memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
-                for(uint16_t i = 0; i<I2S_SAMP_PER_FRAME;i++)
-                {
-                    mic_data_1ch[i] = mic_data[i*2];
-                    mic_data_2ch[i] = mic_data[i*2+1];
-                }
 
-                bufferRelease.bufferHandleOut = NULL;
+//                for(uint8_t i = 0 ; i<sizeof(mic_data_1ch)/(sizeof(mic_data_1ch[0]));i++){
+//                    mic_data_1ch[i]  = ((int16_t*)bufferRequest.bufferIn)[i];
+//                }
+//                for(uint8_t i = 0 ; i<sizeof(mic_data_1ch)/(sizeof(mic_data_1ch[0]));i++){
+//                    raw_data_send[i]  = mic_data_1ch[i];
+//                }
+//                for(uint8_t i = 0 ; i<sizeof(raw_data_send)/(sizeof(raw_data_send[0]));i++){
+//                    ((int16_t*)bufferRequest.bufferOut)[i] = raw_data_send[i];
+//                }
+                memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
+                memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
+
+
+
+
+                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
                 gotBufferIn = 0;
                 i2c_read_delay++;
-#if defined(UART_DEBUG_ADC_NOT_BLUETOOTH) //|| defined(UART_DEBUG_BLUETOOTH_NOT_ADC)
-                for(uint16_t i = 1; i<I2S_SAMP_PER_FRAME+1;i++)
-                    uart_data_send[i] = mic_data_1ch[i-1];
-                uart_data_send[0]=40*pow(2,8)+41;
-                //ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
-                //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
-                UART_write(uart, uart_data_send, sizeof(uart_data_send));
-#endif
+
             }
             pdm_samp_hdl();
 
@@ -1107,6 +1087,7 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
   static uint8_t pretty_data_holder[16]; // 5 bytes as hex string "AA:BB:CC:DD:EE"
   Util_convertArrayToHexString(pCharData->data, pCharData->dataLen,
                                pretty_data_holder, sizeof(pretty_data_holder));
+  //uint8_t buffer_BLE_packet[V_STREAM_OUTPUT_LEN];
 
   switch (pCharData->paramID)
   {
@@ -1128,8 +1109,21 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
                 (IArg)pretty_data_holder);
 
       // Do something useful with pCharData->data here
-      user_enqueueRawAppMsg(APP_MSG_SEND_VOICE_SAMP, pCharData->data, V_STREAM_INPUT_LEN);
+     // user_enqueueRawAppMsg(APP_MSG_SEND_VOICE_SAMP, pCharData->data, V_STREAM_INPUT_LEN);
+      //memcpy ( buffer_BLE_packet, pCharData->data, V_STREAM_INPUT_LEN );
 
+//      Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
+//      mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
+      static Bool ready = FALSE;
+      //ready = Mailbox_pend(mailbox, buffer_BLE_packet, BIOS_NO_WAIT);
+
+      decrypt_packet(pCharData->data);
+      decoder_adpcm.prevsample = ((int16_t)(pCharData->data[V_STREAM_OUTPUT_LEN - 7]) << 8) |
+              (int16_t)(pCharData->data[V_STREAM_OUTPUT_LEN - 6]);
+
+      decoder_adpcm.previndex = ((int32_t)(pCharData->data[V_STREAM_OUTPUT_LEN - 5]));
+
+      ADPCMDecoderBuf2((char*)(pCharData->data), raw_data_send, &decoder_adpcm);
       // -------------------------
       break;
 
@@ -1699,7 +1693,7 @@ static void voice_hdl_init(void)
     GPTimerCC26XX_Params_init(&tim_params);
     tim_params.width = GPT_CONFIG_32BIT;
     tim_params.mode = GPT_MODE_PERIODIC_UP;
-    tim_params.debugStallMode = GPTimerCC26XX_DEBUG_STALL_OFF;
+    tim_params.debugStallMode = GPTimerCC26XX_DEBUG_STALL_ON;
     blink_tim_hdl = GPTimerCC26XX_open(Board_GPTIMER2A, &tim_params);
     //system_time = GPTimerCC26XX_open(Board_GPTIMER1A, &tim_params);
     //GPTimerCC26XX_start(system_time);
@@ -1989,8 +1983,23 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
-    if(stream_on)
+    uint8_t buffer_BLE_packet[V_STREAM_OUTPUT_LEN];
+
+    if(stream_on){
+//        static Bool ready = FALSE;
+//        ready = Mailbox_pend(mailbox, buffer_BLE_packet, BIOS_NO_WAIT);
+//
+//        decrypt_packet(buffer_BLE_packet);
+//        decoder_adpcm.prevsample = ((int16_t)(buffer_BLE_packet[V_STREAM_OUTPUT_LEN - 7]) << 8) |
+//                (int16_t)(buffer_BLE_packet[V_STREAM_OUTPUT_LEN - 6]);
+//
+//        decoder_adpcm.previndex = ((int32_t)(buffer_BLE_packet[V_STREAM_OUTPUT_LEN - 5]));
+//
+//        ADPCMDecoderBuf2((char*)(buffer_BLE_packet), raw_data_send, &decoder_adpcm);
+
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+
+    }
 }
 
 static void start_voice_handle(void)
