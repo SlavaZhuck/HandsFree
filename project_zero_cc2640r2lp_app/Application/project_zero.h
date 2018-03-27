@@ -91,6 +91,7 @@ typedef enum
   APP_MSG_Load_vol,
   APP_MSG_Write_vol,
   APP_MSG_Read_ADC_Voltage,
+  APP_MSG_Decrypt_packet,
 
 } app_msg_types_t;
 

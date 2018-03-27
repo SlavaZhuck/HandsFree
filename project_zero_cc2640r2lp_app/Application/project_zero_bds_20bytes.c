@@ -175,10 +175,9 @@
 // Types of messages that can be sent to the user application task from other
 // tasks or interrupts. Note: Messages from BLE Stack are sent differently.
 static Mailbox_Handle mailbox;
-static int mailpost_usage = 0;
-static Bool buf_OK_flag = false;
+static uint8_t mailpost_usage = 0;
 
-#define MAILBOX_DEPTH 3
+#define MAILBOX_DEPTH 10
 #define MIN_MAILBOX_USAGE 1
 
 // Struct for messages sent to the application task
@@ -356,7 +355,6 @@ static I2SCC26XX_Params i2sParams =
 int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
 static uint16_t i2c_read_delay = 0;
  int16_t raw_data_send[I2S_SAMP_PER_FRAME];
- //uint8_t temp_data[V_STREAM_INPUT_LEN];
  uint8_t packet_data[V_STREAM_INPUT_LEN];
 
 //#define BT_PACKET_DEBUG
@@ -369,7 +367,6 @@ static uint16_t i2c_read_delay = 0;
  #endif
 
  static unsigned char pdm_val = 1;
- static unsigned char ble_val = 1;
  static unsigned char button_val = 1;
  static unsigned char vol_val = 1;
  static unsigned char i2c_val = 1;
@@ -707,7 +704,6 @@ static void ProjectZero_init(void)
 
   // Initalization of characteristics in VoGATT that can provide data
   // to a peer device over the air.
-  Vogatt_SetParameter(V_STREAM_START_ID, V_STREAM_START_LEN, &someVal);
   Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, &someVal);
 
   // Start the stack in Peripheral mode.
@@ -888,36 +884,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
-            static Bool ready = FALSE;
-//            ready = Mailbox_pend(mailbox, temp1, BIOS_NO_WAIT);
-//            memcpy(temp1, packet_data, sizeof(packet_data));
-//            decrypt_packet(temp1);
-//            decoder_adpcm.prevsample = ((int16_t)(temp1[V_STREAM_OUTPUT_LEN - 7]) << 8) |
-//                    (int16_t)(temp1[V_STREAM_OUTPUT_LEN - 6]);
-//
-//            decoder_adpcm.previndex = ((int32_t)(temp1[V_STREAM_OUTPUT_LEN - 5]));
-//
-//            ADPCMDecoderBuf2((char*)(temp1), raw_data_send, &decoder_adpcm);
-//
+
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
             gotBufferIn = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferIn)
             {
 
-//                for(uint8_t i = 0 ; i<sizeof(mic_data_1ch)/(sizeof(mic_data_1ch[0]));i++){
-//                    mic_data_1ch[i]  = ((int16_t*)bufferRequest.bufferIn)[i];
-//                }
-//                for(uint8_t i = 0 ; i<sizeof(mic_data_1ch)/(sizeof(mic_data_1ch[0]));i++){
-//                    raw_data_send[i]  = mic_data_1ch[i];
-//                }
-//                for(uint8_t i = 0 ; i<sizeof(raw_data_send)/(sizeof(raw_data_send[0]));i++){
-//                    ((int16_t*)bufferRequest.bufferOut)[i] = raw_data_send[i];
-//                }
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
                 memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
-
-
-
 
                 bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
@@ -967,6 +941,27 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 while(1);
             }
         break;
+
+        case APP_MSG_Decrypt_packet:
+
+            static Bool ready = FALSE;
+            mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
+            if(mailpost_usage>0){
+                ready = Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
+                decrypt_packet(packet_data);
+//                decoder_adpcm.prevsample = ((int16_t)(packet_data[V_STREAM_OUTPUT_LEN - 7]) << 8) |
+//                        (int16_t)(packet_data[V_STREAM_OUTPUT_LEN - 6]);
+//
+//                decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_LEN - 5]));
+                decoder_adpcm.prevsample = ((int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
+                        (int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 1]);
+
+                decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 2]));
+
+                ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
+            }
+
+            break;
     }
 }
 
@@ -1087,7 +1082,6 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
   static uint8_t pretty_data_holder[16]; // 5 bytes as hex string "AA:BB:CC:DD:EE"
   Util_convertArrayToHexString(pCharData->data, pCharData->dataLen,
                                pretty_data_holder, sizeof(pretty_data_holder));
-  //uint8_t buffer_BLE_packet[V_STREAM_OUTPUT_LEN];
 
   switch (pCharData->paramID)
   {
@@ -1109,21 +1103,8 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
                 (IArg)pretty_data_holder);
 
       // Do something useful with pCharData->data here
-     // user_enqueueRawAppMsg(APP_MSG_SEND_VOICE_SAMP, pCharData->data, V_STREAM_INPUT_LEN);
-      //memcpy ( buffer_BLE_packet, pCharData->data, V_STREAM_INPUT_LEN );
+      Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
 
-//      Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
-//      mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
-      static Bool ready = FALSE;
-      //ready = Mailbox_pend(mailbox, buffer_BLE_packet, BIOS_NO_WAIT);
-
-      decrypt_packet(pCharData->data);
-      decoder_adpcm.prevsample = ((int16_t)(pCharData->data[V_STREAM_OUTPUT_LEN - 7]) << 8) |
-              (int16_t)(pCharData->data[V_STREAM_OUTPUT_LEN - 6]);
-
-      decoder_adpcm.previndex = ((int32_t)(pCharData->data[V_STREAM_OUTPUT_LEN - 5]));
-
-      ADPCMDecoderBuf2((char*)(pCharData->data), raw_data_send, &decoder_adpcm);
       // -------------------------
       break;
 
@@ -1983,20 +1964,10 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
-    uint8_t buffer_BLE_packet[V_STREAM_OUTPUT_LEN];
 
     if(stream_on){
-//        static Bool ready = FALSE;
-//        ready = Mailbox_pend(mailbox, buffer_BLE_packet, BIOS_NO_WAIT);
-//
-//        decrypt_packet(buffer_BLE_packet);
-//        decoder_adpcm.prevsample = ((int16_t)(buffer_BLE_packet[V_STREAM_OUTPUT_LEN - 7]) << 8) |
-//                (int16_t)(buffer_BLE_packet[V_STREAM_OUTPUT_LEN - 6]);
-//
-//        decoder_adpcm.previndex = ((int32_t)(buffer_BLE_packet[V_STREAM_OUTPUT_LEN - 5]));
-//
-//        ADPCMDecoderBuf2((char*)(buffer_BLE_packet), raw_data_send, &decoder_adpcm);
 
+        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
 
     }
@@ -2033,12 +2004,25 @@ static void stop_voice_handle(void)
 
 static void pdm_samp_hdl(void)
 {
+//    uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
+//
+//    encode_buf[V_STREAM_OUTPUT_LEN - 7] = encoder_adpcm.prevsample >> 8;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 6] = encoder_adpcm.prevsample;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 5] = encoder_adpcm.previndex;
+//
+//    //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
+
     uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
-    encode_buf[V_STREAM_OUTPUT_LEN - 7] = encoder_adpcm.prevsample >> 8;
-    encode_buf[V_STREAM_OUTPUT_LEN - 6] = encoder_adpcm.prevsample;
-    encode_buf[V_STREAM_OUTPUT_LEN - 5] = encoder_adpcm.previndex;
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
 
+    //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
     encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
     encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
     encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
@@ -2099,14 +2083,14 @@ static void AudioDuplex_enableCache()
 
 static void encrypt_packet(uint8_t *packet)
 {
-    uint8_t tmp_packet[V_STREAM_OUTPUT_LEN - 4];
+    uint8_t tmp_packet[V_STREAM_OUTPUT_SOUND_LEN + 3];
     status = CryptoCC26XX_loadKey(crypto_hdl, key_index, (const uint32_t*)key);
     if(status != CRYPTOCC26XX_STATUS_SUCCESS)
     {
         while(1);
     }
 
-    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_LEN - 4);
+    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_SOUND_LEN + 3);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex = key_index;
@@ -2130,7 +2114,7 @@ static void encrypt_packet(uint8_t *packet)
         while(1);
     }
 
-    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_LEN - 4);
+    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_SOUND_LEN + 3);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_ENCRYPT);
     trans.keyIndex = key_index;
@@ -2146,14 +2130,15 @@ static void encrypt_packet(uint8_t *packet)
 
 static void decrypt_packet(uint8_t *packet)
 {
-    uint8_t tmp_packet[V_STREAM_INPUT_LEN - 4];
+    //uint8_t tmp_packet[V_STREAM_INPUT_LEN - 4];
+    uint8_t tmp_packet[V_STREAM_INPUT_SOUND_LEN + 3];
     status = CryptoCC26XX_loadKey(crypto_hdl, key_index, (const uint32_t*)key);
     if(status != CRYPTOCC26XX_STATUS_SUCCESS)
     {
         while(1);
     }
 
-    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_LEN - 4);
+    memcpy(tmp_packet, packet, V_STREAM_OUTPUT_SOUND_LEN + 3);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_DECRYPT);
     trans.keyIndex = key_index;
@@ -2165,7 +2150,7 @@ static void decrypt_packet(uint8_t *packet)
         while(1);
     }
 
-    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_LEN - 4);
+    memcpy(packet, tmp_packet, V_STREAM_OUTPUT_SOUND_LEN + 3);
 
     CryptoCC26XX_Transac_init((CryptoCC26XX_Transaction *)&trans, CRYPTOCC26XX_OP_AES_ECB_DECRYPT);
     trans.keyIndex = key_index;
