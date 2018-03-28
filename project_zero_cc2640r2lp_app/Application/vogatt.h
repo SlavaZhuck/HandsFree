@@ -85,6 +85,14 @@ extern "C"
 #define V_STREAM_OUTPUT_LEN_MIN            47
 #define V_STREAM_OUTPUT_SOUND_LEN          40
 
+typedef struct
+{
+  uint8_t        voice_data[V_STREAM_OUTPUT_SOUND_LEN];     // Called when characteristic value changes
+  short        previous_sample;  // Called when characteristic CCCD changes
+  uint8_t           previndex;
+  uint32_t          counter;
+} packet_BLE;
+
 /*********************************************************************
  * TYPEDEFS
  */
