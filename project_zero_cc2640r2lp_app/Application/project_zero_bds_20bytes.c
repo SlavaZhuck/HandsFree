@@ -48,7 +48,7 @@
  */
 #include <string.h>
 #include <math.h>
-//#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
+#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
 
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Event.h>
@@ -60,9 +60,7 @@
 
 #include <xdc/runtime/Log.h>
 #include <xdc/runtime/Diags.h>
-#ifdef UARTLOG_ENABLE
-#  include "UartLog.h"
-#endif
+
 
 /* This Header file contains all BLE API and icall structure definition */
 #include "icall_ble_api.h"
@@ -356,20 +354,10 @@ static uint16_t i2c_read_delay = 0;
  int16_t raw_data_send[I2S_SAMP_PER_FRAME];
  uint8_t packet_data[V_STREAM_INPUT_LEN];
 
-//#define BT_PACKET_DEBUG
- #ifdef BT_PACKET_DEBUG
-     #define TEST_SIZE 255
-     static uint8_t rx_data[TEST_SIZE];
-     static uint8_t rx_counter = 0;
-     static uint16_t number_of_losts = 0;
-     static uint16_t packets_lost = 0;
- #endif
-
  static unsigned char pdm_val = 1;
  static unsigned char button_val = 1;
  static unsigned char vol_val = 1;
  static unsigned char i2c_val = 1;
-
 
 static uint8_t current_volume;
 
@@ -391,13 +379,10 @@ static int stream_on = 0;
 
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
-//Bool bufferReady = false;
 
 //static int16_t mic_data[I2S_SAMP_PER_FRAME];
 static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
 //static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
-
-
 
 static CryptoCC26XX_Handle crypto_hdl;
 static CryptoCC26XX_Params crypto_params;
@@ -412,7 +397,6 @@ static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 uint32_t packet_counter = 0;
 UART_Handle uart;
 static UART_Params uartParams;
-static const char  echoPrompt[] = "55AA\r\n";
 unsigned char key_val;
 
 /*********************************************************************
@@ -455,7 +439,6 @@ static void user_enqueueCharDataMsg( app_msg_types_t appMsgType, uint16_t connHa
                                        uint16_t serviceUUID, uint8_t paramID,
                                        uint8_t *pValue, uint16_t len );
 
-static char *Util_getLocalNameStr(const uint8_t *data);
 static char *Util_convertArrayToHexString(uint8_t const *src, uint8_t src_len,
                                           uint8_t *dst, uint8_t dst_len);
 
@@ -600,8 +583,6 @@ static void ProjectZero_init(void)
   // so that the application can send and receive messages via ICall to Stack.
   ICall_registerApp(&selfEntity, &syncEvent);
 
-  Log_info0("Initializing the user task, hardware, BLE stack and services.");
-
   // Open display. By default this is disabled via the predefined symbol Display_DISABLE_ALL.
   dispHandle = Display_open(Display_Type_LCD, NULL);
 
@@ -616,8 +597,7 @@ static void ProjectZero_init(void)
   ledPinHandle = PIN_open(&ledPinState, ledPinTable);
   if(!ledPinHandle)
   {
-    Log_error0("Error initializing board LED pins");
-    Task_exit();
+     Task_exit();
   }
 
   PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
@@ -646,9 +626,6 @@ static void ProjectZero_init(void)
 
   // Initialize Advertisement data
   GAPRole_SetParameter(GAPROLE_ADVERT_DATA, sizeof(advertData), advertData);
-
-  Log_info1("Name in advertData array: \x1b[33m%s\x1b[0m",
-            (IArg)Util_getLocalNameStr(advertData));
 
   // Set advertising interval
   uint16_t advInt = DEFAULT_ADVERTISING_INTERVAL;
@@ -867,9 +844,6 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         case APP_MSG_SEND_PASSCODE: /* Message about pairing PIN request */
         {
             passcode_req_t *pReq = (passcode_req_t *)pMsg->pdu;
-            Log_info2("BondMgr Requested passcode. We are %s passcode %06d",
-              (IArg)(pReq->uiInputs?"Sending":"Displaying"),
-              DEFAULT_PASSCODE);
             // Send passcode response.
             GAPBondMgr_PasscodeRsp(pReq->connHandle, SUCCESS, DEFAULT_PASSCODE);
         }
@@ -1007,12 +981,10 @@ static void user_processGapStateChangeEvt(gaprole_States_t newState)
 
         // Display device address
         char *cstr_ownAddress = Util_convertBdAddr2Str(ownAddress);
-        Log_info1("GAP is started. Our address: \x1b[32m%s\x1b[0m", (IArg)cstr_ownAddress);
       }
       break;
 
     case GAPROLE_ADVERTISING:
-      Log_info0("Advertising");
       break;
 
     case GAPROLE_CONNECTED:
@@ -1022,30 +994,25 @@ static void user_processGapStateChangeEvt(gaprole_States_t newState)
         GAPRole_GetParameter(GAPROLE_CONN_BD_ADDR, peerAddress);
 
         char *cstr_peerAddress = Util_convertBdAddr2Str(peerAddress);
-        Log_info1("Connected. Peer address: \x1b[32m%s\x1b[0m", (IArg)cstr_peerAddress);
        }
       break;
 
     case GAPROLE_CONNECTED_ADV:
-      Log_info0("Connected and advertising");
       break;
 
     case GAPROLE_WAITING:
 
       // Turn off periodic clocks for ind/noti demo
       stop_voice_handle();
-      Log_info0("Disconnected / Idle");
       break;
 
     case GAPROLE_WAITING_AFTER_TIMEOUT:
 
       // Turn off periodic clocks for ind/noti demo
       stop_voice_handle();
-      Log_info0("Connection timed out");
       break;
 
     case GAPROLE_ERROR:
-      Log_info0("Error");
       break;
 
     default:
@@ -1078,22 +1045,12 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
   switch (pCharData->paramID)
   {
     case V_STREAM_START_ID:
-      Log_info3("Value Change msg: %s %s: %s",
-                (IArg)"VoGATT",
-                (IArg)"STREAM_START",
-                (IArg)pretty_data_holder);
-
       // Do something useful with pCharData->data here
 
       // -------------------------
       break;
 
     case V_STREAM_INPUT_ID:  //rx data here!!!
-      Log_info3("Value Change msg: %s %s: %s",
-                (IArg)"VoGATT",
-                (IArg)"STREAM_INPUT",
-                (IArg)pretty_data_holder);
-
       // Do something useful with pCharData->data here
       Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
 
@@ -1138,10 +1095,6 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
   switch (pCharData->paramID)
   {
     case V_STREAM_OUTPUT_ID:
-      Log_info3("CCCD Change msg: %s %s: %s",
-                (IArg)"VoGATT",
-                (IArg)"STREAM_OUTPUT",
-                (IArg)configValString);
       // -------------------------
       // Do something useful with configValue here. It tells you whether someone
       // wants to know the state of this characteristic.
@@ -1194,7 +1147,6 @@ static uint8_t ProjectZero_processStackMsg(ICall_Hdr *pMsg)
         {
           case HCI_COMMAND_COMPLETE_EVENT_CODE:
             // Process HCI Command Complete Event
-            Log_info0("HCI Command Complete Event received");
             break;
 
           default:
@@ -1222,8 +1174,6 @@ static uint8_t ProjectZero_processGATTMsg(gattMsgEvent_t *pMsg)
   // See if GATT server was unable to transmit an ATT response
   if (pMsg->hdr.status == blePending)
   {
-    Log_warning1("Outgoing RF FIFO full. Re-schedule transmission of msg with opcode 0x%02x",
-      pMsg->method);
 
     // No HCI buffer was available. Let's try to retransmit the response
     // on the next connection event.
@@ -1246,19 +1196,14 @@ static uint8_t ProjectZero_processGATTMsg(gattMsgEvent_t *pMsg)
     // violated. All subsequent ATT requests or indications will be dropped.
     // The app is informed in case it wants to drop the connection.
 
-    // Log the opcode of the message that caused the violation.
-    Log_error1("Flow control violated. Opcode of offending ATT msg: 0x%02x",
-      pMsg->msg.flowCtrlEvt.opcode);
   }
   else if (pMsg->method == ATT_MTU_UPDATED_EVENT)
   {
     // MTU size updated
-    Log_info1("MTU Size change: %d bytes", pMsg->msg.mtuEvt.MTU);
   }
   else
   {
     // Got an expected GATT message from a peer.
-    Log_info1("Recevied GATT Message. Opcode: 0x%02x", pMsg->method);
   }
 
   // Free message payload. Needed only for ATT Protocol messages
@@ -1310,8 +1255,6 @@ static void ProjectZero_sendAttRsp(void)
     else
     {
       // Continue retrying
-      Log_warning2("Retrying message with opcode 0x%02x. Attempt %d",
-        pAttRsp->method, rspTxRetry);
     }
   }
 }
@@ -1331,15 +1274,10 @@ static void ProjectZero_freeAttRsp(uint8_t status)
     // See if the response was sent out successfully
     if (status == SUCCESS)
     {
-      Log_info2("Sent message with opcode 0x%02x. Attempt %d",
-        pAttRsp->method, rspTxRetry);
     }
     else
     {
-      Log_error2("Gave up message with opcode 0x%02x. Status: %d",
-        pAttRsp->method, status);
-
-      // Free response payload
+       // Free response payload
       GATT_bm_free(&pAttRsp->msg, pAttRsp->method);
     }
 
@@ -1374,7 +1312,6 @@ static void ProjectZero_freeAttRsp(uint8_t status)
  */
 static void user_gapStateChangeCB(gaprole_States_t newState)
 {
-  Log_info1("(CB) GAP State change: %d, Sending msg to app.", (IArg)newState);
   user_enqueueRawAppMsg( APP_MSG_GAP_STATE_CHANGE, (uint8_t *)&newState, sizeof(newState) );
 }
 
@@ -1418,24 +1355,20 @@ static void user_gapBondMgr_pairStateCB(uint16_t connHandle, uint8_t state,
 {
   if (state == GAPBOND_PAIRING_STATE_STARTED)
   {
-    Log_info0("Pairing started");
   }
   else if (state == GAPBOND_PAIRING_STATE_COMPLETE)
   {
     if (status == SUCCESS)
     {
-      Log_info0("Pairing completed successfully.");
     }
     else
     {
-      Log_error1("Pairing failed. Error: %02x", status);
     }
   }
   else if (state == GAPBOND_PAIRING_STATE_BONDED)
   {
     if (status == SUCCESS)
     {
-     Log_info0("Re-established pairing from stored bond info.");
     }
   }
 }
@@ -1448,8 +1381,6 @@ static void user_service_ValueChangeCB( uint16_t connHandle, uint16_t svcUuid,
                                         uint16_t len )
 {
   // See the service header file to compare paramID with characteristic.
-  Log_info2("(CB) Characteristic value change: svc(0x%04x) paramID(%d). "
-            "Sending msg to app.", (IArg)svcUuid, (IArg)paramID);
   user_enqueueCharDataMsg(APP_MSG_SERVICE_WRITE, connHandle, svcUuid, paramID,
                           pValue, len);
 }
@@ -1461,8 +1392,6 @@ static void user_service_CfgChangeCB( uint16_t connHandle, uint16_t svcUuid,
                                       uint8_t paramID, uint8_t *pValue,
                                       uint16_t len )
 {
-  Log_info2("(CB) Char config change: svc(0x%04x) paramID(%d). "
-            "Sending msg to app.", (IArg)svcUuid, (IArg)paramID);
   user_enqueueCharDataMsg(APP_MSG_SERVICE_CFG, connHandle, svcUuid,
                           paramID, pValue, len);
 }
@@ -1624,35 +1553,6 @@ static char *Util_convertArrayToHexString(uint8_t const *src, uint8_t src_len,
   return (char *)dst;
 }
 
-/*
- * @brief   Extract the LOCALNAME from Scan/AdvData
- *
- * @param   data - Pointer to the advertisement or scan response data
- *
- * @return  Pointer to null-terminated string with the adv local name.
- */
-static char *Util_getLocalNameStr(const uint8_t *data) {
-  uint8_t nuggetLen = 0;
-  uint8_t nuggetType = 0;
-  uint8_t advIdx = 0;
-
-  static char localNameStr[32] = { 0 };
-  memset(localNameStr, 0, sizeof(localNameStr));
-
-  for (advIdx = 0; advIdx < 32;) {
-    nuggetLen = data[advIdx++];
-    nuggetType = data[advIdx];
-    if ( (nuggetType == GAP_ADTYPE_LOCAL_NAME_COMPLETE ||
-          nuggetType == GAP_ADTYPE_LOCAL_NAME_SHORT) && nuggetLen < 31) {
-      memcpy(localNameStr, &data[advIdx + 1], nuggetLen - 1);
-      break;
-    } else {
-      advIdx += nuggetLen;
-    }
-  }
-
-  return localNameStr;
-}
 
 //GPTimerCC26XX_Value system_tick = 0;
 /* Functions for handle tx/rx packets of voice samples */
@@ -1965,11 +1865,7 @@ static void pdm_samp_hdl(void)
 
     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
     encrypt_packet(encode_buf);
-#ifdef BT_PACKET_DEBUG
-     static uint8_t counter = 0;
-     encode_buf[0] = counter;
-     counter++;
- #endif
+
     Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
 }
 
