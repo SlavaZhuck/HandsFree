@@ -1077,6 +1077,9 @@ static void user_processGapStateChangeEvt(gaprole_States_t newState)
  *
  * @return  None.
  */
+static uint8_t loopback_counter = 0;
+static uint8_t loopback_mailbox_usage = 0;
+
 void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
 {
   static uint8_t pretty_data_holder[16]; // 5 bytes as hex string "AA:BB:CC:DD:EE"
@@ -1104,7 +1107,8 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
 
       // Do something useful with pCharData->data here
       Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
-
+      loopback_counter = pCharData->data[V_STREAM_OUTPUT_LEN-1];
+      loopback_mailbox_usage  = pCharData->data[V_STREAM_OUTPUT_LEN-2];
       // -------------------------
       break;
 
@@ -2023,13 +2027,22 @@ static void pdm_samp_hdl(void)
     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
 
     //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
-    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
-    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
-    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
-    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
 
+//    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
+//    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
+
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 3] = packet_counter >> 24;
+    //    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 3] = mailpost_usage;
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 4] = packet_counter >> 16;
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 5] = packet_counter >> 8;
+    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 6] = packet_counter;
+
+    //temp_loopback_counter = *(uint32_t*)pCharData->data[V_STREAM_INPUT_SOUND_LEN+V_STREAM_SERVICE_SIZE+3];
     packet_counter++;
-
+    encode_buf[V_STREAM_OUTPUT_LEN-1] = (uint8_t)(packet_counter/10);
+    encode_buf[V_STREAM_OUTPUT_LEN-2] = mailpost_usage;
     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
     encrypt_packet(encode_buf);
 #ifdef BT_PACKET_DEBUG
@@ -2056,8 +2069,9 @@ static void pdm_samp_hdl(void)
 static void AudioDuplex_disableCache()
 {
     uint_least16_t hwiKey = Hwi_disable();
-    Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
-    Power_setConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
+    //Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
+    //Power_setConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
+
     VIMSModeSafeSet(VIMS_BASE, VIMS_MODE_DISABLED, true);
     Hwi_restore(hwiKey);
 }

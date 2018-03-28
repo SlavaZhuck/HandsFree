@@ -73,17 +73,19 @@ extern "C"
 #define V_STREAM_INPUT_ID                 1
 #define V_STREAM_INPUT_UUID               0xB002
 #define V_STREAM_INPUT_UUID_BASE128(uuid) 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, LO_UINT16(uuid), HI_UINT16(uuid), 0x00, 0xF0
-#define V_STREAM_INPUT_LEN                47
-#define V_STREAM_INPUT_LEN_MIN            47
+#define V_STREAM_INPUT_LEN                51
+#define V_STREAM_INPUT_LEN_MIN            51
 #define V_STREAM_INPUT_SOUND_LEN          40
 
 // STREAM_OUTPUT Characteristic defines
 #define V_STREAM_OUTPUT_ID                 2
 #define V_STREAM_OUTPUT_UUID               0xB003
 #define V_STREAM_OUTPUT_UUID_BASE128(uuid) 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, LO_UINT16(uuid), HI_UINT16(uuid), 0x00, 0xF0
-#define V_STREAM_OUTPUT_LEN                47
-#define V_STREAM_OUTPUT_LEN_MIN            47
+#define V_STREAM_OUTPUT_LEN                51
+#define V_STREAM_OUTPUT_LEN_MIN            51
 #define V_STREAM_OUTPUT_SOUND_LEN          40
+
+#define V_STREAM_SERVICE_SIZE          7
 
 /*********************************************************************
  * TYPEDEFS
