@@ -103,6 +103,14 @@
 #include "driverlib/aon_batmon.h"
 #include "Uart_commands.h"
 #include "max9860_i2c.h"
+
+#ifdef  LPF
+  #include "../LPF/LPF.h"                       /* Model's header file */
+  #include "../LPF/rtwtypes.h"
+#endif
+
+
+
 /*********************************************************************
  * CONSTANTS
  */
@@ -304,6 +312,7 @@ static void AudioDuplex_enableCache();
 void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId);
 void button_processing (void);
 
+
 // Voice handle functions
 static void voice_hdl_init(void);
 static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask);
@@ -398,6 +407,15 @@ uint32_t packet_counter = 0;
 UART_Handle uart;
 static UART_Params uartParams;
 unsigned char key_val;
+
+#ifdef UART_DEBUG
+  #define UART_BAUD_RATE 460800
+  int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+#endif
+
+#ifndef UART_DEBUG
+  #define UART_BAUD_RATE 115200
+#endif
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -540,6 +558,7 @@ static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
 
 static void ProjectZero_init(void)
 {
+    LPF_initialize();
     uint_least16_t hwiKey = Hwi_disable();
 
     UART_init();
@@ -558,7 +577,7 @@ static void ProjectZero_init(void)
     uartParams.writeCallback    = writeCallback;
     uartParams.readReturnMode   = UART_RETURN_FULL;
     uartParams.readEcho         = UART_ECHO_OFF;
-    uartParams.baudRate         = 115200;
+    uartParams.baudRate         = UART_BAUD_RATE;
 
     uart = UART_open(Board_UART0, &uartParams);
     if (uart == NULL) {
@@ -805,10 +824,43 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
  * @return  None.
  */
 
+#ifdef LPF
+void rt_OneStep(void);
+
+void rt_OneStep(void)
+  {
+    static boolean_T OverrunFlag = false;
+
+    /* Disable interrupts here */
+
+    /* Check for overrun */
+    if (OverrunFlag) {
+      return;
+    }
+
+    OverrunFlag = true;
+
+    /* Save FPU context here (if necessary) */
+    /* Re-enable timer or interrupt here */
+    /* Set model inputs here */
+
+    /* Step the model */
+    LPF_step();
+
+    /* Get model outputs here */
+
+    /* Indicate task complete */
+    OverrunFlag = false;
+
+    /* Disable interrupts here */
+    /* Restore FPU context here (if necessary) */
+    /* Enable interrupts here */
+  }
+#endif
+
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-    int16_t temp1[I2S_SAMP_PER_FRAME];
     bool gotBufferIn = false;
     bool gotBufferOut = false;
 
@@ -859,9 +911,22 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             gotBufferIn = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferIn)
             {
-
+#ifdef  LPF
+                for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
+                    rtU.In1 = raw_data_send[i];
+                    rt_OneStep();
+                    raw_data_send[i] = rtY.Out1;
+                }
+#endif
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
                 memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
+#ifdef  UART_DEBUG
+                memcpy(uart_data_send, &raw_data_send[1], sizeof(raw_data_send));
+                uart_data_send[0]=40*pow(2,8)+41;
+                ////ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
+               // //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
+                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+#endif
 
                 bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
@@ -872,9 +937,9 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             }
             pdm_samp_hdl();
 
-            if(i2c_read_delay % 30 == 0){
-                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
-            }
+//            if(i2c_read_delay % 30 == 0){
+//                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
+//            }
         break;
 
         case APP_MSG_Buttons:
@@ -925,6 +990,9 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 2]));
 
                 ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
+            }else{
+                memset ( packet_data,   0, sizeof(packet_data) );
+                memset ( raw_data_send, 0, sizeof(raw_data_send));
             }
 
             break;
