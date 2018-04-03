@@ -82,7 +82,6 @@ typedef enum
   APP_MSG_GAP_STATE_CHANGE,    /* The GAP / connection state has changed        */
   APP_MSG_BUTTON_DEBOUNCED,    /* A button has been debounced with new value    */
   APP_MSG_SEND_PASSCODE,       /* A pass-code/PIN is requested during pairing   */
-  APP_MSG_SEND_VOICE_SAMP,     /* Request from app to send voice samples to BLE */
   APP_MSG_GET_VOICE_SAMP,
   APP_MSG_Buttons,
   APP_MSG_I2C_Read_Status,

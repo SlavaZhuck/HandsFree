@@ -630,7 +630,7 @@ static void ProjectZero_init(void)
 
   // By setting this to zero, the device will go into the waiting state after
   // being discoverable. Otherwise wait this long [ms] before advertising again.
-  uint16_t advertOffTime = 0; // miliseconds
+  uint16_t advertOffTime = 5000; // miliseconds
 
   // Set advertisement enabled.
   GAPRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8_t),
@@ -712,7 +712,7 @@ static void ProjectZero_init(void)
 
   PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
 
-  HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
+  HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
   user_enqueueRawAppMsg(APP_MSG_Read_key, &key_val, 1);
   mailbox = Mailbox_create(sizeof(packet_data), MAILBOX_DEPTH, NULL, NULL);
   if (mailbox == NULL) {
@@ -861,8 +861,7 @@ void rt_OneStep(void)
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-    bool gotBufferIn = false;
-    bool gotBufferOut = false;
+    bool gotBufferInOut = false;
 
     switch (pMsg->type)
     {
@@ -901,42 +900,34 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         }
         break;
 
-        case APP_MSG_SEND_VOICE_SAMP:
-
-        break;
-
         case APP_MSG_GET_VOICE_SAMP:
-
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
-            gotBufferIn = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-            if (gotBufferIn)
+            gotBufferInOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferInOut)
             {
-#ifdef  LPF
-                for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
-                    rtU.In1 = raw_data_send[i];
-                    rt_OneStep();
-                    raw_data_send[i] = rtY.Out1;
-                }
-#endif
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
                 memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
-#ifdef  UART_DEBUG
-                memcpy(uart_data_send, &raw_data_send[1], sizeof(raw_data_send));
-                uart_data_send[0]=40*pow(2,8)+41;
-                ////ADPCMEncoderBuf(&uart_data_send[1], coded_data, &encoder_adpcm1);
-               // //ADPCMDecoderBuf(coded_data, &uart_data_send[1], &decoder_adpcm1);
-                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+#ifdef  LPF
+                for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
+                    rtU.In1 = mic_data_1ch[i];
+                    rt_OneStep();
+                    mic_data_1ch[i] = rtY.Out1;
+                }
 #endif
 
+#ifdef  UART_DEBUG
+                memcpy(uart_data_send, &raw_data_send[1], sizeof(raw_data_send));
+                uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
+                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+#endif
                 bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-                gotBufferIn = 0;
+                gotBufferInOut = 0;
                 i2c_read_delay++;
 
             }
             pdm_samp_hdl();
-
 //            if(i2c_read_delay % 30 == 0){
 //                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
 //            }
@@ -956,9 +947,9 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         case APP_MSG_Write_key:
             send_fh_key();
         break;
-        case APP_MSG_Load_vol:
-            uint8_t status;
 
+        case APP_MSG_Load_vol:
+            uint8_t status = 0;
             status = osal_snv_read(INIT_VOL_ADDR, 1, &current_volume);
                 if(status != SUCCESS)
                 {
@@ -978,11 +969,9 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_Decrypt_packet:
-
-            static Bool ready = FALSE;
             mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
             if(mailpost_usage>0){
-                ready = Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
+                Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
                 decrypt_packet(packet_data);
                 decoder_adpcm.prevsample = ((int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
                         (int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 1]);
@@ -1911,6 +1900,7 @@ static void stop_voice_handle(void)
     }
     memset ( packet_data,   0, sizeof(packet_data) );
     memset ( raw_data_send, 0, sizeof(raw_data_send) );
+    memset ( &rtDW, 0, sizeof(rtDW) );
 
     user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
