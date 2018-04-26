@@ -153,7 +153,7 @@
 #define AUDIO_DUPLEX_STREAM_TYPE_NONE       AUDIO_DUPLEX_CMD_STOP
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM      AUDIO_DUPLEX_CMD_START
 #define I2S_SAMP_PER_FRAME                  80
-#define NUM_OF_CHANNELS                     2
+#define NUM_OF_CHANNELS                     3
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
@@ -389,9 +389,9 @@ static int stream_on = 0;
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
 
-//static int16_t mic_data[I2S_SAMP_PER_FRAME];
+static int16_t mic_data[I2S_SAMP_PER_FRAME*2];
 static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
-//static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
+static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
 
 static CryptoCC26XX_Handle crypto_hdl;
 static CryptoCC26XX_Params crypto_params;
@@ -906,7 +906,12 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             if (gotBufferInOut)
             {
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
-                memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
+                memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
+                for(uint16_t i = 0; i<I2S_SAMP_PER_FRAME;i++)
+                {
+                    mic_data_1ch[i] = mic_data[i*2];  //DA1
+                    mic_data_2ch[i] = mic_data[i*2+1];//DA2
+                }
 #ifdef  LPF
                 for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
                     rtU.In1 = mic_data_1ch[i];
