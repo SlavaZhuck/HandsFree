@@ -128,7 +128,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1300
+#define PRZ_TASK_STACK_SIZE                   1100
 #endif
 
 // Internal Events for RTOS application
@@ -909,8 +909,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 memcpy(mic_data, bufferRequest.bufferIn, sizeof(mic_data));
                 for(uint16_t i = 0; i<I2S_SAMP_PER_FRAME;i++)
                 {
-                    mic_data_1ch[i] = mic_data[i*2];  //DA1
-                    mic_data_2ch[i] = mic_data[i*2+1];//DA2
+                    mic_data_2ch[i] = mic_data[i*2];  //DA1
+                    mic_data_1ch[i] = mic_data[i*2+1];//DA2
                 }
 #ifdef  LPF
                 for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
@@ -1905,8 +1905,9 @@ static void stop_voice_handle(void)
     }
     memset ( packet_data,   0, sizeof(packet_data) );
     memset ( raw_data_send, 0, sizeof(raw_data_send) );
+#ifdef LPF
     memset ( &rtDW, 0, sizeof(rtDW) );
-
+#endif
     user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
 

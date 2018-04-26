@@ -38,7 +38,7 @@ void max9860_I2C_Init(void){
     i2cTxBuffer[6]  = 0x33;//!voice filter    0x33               //digital filtering        0x08
     i2cTxBuffer[7]  = INIT_GAIN;//!DAC att                       //digital level control    0x09
     i2cTxBuffer[8]  = 0x99;//!ADC output levels                                             0x0A
-    i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
+    i2cTxBuffer[9]  = 0x00;//!DAC gain and sidetone                                         0x0B
     i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
     i2cTxBuffer[12] = 0x01;//!microphone AGC                   //MIC automatic gain control 0x0E
