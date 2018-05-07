@@ -1905,8 +1905,9 @@ static void stop_voice_handle(void)
     }
     memset ( packet_data,   0, sizeof(packet_data) );
     memset ( raw_data_send, 0, sizeof(raw_data_send) );
+#ifdef LPF
     memset ( &rtDW, 0, sizeof(rtDW) );
-
+#endif
     user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
 
