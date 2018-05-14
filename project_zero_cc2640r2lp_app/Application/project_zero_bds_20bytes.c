@@ -46,7 +46,7 @@
 /*
  * INCLUDES
  */
-#include <string.h>
+//#include <string.h>
 #include <math.h>
 #define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
 
@@ -56,10 +56,10 @@
 #include <ti/sysbios/knl/Clock.h>
 
 #include <ti/drivers/PIN.h>
-#include <ti/display/Display.h>
+//#include <ti/display/Display.h>
 
-#include <xdc/runtime/Log.h>
-#include <xdc/runtime/Diags.h>
+//#include <xdc/runtime/Log.h>
+//#include <xdc/runtime/Diags.h>
 
 
 /* This Header file contains all BLE API and icall structure definition */
@@ -128,7 +128,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1100
+#define PRZ_TASK_STACK_SIZE                   1000
 #endif
 
 // Internal Events for RTOS application
@@ -156,10 +156,6 @@
 #define NUM_OF_CHANNELS                     3
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
-
-#define EXTRAPOLATE_FACTOR                  4
-//#define ADCBUFSIZE                          I2S_SAMP_PER_FRAME*EXTRAPOLATE_FACTOR//80
-//#define SAMPFREQ                            8000*EXTRAPOLATE_FACTOR
 
 #define KEY_SNV_ID                          BLE_NVID_CUST_START
 #define KEY_SIZE                            16
@@ -275,7 +271,6 @@ static gattMsgEvent_t *pAttRsp = NULL;
 static uint8_t rspTxRetry = 0;
 
 // Global display handle
-Display_Handle dispHandle;
 
 static Bool buttonVol_UP_pressed = false;
 static Bool buttonVol_DOWN_pressed = false;
@@ -358,7 +353,6 @@ static I2SCC26XX_Params i2sParams =
     .currentStream          = &i2sStream
 };
 
-int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
 static uint16_t i2c_read_delay = 0;
  int16_t raw_data_send[I2S_SAMP_PER_FRAME];
  uint8_t packet_data[V_STREAM_INPUT_LEN];
@@ -409,8 +403,8 @@ static UART_Params uartParams;
 unsigned char key_val;
 
 #ifdef UART_DEBUG
-  #define UART_BAUD_RATE 460800
-  int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+  #define UART_BAUD_RATE 921600
+  int16_t uart_data_send[I2S_SAMP_PER_FRAME*2+1];
 #endif
 
 #ifndef UART_DEBUG
@@ -602,8 +596,6 @@ static void ProjectZero_init(void)
   // so that the application can send and receive messages via ICall to Stack.
   ICall_registerApp(&selfEntity, &syncEvent);
 
-  // Open display. By default this is disabled via the predefined symbol Display_DISABLE_ALL.
-  dispHandle = Display_open(Display_Type_LCD, NULL);
 
   // Initialize queue for application messages.
   // Note: Used to transfer control to application thread from e.g. interrupts.
@@ -912,6 +904,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                     mic_data_1ch[i] = mic_data[i*2];  //DA1
                     mic_data_2ch[i] = mic_data[i*2+1];//DA2
                 }
+
+
 #ifdef  LPF
                 for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
                     rtU.In1 = mic_data_1ch[i];
@@ -920,19 +914,21 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 }
 #endif
 
-#ifdef  UART_DEBUG
-                memcpy(uart_data_send, &raw_data_send[1], sizeof(raw_data_send));
-                uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
-                UART_write(uart, uart_data_send, sizeof(uart_data_send));
-#endif
                 bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
                 gotBufferInOut = 0;
                 i2c_read_delay++;
+#ifdef  UART_DEBUG
+                memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+                memcpy(&uart_data_send[1+I2S_SAMP_PER_FRAME], mic_data_2ch, sizeof(mic_data_2ch));
+                uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
+                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+#endif
 
             }
             pdm_samp_hdl();
+
 //            if(i2c_read_delay % 30 == 0){
 //                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
 //            }
