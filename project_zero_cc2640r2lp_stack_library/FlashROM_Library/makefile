@@ -2,7 +2,9 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-CG_TOOL_ROOT := /opt/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.4.LTS
+SHELL = cmd.exe
+
+CG_TOOL_ROOT := D:/ti/ccsv8/tools/compiler/ti-cgt-arm_16.9.7.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -39,8 +41,8 @@ ORDERED_OBJS += \
 
 -include ../makefile.init
 
-RM := rm -rf
-RMDIR := rm -rf
+RM := DEL /F
+RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -179,23 +181,23 @@ main-build: project_zero_cc2640r2lp_stack_library.lib
 # Tool invocations
 project_zero_cc2640r2lp_stack_library.lib: $(OBJS)
 ifneq ($(strip $(ORDERED_OBJS)),)
-	@echo 'Building target: $@'
+	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Archiver'
-	"/opt/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.4.LTS/bin/armar" r "project_zero_cc2640r2lp_stack_library.lib" $(ORDERED_OBJS)
-	@echo 'Finished building target: $@'
+	"D:/ti/ccsv8/tools/compiler/ti-cgt-arm_16.9.7.LTS/bin/armar" r "project_zero_cc2640r2lp_stack_library.lib" $(ORDERED_OBJS)
+	@echo 'Finished building target: "$@"'
 	@echo ' '
 endif
 
 # Other Targets
 clean:
 	-$(RM) $(LIB_OUTPUTS__QUOTED)
-	-$(RM) "HAL/Common/hal_assert.obj" "HAL/Target/CC2650/Drivers/hal_flash_wrapper.obj" "HAL/Target/CC2650/Drivers/hal_rtc_wrapper.obj" "HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj" "HAL/Target/CC2650/_common/mb_patch.obj" "Host/gatt_uuid.obj" "ICallBLE/ble_dispatch_JT.obj" "ICallBLE/ble_dispatch_lite.obj" "ICallBLE/icall_lite_translation.obj" "NPI/npi.obj" "OSAL/osal.obj" "OSAL/osal_bufmgr.obj" "OSAL/osal_cbtimer.obj" "OSAL/osal_clock.obj" "OSAL/osal_memory_icall.obj" "OSAL/osal_pwrmgr.obj" "OSAL/osal_snv_wrapper.obj" "OSAL/osal_timers.obj" "PROFILES/gap.obj" "PROFILES/gapbondmgr.obj" "PROFILES/gattservapp_util.obj" "PROFILES/sm_ecc.obj" "ROM/common_rom_init.obj" "ROM/rom_init.obj" "Startup/ble_user_config.obj" "Startup/icall_startup.obj" "Startup/osal_icall_ble.obj" "TOOLS/onboard.obj" 
-	-$(RM) "HAL/Common/hal_assert.d" "HAL/Target/CC2650/Drivers/hal_flash_wrapper.d" "HAL/Target/CC2650/Drivers/hal_rtc_wrapper.d" "HAL/Target/CC2650/Drivers/hal_trng_wrapper.d" "HAL/Target/CC2650/_common/mb_patch.d" "Host/gatt_uuid.d" "ICallBLE/ble_dispatch_JT.d" "ICallBLE/ble_dispatch_lite.d" "ICallBLE/icall_lite_translation.d" "NPI/npi.d" "OSAL/osal.d" "OSAL/osal_bufmgr.d" "OSAL/osal_cbtimer.d" "OSAL/osal_clock.d" "OSAL/osal_memory_icall.d" "OSAL/osal_pwrmgr.d" "OSAL/osal_snv_wrapper.d" "OSAL/osal_timers.d" "PROFILES/gap.d" "PROFILES/gapbondmgr.d" "PROFILES/gattservapp_util.d" "PROFILES/sm_ecc.d" "ROM/common_rom_init.d" "ROM/rom_init.d" "Startup/ble_user_config.d" "Startup/icall_startup.d" "Startup/osal_icall_ble.d" "TOOLS/onboard.d" 
+	-$(RM) "HAL\Common\hal_assert.obj" "HAL\Target\CC2650\Drivers\hal_flash_wrapper.obj" "HAL\Target\CC2650\Drivers\hal_rtc_wrapper.obj" "HAL\Target\CC2650\Drivers\hal_trng_wrapper.obj" "HAL\Target\CC2650\_common\mb_patch.obj" "Host\gatt_uuid.obj" "ICallBLE\ble_dispatch_JT.obj" "ICallBLE\ble_dispatch_lite.obj" "ICallBLE\icall_lite_translation.obj" "NPI\npi.obj" "OSAL\osal.obj" "OSAL\osal_bufmgr.obj" "OSAL\osal_cbtimer.obj" "OSAL\osal_clock.obj" "OSAL\osal_memory_icall.obj" "OSAL\osal_pwrmgr.obj" "OSAL\osal_snv_wrapper.obj" "OSAL\osal_timers.obj" "PROFILES\gap.obj" "PROFILES\gapbondmgr.obj" "PROFILES\gattservapp_util.obj" "PROFILES\sm_ecc.obj" "ROM\common_rom_init.obj" "ROM\rom_init.obj" "Startup\ble_user_config.obj" "Startup\icall_startup.obj" "Startup\osal_icall_ble.obj" "TOOLS\onboard.obj" 
+	-$(RM) "HAL\Common\hal_assert.d" "HAL\Target\CC2650\Drivers\hal_flash_wrapper.d" "HAL\Target\CC2650\Drivers\hal_rtc_wrapper.d" "HAL\Target\CC2650\Drivers\hal_trng_wrapper.d" "HAL\Target\CC2650\_common\mb_patch.d" "Host\gatt_uuid.d" "ICallBLE\ble_dispatch_JT.d" "ICallBLE\ble_dispatch_lite.d" "ICallBLE\icall_lite_translation.d" "NPI\npi.d" "OSAL\osal.d" "OSAL\osal_bufmgr.d" "OSAL\osal_cbtimer.d" "OSAL\osal_clock.d" "OSAL\osal_memory_icall.d" "OSAL\osal_pwrmgr.d" "OSAL\osal_snv_wrapper.d" "OSAL\osal_timers.d" "PROFILES\gap.d" "PROFILES\gapbondmgr.d" "PROFILES\gattservapp_util.d" "PROFILES\sm_ecc.d" "ROM\common_rom_init.d" "ROM\rom_init.d" "Startup\ble_user_config.d" "Startup\icall_startup.d" "Startup\osal_icall_ble.d" "TOOLS\onboard.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
 pre-build:
-	-/home/artyom/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search         /home/artyom/workspace/handsfree/project_zero_cc2640r2lp_stack_library/TOOLS/build_config.opt         /home/artyom/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/blelib         /home/artyom/workspace/handsfree/project_zero_cc2640r2lp_stack_library/FlashROM_Library/lib_linker.cmd         cc2640         /home/artyom/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search.xml         /home/artyom/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/symbols
+	-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search         D:/HandsFree/project_zero_cc2640r2lp_stack_library/TOOLS/build_config.opt         D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/blelib         D:/HandsFree/project_zero_cc2640r2lp_stack_library/FlashROM_Library/lib_linker.cmd         cc2640         D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search.xml         D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/symbols
 	-@echo ' '
 
 .PHONY: all clean dependents
