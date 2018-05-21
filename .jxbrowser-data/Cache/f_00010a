@@ -1,0 +1,432 @@
+[
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdkCSCY_v5kPE&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "Board.h",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdkCSCY_v5kPE",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdkCSCY_v5kPE?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.h",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "Board.h",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdTGLTBxUIFbU&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "CC2640R2_LAUNCHXL.c",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdTGLTBxUIFbU",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdTGLTBxUIFbU?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.c",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "CC2640R2_LAUNCHXL.c",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdISVfImR1DN0&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "CC2640R2_LAUNCHXL.h",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdISVfImR1DN0",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdISVfImR1DN0?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.h",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "CC2640R2_LAUNCHXL.h",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdUn1RjNaS2-M&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "CC2640R2_LAUNCHXL_TIRTOS.cmd",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdUn1RjNaS2-M",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdUn1RjNaS2-M?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.cmd",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "CC2640R2_LAUNCHXL_TIRTOS.cmd",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdiIKdK1cDACs&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "README.html",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdiIKdK1cDACs",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdiIKdK1cDACs?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.html",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "README.html",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdsLrZiZzlChE&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "README.md",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdsLrZiZzlChE",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdsLrZiZzlChE?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.md",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "README.md",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdTu0PcD8QciY&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "adcsinglechannel.c",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdTu0PcD8QciY",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdTu0PcD8QciY?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.c",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "adcsinglechannel.c",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URd8A49gwPa22M&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "ccfg.c",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URd8A49gwPa22M",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URd8A49gwPa22M?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.c",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "ccfg.c",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdSga6fBrdqWY&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "main_tirtos.c",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdSga6fBrdqWY",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdSga6fBrdqWY?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.c",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "main_tirtos.c",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  },
+  {
+    "downloadLink": "api/bundle?vid=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58&download=true&analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel",
+    "makeofflineLink": "api/bundles?vids=com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "removeofflineLink": "api/resources?id=URdA_oHJ1WPXHE&path=Software/SimpleLink CC2640R2 SDK/Examples/Development Tools/CC2640R2 LaunchPad/TI Drivers/adcsinglechannel/TI-RTOS/CCS Compiler/adcsinglechannel&removeoffline=true",
+    "kernel": [
+      "tirtos"
+    ],
+    "name": "overview.rov.json",
+    "coreTypes": [
+      "Cortex M.CC2640R2F"
+    ],
+    "resourceType": "file",
+    "advanced": {
+      "overrideProjectSpecDeviceId": true
+    },
+    "compiler": [
+      "ccs"
+    ],
+    "devtools": [
+      "CC2640R2 LaunchPad"
+    ],
+    "_id": "URdA_oHJ1WPXHE",
+    "version": "UNVERSIONED",
+    "semver": "0.0.0",
+    "dependencies": [],
+    "link": "api/linkTo/URdA_oHJ1WPXHE?analyticsDevice=undefined&analyticsDevtool=CC2640R2%20LaunchPad&analyticsPath=Software%2FSimpleLink%20CC2640R2%20SDK%2FExamples%2FDevelopment%20Tools%2FCC2640R2%20LaunchPad%2FTI%20Drivers%2Fadcsinglechannel%2FTI-RTOS%2FCCS%20Compiler%2Fadcsinglechannel&extname=.json",
+    "package": "SimpleLink CC2640R2 SDK",
+    "packageId": "com.ti.SIMPLELINK_CC2640R2_SDK",
+    "packageVersion": "1.50.00.58",
+    "packageUId": "com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58",
+    "packagePath": "simplelink_cc2640r2_sdk_1_50_00_58",
+    "allowPartialDownload": false,
+    "license": "simplelink_cc2640r2_sdk_1_50_00_58/license_simplelink_cc2640r2_sdk_1_50_00_58.txt",
+    "linkType": "local",
+    "implictDependencyFile": "simplelink_cc2640r2_sdk_1_50_00_58/.metadata/.tirex/.dependencies/spec_2.dependency.tirex.json",
+    "parentID": "URdpixF9rP6yWA",
+    "isIncludedFile": true,
+    "type": "resource",
+    "text": "overview.rov.json",
+    "url": "/api/resources?devtool=CC2640R2%20LaunchPad&package=com.ti.SIMPLELINK_CC13X0_SDK__2.10.00.36::com.ti.SIMPLELINK_CC13X2_SDK__2.10.00.48::com.ti.SIMPLELINK_MSP432_SDK__2.10.00.14::com.ti.SIMPLELINK_MSP432E4_SDK__2.10.00.17::com.ti.SIMPLELINK_CC26X2_SDK__2.10.00.44::com.ti.SIMPLELINK_CC2640R2_SDK__1.50.00.58::com.ti.SIMPLELINK_CC32XX_SDK__2.10.00.04::com.ti.SIMPLELINK_CC2640R2_SDK_BLE_EXAMPLE_PACK__1.40.00.50::com.ti.SIMPLELINK_SDK_BLE_PLUGIN__1.40.00.42::com.ti.SIMPLELINK_MSP432_SDK_WIFI_PLUGIN__1.55.00.42::com.ti.SIMPLELINK_SDK_VOICE_DETECTION_PLUGIN__1.50.00.15::com.ti.SAIL__1.20.00.02::com.ti.AZURE_CC32XX__1.00.00.10::com.ti.AWS_CC32XX__1.10.00.07::c2000ware_software_package__1.00.04.00::digital_power_c2000ware_sdk_software_package__1.00.01.00::powerSUITE_software_package__2.01.00.00::com.ti.MMWAVE_SDK__01.02.00.05::com.ti.mmwave_training__1.6.2::com.ti.mmwave_industrial_toolbox__2.2.0::msp430ware__3.80.03.07::tm4c__2.1.3.156::tirtos_cc13xx_cc26xx__2.21.00.06::sitara__1.02.00.00::tirtos_msp43x__2.20.00.06::tirtos_tivac__2.16.00.08::tirtos_simplelink__2.13.01.09::sysbios__6.50.01.12::xdctools__3.50.05.12::com.ti.SIMPLELINK_SDK_TI_15_4_STACK_PLUGIN__1.60.00.16::com.ti.mmwave_automotive_toolbox__1.2.0::com.ti.SIMPLELINK_ZIGBEE_SDK_PLUGIN__1.60.00.14&path=Software/SimpleLink%20CC2640R2%20SDK/Examples/Development%20Tools/CC2640R2%20LaunchPad/TI%20Drivers/adcsinglechannel/TI-RTOS/CCS%20Compiler/adcsinglechannel",
+    "packageOrder": 48,
+    "offline": "true"
+  }
+]

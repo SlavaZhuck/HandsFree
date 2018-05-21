@@ -12,7 +12,7 @@
 //#define HANDS_FREE_NOT_BOARD
 #define HANDS_FREE_NOT_BOARD_NEW_VERSION
 
-//#define UART_DEBUG
+#define UART_DEBUG
 #define LPF //LPF FP = 2.5k FS = 3.5k stopband, 19 order
 
 #endif /* STARTUP_GENERALDEF_H_ */
