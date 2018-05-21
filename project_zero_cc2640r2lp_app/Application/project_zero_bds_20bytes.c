@@ -152,7 +152,7 @@
 #define I2S_MEM_BASE                        (GPRAM_BASE + FlashSectorSizeGet())
 #define AUDIO_DUPLEX_STREAM_TYPE_NONE       AUDIO_DUPLEX_CMD_STOP
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM      AUDIO_DUPLEX_CMD_START
-#define I2S_SAMP_PER_FRAME                  80
+#define I2S_SAMP_PER_FRAME                  160
 #define NUM_OF_CHANNELS                     2
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
@@ -358,7 +358,6 @@ static I2SCC26XX_Params i2sParams =
     .currentStream          = &i2sStream
 };
 
-int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
 static uint16_t i2c_read_delay = 0;
  int16_t raw_data_send[I2S_SAMP_PER_FRAME];
  uint8_t packet_data[V_STREAM_INPUT_LEN];

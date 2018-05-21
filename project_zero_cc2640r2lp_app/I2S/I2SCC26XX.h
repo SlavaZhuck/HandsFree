@@ -249,7 +249,7 @@ extern "C" {
 #define I2SCC26XX_MIN_ALLOWED_QUEUE_SIZE            3
 
 #ifndef I2SCC26XX_QUEUE_SIZE
-#define    I2SCC26XX_QUEUE_SIZE                     7
+#define    I2SCC26XX_QUEUE_SIZE                     5
 #endif // !defined(I2SCC26XX_QUEUE_SIZE)
 
 /*!
