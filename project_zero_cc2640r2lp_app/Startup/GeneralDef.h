@@ -10,9 +10,9 @@
 
 //should be defined one of boards for garniture or nothing for TI demoboard
 //#define HANDS_FREE_NOT_BOARD
-//#define HANDS_FREE_NOT_BOARD_NEW_VERSION
+#define HANDS_FREE_NOT_BOARD_NEW_VERSION
 
 #define UART_DEBUG
-#define LPF //LPF FP = 2.5k FS = 3.5k stopband, 19 order
+//#define LPF //LPF FP = 2.5k FS = 3.5k stopband, 19 order
 
 #endif /* STARTUP_GENERALDEF_H_ */

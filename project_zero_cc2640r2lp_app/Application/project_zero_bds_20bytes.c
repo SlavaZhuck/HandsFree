@@ -409,7 +409,8 @@ unsigned char key_val;
 
 #ifdef UART_DEBUG
   #define UART_BAUD_RATE 921600
-  int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+  //int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+  int16_t uart_data_send[80+1];
 #endif
 
 #ifndef UART_DEBUG
@@ -915,7 +916,15 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 #endif
 
 #ifdef  UART_DEBUG
-                memcpy(uart_data_send, &raw_data_send[1], sizeof(raw_data_send));
+                uint8_t j = 0;
+                int16_t temp_output[I2S_SAMP_PER_FRAME/2];
+                for(uint8_t i= 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
+                {
+                    temp_output[j] = (mic_data_1ch[i]+mic_data_1ch[i-1])/2;
+                    j++;
+                }
+                memcpy(&uart_data_send[1], temp_output, sizeof(temp_output));
+                //memcpy(uart_data_send[1], &raw_data_send[0], sizeof(raw_data_send));
                 uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
                 UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
@@ -1899,8 +1908,9 @@ static void stop_voice_handle(void)
     }
     memset ( packet_data,   0, sizeof(packet_data) );
     memset ( raw_data_send, 0, sizeof(raw_data_send) );
+#ifdef LPF
     memset ( &rtDW, 0, sizeof(rtDW) );
-
+#endif
     user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
 
