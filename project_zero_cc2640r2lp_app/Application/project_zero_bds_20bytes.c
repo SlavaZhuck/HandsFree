@@ -410,7 +410,7 @@ unsigned char key_val;
 #ifdef UART_DEBUG
   #define UART_BAUD_RATE 921600
   //int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
-  int16_t uart_data_send[80+1];
+  int16_t uart_data_send[I2S_SAMP_PER_FRAME/2+1];
 #endif
 
 #ifndef UART_DEBUG
@@ -924,7 +924,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                     j++;
                 }
                 memcpy(&uart_data_send[1], temp_output, sizeof(temp_output));
-                //memcpy(uart_data_send[1], &raw_data_send[0], sizeof(raw_data_send));
+                //memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
                 uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
                 UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
