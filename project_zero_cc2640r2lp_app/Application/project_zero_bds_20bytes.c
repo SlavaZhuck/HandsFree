@@ -152,7 +152,11 @@
 #define I2S_MEM_BASE                        (GPRAM_BASE + FlashSectorSizeGet())
 #define AUDIO_DUPLEX_STREAM_TYPE_NONE       AUDIO_DUPLEX_CMD_STOP
 #define AUDIO_DUPLEX_STREAM_TYPE_ADPCM      AUDIO_DUPLEX_CMD_START
-#define I2S_SAMP_PER_FRAME                  160
+#ifdef DOUBLE_DATA_RATE
+    #define I2S_SAMP_PER_FRAME                  160
+#else
+    #define I2S_SAMP_PER_FRAME                  80
+#endif
 #define NUM_OF_CHANNELS                     2
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
@@ -409,8 +413,7 @@ unsigned char key_val;
 
 #ifdef UART_DEBUG
   #define UART_BAUD_RATE 921600
-  //int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
-  int16_t uart_data_send[I2S_SAMP_PER_FRAME/2+1];
+  int16_t uart_data_send[80+1];
 #endif
 
 #ifndef UART_DEBUG
@@ -916,6 +919,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 #endif
 
 #ifdef  UART_DEBUG
+    #ifdef  DOUBLE_DATA_RATE
                 uint8_t j = 0;
                 int16_t temp_output[I2S_SAMP_PER_FRAME/2];
                 for(uint8_t i= 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
@@ -924,7 +928,10 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                     j++;
                 }
                 memcpy(&uart_data_send[1], temp_output, sizeof(temp_output));
-                //memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+                //memcpy(uart_data_send[1], &raw_data_send[0], sizeof(raw_data_send));
+    #else
+                memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+    #endif
                 uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
                 UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
@@ -1908,9 +1915,8 @@ static void stop_voice_handle(void)
     }
     memset ( packet_data,   0, sizeof(packet_data) );
     memset ( raw_data_send, 0, sizeof(raw_data_send) );
-#ifdef LPF
-    memset ( &rtDW, 0, sizeof(rtDW) );
-#endif
+    //memset ( &rtDW, 0, sizeof(rtDW) );
+
     user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
 

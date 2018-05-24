@@ -45,7 +45,7 @@
 #include <ti/drivers/power/PowerCC26XX.h>
 
 #include "I2SCC26XX.h"
-
+#include "GeneralDef.h"
 #include <string.h>
 
 /* driverlib header files */
@@ -202,7 +202,11 @@ I2SCC26XX_Handle I2SCC26XX_open(I2SCC26XX_Handle handle, I2SCC26XX_Params *param
     object->audioClkCfg.wclkPhase = I2SCC26XX_WordClockPhase_Dual;           /* I2S Word Clock Phase */
     object->audioClkCfg.wclkInverted = I2SCC26XX_ClockSource_Normal;         /* I2S Invert Word Clock */
     object->audioClkCfg.wclkSource = I2SCC26XX_WordClockSource_Int;          /* I2S Word Clock source */
-    object->audioClkCfg.bclkDiv = 94;//375/2;//375; 94; !!188                                   /* I2S Bit Clock divider override */
+#ifdef DOUBLE_DATA_RATE
+    object->audioClkCfg.bclkDiv = 94;;//375/2;//375;94; 750                                   /* I2S Bit Clock divider override */
+#else
+    object->audioClkCfg.bclkDiv = 188;//375/2;//375;94; 750                                   /* I2S Bit Clock divider override */
+#endif
     object->audioClkCfg.reserved = 0;
     object->audioClkCfg.bclkSource = I2SCC26XX_BitClockSource_Int;           /* I2S Bit Clock source */
     object->audioClkCfg.mclkDiv = 4;                                         /* I2S Master Clock divider override */

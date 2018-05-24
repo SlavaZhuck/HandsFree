@@ -15,4 +15,6 @@
 #define UART_DEBUG
 //#define LPF //LPF FP = 2.5k FS = 3.5k stopband, 19 order
 
+//#define DOUBLE_DATA_RATE
+
 #endif /* STARTUP_GENERALDEF_H_ */
