@@ -128,7 +128,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1300
+#define PRZ_TASK_STACK_SIZE                   1100
 #endif
 
 // Internal Events for RTOS application
@@ -414,11 +414,22 @@ unsigned char key_val;
 #ifdef UART_DEBUG
   #define UART_BAUD_RATE 921600
   int16_t uart_data_send[80+1];
-#endif
 
+#endif
+#ifdef DOUBLE_DATA_RATE
+  int16_t temp_output[I2S_SAMP_PER_FRAME/2];
+  int16_t extrapolate_buf[I2S_SAMP_PER_FRAME/2];
+#endif
 #ifndef UART_DEBUG
   #define UART_BAUD_RATE 115200
 #endif
+
+#define NOISE_POWER 30000
+#define SOUND_DELAY 25
+
+  uint64_t channel_power = 0;
+  bool sound_appeared = 0;
+  uint32_t sound_timestamp = 0;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -918,22 +929,24 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 }
 #endif
 
-#ifdef  UART_DEBUG
-    #ifdef  DOUBLE_DATA_RATE
+#ifdef   DOUBLE_DATA_RATE
+
                 uint8_t j = 0;
-                int16_t temp_output[I2S_SAMP_PER_FRAME/2];
                 for(uint8_t i= 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
                 {
                     temp_output[j] = (mic_data_1ch[i]+mic_data_1ch[i-1])/2;
                     j++;
                 }
-                memcpy(&uart_data_send[1], temp_output, sizeof(temp_output));
-                //memcpy(uart_data_send[1], &raw_data_send[0], sizeof(raw_data_send));
+#endif
+
+#ifdef  UART_DEBUG
+    #ifdef   DOUBLE_DATA_RATE
+            memcpy(&uart_data_send[1], temp_output, sizeof(temp_output));
     #else
-                memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+            memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
     #endif
-                uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
-                UART_write(uart, uart_data_send, sizeof(uart_data_send));
+            uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
+            UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
                 bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
@@ -993,7 +1006,51 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
                 decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 2]));
 
+#ifdef DOUBLE_DATA_RATE
+
+                uint8_t j =0;
+                ADPCMDecoderBuf2((char*)(packet_data), extrapolate_buf, &decoder_adpcm);
+                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i+=2)
+                {
+                    raw_data_send[i] = extrapolate_buf[i/2];
+                }
+                for(uint8_t i = 1 ; i < I2S_SAMP_PER_FRAME; i+=2)
+                {
+                    if(i == I2S_SAMP_PER_FRAME-1){
+                        raw_data_send[i] = extrapolate_buf[j];
+                    }
+                    else
+                    {
+                        raw_data_send[i] = (extrapolate_buf[j]+extrapolate_buf[j+1])/2;
+                    }
+                    j++;
+                }
+#else
                 ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
+#endif
+                channel_power = 0;
+                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i++)
+                {
+                    channel_power += (uint64_t)((int32_t)raw_data_send[i] * (int32_t)raw_data_send[i]);
+                }
+                channel_power = channel_power/I2S_SAMP_PER_FRAME;
+
+                if (channel_power > NOISE_POWER)
+                {
+                    sound_appeared = true;
+                    sound_timestamp = SOUND_DELAY;
+                }
+
+                if(sound_timestamp> 0 )
+                {
+                    sound_timestamp--;
+                }
+                else
+                {
+                    sound_appeared = false;
+                    memset(raw_data_send, 0, sizeof(raw_data_send));
+                }
+
             }else{
                 memset ( packet_data,   0, sizeof(packet_data) );
                 memset ( raw_data_send, 0, sizeof(raw_data_send));
@@ -1935,8 +1992,12 @@ static void pdm_samp_hdl(void)
     encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
 
     packet_counter++;
-
+#ifdef DOUBLE_DATA_RATE
+    ADPCMEncoderBuf2(temp_output, (char*)(encode_buf), &encoder_adpcm);
+#else
     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
+#endif
+
     encrypt_packet(encode_buf);
 
     Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
