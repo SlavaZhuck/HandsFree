@@ -1,6 +1,6 @@
 #
 # This file was generated based on the configuration script:
-#     /home/artyom/workspace/ti/cit/HandsFree/project_zero_cc2640r2lp_app/TOOLS/app_ble_uartlog.cfg
+#     E:\Work_CET\Hands_free\Project\firmware\project_zero_cc2640r2lp_stack_library\project_zero_cc2640r2lp_app\TOOLS\app_ble_uartlog.cfg
 #
 # This makefile may be included in other makefiles that need to build
 # the libraries containing the compiled source files generated as
@@ -14,7 +14,7 @@
 #
 # The absolute path to the generated source directory (at the time the
 # sources were generated) is:
-#    /home/artyom/workspace/ti/cit/HandsFree/project_zero_cc2640r2lp_app/TOOLS/src
+#    E:\Work_CET\Hands_free\Project\firmware\project_zero_cc2640r2lp_stack_library\project_zero_cc2640r2lp_app\TOOLS\src
 #
 GEN_SRC_DIR ?= ../TOOLS/src
 

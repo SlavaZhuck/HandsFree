@@ -293,6 +293,12 @@ PIN_Config buttonPinTable[] = {
     PIN_TERMINATE
 };
 
+PIN_Config powerPinTable[] = {
+    CC2640R2_LAUNCHXL_PIN_POWER  | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    PIN_TERMINATE
+};
+
+
 // Global pin's handle ans status
 PIN_Config ledPinTable[] = {
   Board_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
@@ -339,6 +345,9 @@ uint16_t get_bat_voltage(void);
 static PIN_Handle ledPinHandle;
 static PIN_State ledPinState;
 
+static PIN_Handle powerPinHandle;
+static PIN_State powerPinState;
+
 static GPTimerCC26XX_Params tim_params;
 static GPTimerCC26XX_Handle blink_tim_hdl = NULL;
 //GPTimerCC26XX_Handle system_time = NULL;
@@ -376,10 +385,25 @@ static uint8_t current_volume;
 #define ADCBUFSIZE      1
 #define SAMPFREQ        1000000
 
+#define ADC_POWER_BUTTON_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL6
+#define ADC_VOLTAGE_MEASURE_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL7
+#define POWER_ON 0
+#define POWER_OFF 1
+
+#define ADC_POWER_BUTTON_THRESHOLD 100
+
+static bool button_check = TRUE;
+static bool power_state  = FALSE;
+
  ADCBuf_Handle adc_hdl;
 static ADCBuf_Params adc_params;
  ADCBuf_Conversion adc_conversion;
-int16_t adc_data[ADCBUFSIZE];
+
+ int16_t batt_voltage[ADCBUFSIZE];
+ int16_t power_button_voltage[ADCBUFSIZE];
+
+ int16_t power_button_counter = 0;
+
 static int16_t samp_buf1[ADCBUFSIZE];
 static int16_t samp_buf2[ADCBUFSIZE];
 
@@ -635,6 +659,12 @@ static void ProjectZero_init(void)
 
   PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
 
+  powerPinHandle = PIN_open(&powerPinState, powerPinTable);
+  if(!powerPinHandle)
+  {
+     Task_exit();
+  }
+  PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_ON);
   // ******************************************************************
   // BLE Stack initialization
   // ******************************************************************
@@ -991,6 +1021,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_Read_ADC_Voltage:
+            adc_conversion.adcChannel = ADC_VOLTAGE_MEASURE_PIN;
+            button_check = FALSE;
             if (ADCBuf_convert(adc_hdl, &adc_conversion, 1) != ADCBuf_STATUS_SUCCESS) {
                 while(1);
             }
@@ -1774,7 +1806,7 @@ static void voice_hdl_init(void)
     adc_hdl = ADCBuf_open(Board_ADCBUF0, &adc_params);//Board_ADCBUF0
 //
     adc_conversion.arg = NULL;
-    adc_conversion.adcChannel = CC2640R2_LAUNCHXL_ADCBUF0CHANNEL5;
+    adc_conversion.adcChannel = ADC_POWER_BUTTON_PIN;
     adc_conversion.sampleBuffer = samp_buf1;
     adc_conversion.sampleBufferTwo = samp_buf2;
     adc_conversion.samplesRequestedCount = ADCBUFSIZE;
@@ -1791,15 +1823,51 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     countAdc++;
     int16_t *buf_ptr = (int16_t*)completedADCBuffer;
     /* handle receive data */
-    for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
-        adc_data[i] = buf_ptr[i] ;
+//    PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_ON); //turn ON power
+
+    if(button_check)
+    {
+        for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
+        {
+            power_button_voltage[i] = buf_ptr[i] ;
+            if (power_button_voltage[i] < ADC_POWER_BUTTON_THRESHOLD)
+            {
+                power_button_counter++;
+            }
+            else
+            {
+                power_button_counter--;
+            }
+            if(power_button_counter>3)
+            {
+                power_button_counter = 3;
+                if (power_state == FALSE)
+                    PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_ON); //turn ON power
+                else
+                    PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_OFF); //turn OFF power
+
+            }
+            else if (power_button_counter <= 0)
+            {
+                power_button_counter = 0;
+                if (PIN_getOutputValue(CC2640R2_LAUNCHXL_PIN_POWER))
+                    power_state = FALSE;
+                else
+                    power_state = TRUE;
+            }
+        }
+    }
+    else
+    {
+//        for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
+//        {
+//            batt_voltage[i] = buf_ptr[i] ;
+//        }
+        batt_voltage[0] = buf_ptr[0] ;
+        button_check = TRUE;
+    }
    // ADCBuf_convertCancel(adc_hdl);
 }
-
-
-
-
-
 
 
 /*
@@ -1888,6 +1956,13 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 {
     static bool blink = false;
     static bool bat_low = false;
+
+    if(button_check)
+    {    adc_conversion.adcChannel = ADC_POWER_BUTTON_PIN;
+        if (ADCBuf_convert(adc_hdl, &adc_conversion, 1) != ADCBuf_STATUS_SUCCESS) {
+            while(1);
+        }
+    }
 
     if(blink)
     {
