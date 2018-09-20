@@ -103,6 +103,7 @@
 #include "driverlib/aon_batmon.h"
 #include "Uart_commands.h"
 #include "max9860_i2c.h"
+#include "Interpolation.h"
 
 #ifdef  LPF
   #include "../LPF/LPF.h"                       /* Model's header file */
@@ -351,9 +352,9 @@ static I2SCC26XX_BufferRequest bufferRequest;
 static I2SCC26XX_Handle i2sHandle = (I2SCC26XX_Handle)&(I2SCC26XX_config);
 static I2SCC26XX_Params i2sParams =
 {
-    .requestMode            = I2SCC26XX_CALLBACK_MODE,
+    .requestMode            = I2SCC26XX_CALLBACK_MODE,//I2SCC26XX_CALLBACK_MODE,
     .ui32requestTimeout     = BIOS_WAIT_FOREVER,
-    .callbackFxn            = bufRdy_callback,
+    .callbackFxn            = bufRdy_callback,//bufRdy_callback,
     .blockSize              = 0,
     .pvContBuffer           = NULL,
     .ui32conBufTotalSize    = 0,
@@ -395,6 +396,14 @@ static uint8_t *i2sContMgtBuffer = NULL;
 //static int16_t mic_data[I2S_SAMP_PER_FRAME];
 static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
 //static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
+
+static uint32_t timer_count = 0;
+static uint32_t task_count = 0;
+
+bool gotBufferInOut = false;
+
+bool gotBufferIn = false;
+bool gotBufferOut = false;
 
 static CryptoCC26XX_Handle crypto_hdl;
 static CryptoCC26XX_Params crypto_params;
@@ -875,7 +884,7 @@ void rt_OneStep(void)
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-    bool gotBufferInOut = false;
+
 
     switch (pMsg->type)
     {
@@ -915,50 +924,128 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
-            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
-            gotBufferInOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
-            if (gotBufferInOut)
+            task_count++;
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN;
+            I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferIn)
             {
-                memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
                 memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
-#ifdef  LPF
-                for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
-                    rtU.In1 = mic_data_1ch[i];
-                    rt_OneStep();
-                    mic_data_1ch[i] = rtY.Out1;
-                }
-#endif
-
-#ifdef   DOUBLE_DATA_RATE
-
-                uint8_t j = 0;
-                for(uint8_t i= 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
-                {
-                    temp_output[j] = (mic_data_1ch[i]+mic_data_1ch[i-1])/2;
-                    j++;
-                }
-#endif
-
-#ifdef  UART_DEBUG
-    #ifdef   DOUBLE_DATA_RATE
-            memcpy(&uart_data_send[1], temp_output, sizeof(temp_output));
-    #else
-            memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
-    #endif
-            uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
-            UART_write(uart, uart_data_send, sizeof(uart_data_send));
-#endif
-                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+                bufferRelease.bufferHandleOut = NULL;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-                gotBufferInOut = 0;
+                gotBufferIn = 0;
                 i2c_read_delay++;
-
             }
-            pdm_samp_hdl();
-//            if(i2c_read_delay % 30 == 0){
-//                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
+
+//  int16_t temp_output[I2S_SAMP_PER_FRAME/2];
+//  int16_t extrapolate_buf[I2S_SAMP_PER_FRAME];
+#ifdef DOUBLE_DATA_RATE
+
+            uint16_t j = 0;
+
+
+            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME; i+=2)
+            {
+                temp_output[i/2] = (mic_data_1ch[i]+mic_data_1ch[i+1])/2;
+                j++;
+            }
+
+
+
+            memset(mic_data_1ch, 0x0, sizeof(mic_data_1ch));
+
+
+            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i+=2)
+            {
+                mic_data_1ch[i] = temp_output[i/2];
+            }
+            for(uint8_t i = 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
+            {
+                if(i == I2S_SAMP_PER_FRAME-1)
+                {
+                    mic_data_1ch[i] = mic_data_1ch[i-1];
+                }
+                else
+                {
+                    mic_data_1ch[i] = (mic_data_1ch[i-1]+mic_data_1ch[i+1])/2;
+                }
+            }
+
+//            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME/2; i++)
+//            {
+//                extrapolate_buf[i] = i;
 //            }
+//            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i+=2)
+//            {
+//                mic_data_1ch[i] = temp_output[i/2];
+//            }
+//
+//            for(uint8_t i = 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
+//            {
+//                if(i == I2S_SAMP_PER_FRAME-1)
+//                {
+//                    mic_data_1ch[i] = mic_data_1ch[i-1];
+//                }
+//                else
+//                {
+//                    mic_data_1ch[i] = InterpolateLagrangePolynomial(((float)i)/2.0f, extrapolate_buf, temp_output, I2S_SAMP_PER_FRAME/2);
+//                }
+//            }
+
+#endif
+            /*
+            uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
+            ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
+
+
+            ///////////////////////////////////////////////////////////////////////////////////////
+            //compressing start
+//            uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
+            ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
+            //compressing end
+
+            //decompressing
+            decoder_adpcm.prevsample = ((int16_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
+                    (int16_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1]);
+
+            decoder_adpcm.previndex = ((int32_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2]));
+            ADPCMDecoderBuf2((char*)(encode_buf), mic_data_1ch, &decoder_adpcm);
+            //decompressing end
+            ///////////////////////////////////////////////////////////////////////////////////////
+*/
+
+            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
+            I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+            if (gotBufferOut)
+            {
+                memcpy(bufferRequest.bufferOut, mic_data_1ch, sizeof(mic_data_1ch));
+                //memset(bufferRequest.bufferOut, 0x53, sizeof(mic_data_1ch));
+                bufferRelease.bufferHandleIn = NULL;
+                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+                I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+                gotBufferOut = 0;
+                i2c_read_delay++;
+            }
+
+//            bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
+//            I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+//            if (gotBufferInOut)
+//            {
+//                //memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
+//                memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
+//                memcpy(bufferRequest.bufferOut, mic_data_1ch, sizeof(mic_data_1ch));
+//
+//                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+//                bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
+//                I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+//                gotBufferInOut = 0;
+//                i2c_read_delay++;
+//            }
+
+
         break;
 
         case APP_MSG_Buttons:
@@ -1061,6 +1148,18 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 }
 
 
+static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
+{
+    I2SCC26XX_Status streamStatus = pStreamNotification->status;
+
+    if (streamStatus == I2SCC26XX_STREAM_BUFFER_READY || streamStatus == I2SCC26XX_STREAM_BUFFER_READY_BUT_NO_AVAILABLE_BUFFERS)
+    {
+        gotBufferOut = true;
+        gotBufferIn = true;
+        gotBufferInOut = true;
+
+    }
+}
 /******************************************************************************
  *****************************************************************************
  *
@@ -1132,13 +1231,13 @@ static void user_processGapStateChangeEvt(gaprole_States_t newState)
     case GAPROLE_WAITING:
 
       // Turn off periodic clocks for ind/noti demo
-      stop_voice_handle();
+      //stop_voice_handle();
       break;
 
     case GAPROLE_WAITING_AFTER_TIMEOUT:
 
       // Turn off periodic clocks for ind/noti demo
-      stop_voice_handle();
+     // stop_voice_handle();
       break;
 
     case GAPROLE_ERROR:
@@ -1237,7 +1336,7 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       }
       else
       {
-          stop_voice_handle();
+          //stop_voice_handle();
       }
       break;
 
@@ -1712,8 +1811,11 @@ static void voice_hdl_init(void)
     if (samp_tim_hdl == NULL) {
         while (1);
     }
-    GPTimerCC26XX_setLoadValue(samp_tim_hdl, (GPTimerCC26XX_Value)SAMP_TIME);
+    GPTimerCC26XX_setLoadValue(samp_tim_hdl, (GPTimerCC26XX_Value)(SAMP_TIME));
     GPTimerCC26XX_registerInterrupt(samp_tim_hdl, samp_timer_callback, GPT_INT_TIMEOUT);
+    max9860_I2C_Shutdown_state(0);//disable shutdown_mode
+
+    GPTimerCC26XX_start(samp_tim_hdl);
 
     buttonPinHandle = PIN_open(&buttonPinState, buttonPinTable);
     if(!buttonPinHandle) {
@@ -1781,6 +1883,7 @@ static void voice_hdl_init(void)
     if (!adc_hdl){
         while(1);
     }
+    start_voice_handle();
     /* Start converting. */
 }
 
@@ -1875,14 +1978,6 @@ void button_processing(void){
 
 }
 
-static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
-{
-    I2SCC26XX_Status streamStatus = pStreamNotification->status;
-
-    if (streamStatus == I2SCC26XX_STREAM_BUFFER_READY || streamStatus == I2SCC26XX_STREAM_BUFFER_READY_BUT_NO_AVAILABLE_BUFFERS)
-    {
-    }
-}
 
 static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
@@ -1928,23 +2023,23 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
 
-    if(stream_on){
+//    if(stream_on){
 
-        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
+//        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
-
-    }
+        timer_count++;
+ //   }
 }
 
 static void start_voice_handle(void)
 {
     max9860_I2C_Shutdown_state(0);//disable shutdown_mode
-    user_enqueueRawAppMsg(APP_MSG_Load_vol, &vol_val, 1); // read global vol level
+    //user_enqueueRawAppMsg(APP_MSG_Load_vol, &vol_val, 1); // read global vol level
     PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
-    GPTimerCC26XX_start(samp_tim_hdl);
+    //GPTimerCC26XX_start(samp_tim_hdl);
     I2SCC26XX_startStream(i2sHandle);
-    HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
-    HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
+    //HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
+    //HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
     packet_counter = 0;
 }

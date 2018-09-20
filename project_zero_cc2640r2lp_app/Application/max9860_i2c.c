@@ -34,7 +34,7 @@ void max9860_I2C_Init(void){
     i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
     i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
     i2cTxBuffer[4]  = 0x50;//!interface  0x50                        //digital audio interface  0x06
-    i2cTxBuffer[5]  = 0x10;//!interface  0x10                                                   0x07
+    i2cTxBuffer[5]  = 0x00;//!interface  0x10                                                   0x07
 #ifdef DOUBLE_DATA_RATE
     i2cTxBuffer[6]  = 0x11;//!voice filter    0x11               //digital filtering        0x08
 #else
@@ -45,8 +45,8 @@ void max9860_I2C_Init(void){
     i2cTxBuffer[9]  = 0x00;//!DAC gain and sidetone          0x60                           0x0B
     i2cTxBuffer[10] = 0x40;//!microphone gain                    //MIC level control        0x0C
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
-    i2cTxBuffer[12] = 0x01;//!microphone AGC 0x01              //MIC automatic gain control 0x0E  //for Vova
-    i2cTxBuffer[13] = 0xE0;//!Noise gate, mic AGC  0x4F                                     0x0F  //for Vova
+    i2cTxBuffer[12] = 0x00;//!microphone AGC 0x01              //MIC automatic gain control 0x0E  //for Vova
+    i2cTxBuffer[13] = 0x00;//!Noise gate, mic AGC  0x4F                                     0x0F  //for Vova
     i2cTxBuffer[14] = 0x00;//!System shutdown                    //POWER MANAGEMENT         0x10
 
     i2cTransaction.slaveAddress = 0x10;
@@ -97,7 +97,7 @@ void max9860_I2C_Shutdown_state(uint8_t state){
     if(state){
         i2cTxBuffer[1]  = 0x00;//!DAC att  digital level control    0x09
     }else{
-        i2cTxBuffer[1]  = 0x8B;
+        i2cTxBuffer[1]  = 0x8A;
     }
     I2C_transfer(i2c, &i2cTransaction);
 }
