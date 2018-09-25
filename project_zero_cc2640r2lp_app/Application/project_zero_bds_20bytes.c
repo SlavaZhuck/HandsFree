@@ -372,7 +372,7 @@ static uint16_t i2c_read_delay = 0;
  static unsigned char vol_val = 1;
  static unsigned char i2c_val = 1;
 
-static uint8_t current_volume;
+static uint8_t current_volume = INIT_GAIN;
 
 #define ADCBUFSIZE      1
 #define SAMPFREQ        1000000
@@ -393,9 +393,12 @@ static int stream_on = 0;
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
 
+#define SMOOTH_FACTOR 1
 //static int16_t mic_data[I2S_SAMP_PER_FRAME];
-static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
-//static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
+static int16_t mic_data_current[I2S_SAMP_PER_FRAME];
+static int16_t mic_data_out[I2S_SAMP_PER_FRAME];
+static int16_t mic_data_temp[I2S_SAMP_PER_FRAME];
+static int16_t mic_data_prevNsamp[SMOOTH_FACTOR];
 
 static uint32_t timer_count = 0;
 static uint32_t task_count = 0;
@@ -881,6 +884,7 @@ void rt_OneStep(void)
   }
 #endif
 
+
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
@@ -925,11 +929,23 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_GET_VOICE_SAMP:
             task_count++;
+
+
+#ifdef SMOOTHING
+            //filling previous buffers and temp buffer
+            for(uint16_t i = 0; i < SMOOTH_FACTOR; i++)
+            {
+                mic_data_prevNsamp[i] = mic_data_temp[I2S_SAMP_PER_FRAME - 1 - i];
+            }
+            memcpy(mic_data_temp, mic_data_current, sizeof(mic_data_current));
+#endif
+
+
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN;
             I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferIn)
             {
-                memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
+                memcpy(mic_data_current, bufferRequest.bufferIn, sizeof(mic_data_current));
                 bufferRelease.bufferHandleOut = NULL;
                 bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
@@ -937,92 +953,70 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 i2c_read_delay++;
             }
 
-//  int16_t temp_output[I2S_SAMP_PER_FRAME/2];
-//  int16_t extrapolate_buf[I2S_SAMP_PER_FRAME];
-#ifdef DOUBLE_DATA_RATE
-
-            uint16_t j = 0;
-
-
-            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME; i+=2)
-            {
-                temp_output[i/2] = (mic_data_1ch[i]+mic_data_1ch[i+1])/2;
-                j++;
-            }
 
 
 
-            memset(mic_data_1ch, 0x0, sizeof(mic_data_1ch));
-
-
-            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i+=2)
-            {
-                mic_data_1ch[i] = temp_output[i/2];
-            }
-            for(uint8_t i = 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
-            {
-                if(i == I2S_SAMP_PER_FRAME-1)
-                {
-                    mic_data_1ch[i] = mic_data_1ch[i-1];
-                }
-                else
-                {
-                    mic_data_1ch[i] = (mic_data_1ch[i-1]+mic_data_1ch[i+1])/2;
-                }
-            }
-
-//            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME/2; i++)
-//            {
-//                extrapolate_buf[i] = i;
-//            }
-//            for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i+=2)
-//            {
-//                mic_data_1ch[i] = temp_output[i/2];
-//            }
-//
-//            for(uint8_t i = 1 ; i < I2S_SAMP_PER_FRAME ; i+=2)
-//            {
-//                if(i == I2S_SAMP_PER_FRAME-1)
-//                {
-//                    mic_data_1ch[i] = mic_data_1ch[i-1];
-//                }
-//                else
-//                {
-//                    mic_data_1ch[i] = InterpolateLagrangePolynomial(((float)i)/2.0f, extrapolate_buf, temp_output, I2S_SAMP_PER_FRAME/2);
-//                }
-//            }
-
-#endif
-            /*
-            uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
-            ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-
-
-            ///////////////////////////////////////////////////////////////////////////////////////
-            //compressing start
+///////////////////////////////////////////////////////////////////////////////////////
+//compressing start
 //            uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
-            encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
-            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
-            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
-            ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-            //compressing end
+//            ADPCMEncoderBuf2(mic_data_current, (char*)(encode_buf), &encoder_adpcm);
+//            encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
+//            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
+//            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
+//            ADPCMEncoderBuf2(mic_data_current, (char*)(encode_buf), &encoder_adpcm);
+//            //compressing end
+//
+//            //decompressing
+//            decoder_adpcm.prevsample = ((int16_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
+//                    (int16_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1]);
+//
+//            decoder_adpcm.previndex = ((int32_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2]));
+//            ADPCMDecoderBuf2((char*)(encode_buf), mic_data_current, &decoder_adpcm);
+//decompressing end
+///////////////////////////////////////////////////////////////////////////////////////
 
-            //decompressing
-            decoder_adpcm.prevsample = ((int16_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
-                    (int16_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1]);
+#ifdef SMOOTHING
+            //SMOOTH_FACTOR = 2
+            if(SMOOTH_FACTOR == 2)
+            {
+                memcpy(mic_data_out, mic_data_temp, sizeof(mic_data_temp));
+                for(uint8_t i = SMOOTH_FACTOR ; i < I2S_SAMP_PER_FRAME - SMOOTH_FACTOR; i++)
+                {
+                    mic_data_out[i] = (mic_data_temp[i-2] + mic_data_temp[i-1]+mic_data_temp[i]+mic_data_temp[i+1] + mic_data_temp[i+2])/(SMOOTH_FACTOR*2+1);
+                }
+                mic_data_out[0] = (mic_data_prevNsamp[0] + mic_data_prevNsamp[1] + mic_data_temp[0] + mic_data_temp[1]+mic_data_temp[2])/(SMOOTH_FACTOR*2+1);
+                mic_data_out[1] = (mic_data_prevNsamp[0] + mic_data_temp[0] + mic_data_temp[1] + mic_data_temp[2]+mic_data_temp[3])/(SMOOTH_FACTOR*2+1);
+                mic_data_out[I2S_SAMP_PER_FRAME-1] = (mic_data_temp[I2S_SAMP_PER_FRAME-1] + mic_data_temp[I2S_SAMP_PER_FRAME-2] + mic_data_temp[I2S_SAMP_PER_FRAME-3]+mic_data_current[0]+mic_data_current[1])/(SMOOTH_FACTOR*2+1);
+                mic_data_out[I2S_SAMP_PER_FRAME-2] = (mic_data_temp[I2S_SAMP_PER_FRAME-1] + mic_data_temp[I2S_SAMP_PER_FRAME-2] + mic_data_temp[I2S_SAMP_PER_FRAME-3] + mic_data_temp[I2S_SAMP_PER_FRAME-4]+mic_data_current[0])/(SMOOTH_FACTOR*2+1);
+            }
+            else if(SMOOTH_FACTOR == 1)
+            {
+                memcpy(mic_data_out, mic_data_temp, sizeof(mic_data_temp));
+                for(uint8_t i = SMOOTH_FACTOR ; i < I2S_SAMP_PER_FRAME - SMOOTH_FACTOR; i++)
+                {
+                    mic_data_out[i] = (mic_data_temp[i-1]+mic_data_temp[i]+mic_data_temp[i+1])/(SMOOTH_FACTOR*2+1);
+                }
+                mic_data_out[0] = (mic_data_prevNsamp[0] +  mic_data_temp[0] + mic_data_temp[1])/(SMOOTH_FACTOR*2+1);
+                mic_data_out[I2S_SAMP_PER_FRAME-1] = (mic_data_temp[I2S_SAMP_PER_FRAME-1] + mic_data_temp[I2S_SAMP_PER_FRAME-2] + mic_data_current[0])/(SMOOTH_FACTOR*2+1);
+            }
+#endif
 
-            decoder_adpcm.previndex = ((int32_t)(encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2]));
-            ADPCMDecoderBuf2((char*)(encode_buf), mic_data_1ch, &decoder_adpcm);
-            //decompressing end
-            ///////////////////////////////////////////////////////////////////////////////////////
-*/
+//            for(uint8_t i = 1 ; i < I2S_SAMP_PER_FRAME-1; i++)
+//            {
+//                 mic_data_current[i] = (mic_data_current[i-1]+mic_data_current[i]+mic_data_current[i+1])/3;
+//            }
+//            for(uint8_t i = 2 ; i < I2S_SAMP_PER_FRAME-2; i++)
+//            {
+//                mic_data_current[i] = (int16_t)((float)mic_data_current[i-2]+(float)mic_data_current[i-1]+(float)mic_data_current[i]+(float)mic_data_current[i+1]+(float)mic_data_current[i+2])/5.0f;
+//            }
+
 
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_OUT;
             I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferOut)
             {
-                memcpy(bufferRequest.bufferOut, mic_data_1ch, sizeof(mic_data_1ch));
-                //memset(bufferRequest.bufferOut, 0x53, sizeof(mic_data_1ch));
+                memcpy(bufferRequest.bufferOut, mic_data_out, sizeof(mic_data_out));
+                //memset(bufferRequest.bufferOut, 0x53, sizeof(mic_data_current));
                 bufferRelease.bufferHandleIn = NULL;
                 bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
                 I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
@@ -1035,8 +1029,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 //            if (gotBufferInOut)
 //            {
 //                //memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
-//                memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
-//                memcpy(bufferRequest.bufferOut, mic_data_1ch, sizeof(mic_data_1ch));
+//                memcpy(mic_data_current, bufferRequest.bufferIn, sizeof(mic_data_current));
+//                memcpy(bufferRequest.bufferOut, mic_data_current, sizeof(mic_data_current));
 //
 //                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
 //                bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
@@ -2090,7 +2084,7 @@ static void pdm_samp_hdl(void)
 #ifdef DOUBLE_DATA_RATE
     ADPCMEncoderBuf2(temp_output, (char*)(encode_buf), &encoder_adpcm);
 #else
-    ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
+    ADPCMEncoderBuf2(mic_data_current, (char*)(encode_buf), &encoder_adpcm);
 #endif
 
     encrypt_packet(encode_buf);
