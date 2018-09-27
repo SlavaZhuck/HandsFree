@@ -33,16 +33,20 @@ void max9860_I2C_Init(void){
     i2cTxBuffer[1]  = 0x12;//!system clock                       //clock control            0x03
     i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
     i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
-    i2cTxBuffer[4]  = 0x50;//!interface  0x50                        //digital audio interface  0x06   !!!falling edge for DAC when adc works
+    i2cTxBuffer[4]  = 0x50;//!interface  0x50                        //digital audio interface  0x06
     i2cTxBuffer[5]  = 0x10;//!interface  0x10                                                   0x07
+#ifdef DOUBLE_DATA_RATE
+    i2cTxBuffer[6]  = 0x11;//!voice filter    0x11               //digital filtering        0x08
+#else
     i2cTxBuffer[6]  = 0x33;//!voice filter    0x33               //digital filtering        0x08
+#endif
     i2cTxBuffer[7]  = INIT_GAIN;//!DAC att                       //digital level control    0x09
-    i2cTxBuffer[8]  = 0x99;//!ADC output levels                                             0x0A
-    i2cTxBuffer[9]  = 0x60;//!DAC gain and sidetone                                         0x0B
-    i2cTxBuffer[10] = 0x20;//!microphone gain                    //MIC level control        0x0C
+    i2cTxBuffer[8]  = 0x00;//!ADC output levels                                             0x0A
+    i2cTxBuffer[9]  = 0x00;//!DAC gain and sidetone          0x60                           0x0B
+    i2cTxBuffer[10] = 0x40;//!microphone gain                    //MIC level control        0x0C
     i2cTxBuffer[11] = 0x00;                                     //RESERVED                  0x0D
-    i2cTxBuffer[12] = 0x01;//!microphone AGC                   //MIC automatic gain control 0x0E
-    i2cTxBuffer[13] = 0x4F;//!Noise gate, mic AGC  0xFF                                     0x0F
+    i2cTxBuffer[12] = 0x01;//!microphone AGC 0x01              //MIC automatic gain control 0x0E  //for Vova
+    i2cTxBuffer[13] = 0xE0;//!Noise gate, mic AGC  0x4F                                     0x0F  //for Vova
     i2cTxBuffer[14] = 0x00;//!System shutdown                    //POWER MANAGEMENT         0x10
 
     i2cTransaction.slaveAddress = 0x10;
