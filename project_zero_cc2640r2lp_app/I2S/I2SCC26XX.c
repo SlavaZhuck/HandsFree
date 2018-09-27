@@ -635,7 +635,7 @@ static void I2SCC26XX_hwiFxn (UArg arg) {
             object->currentStream->status = I2SCC26XX_STREAM_STOPPED;
         }
         else if (object->currentStream->status != I2SCC26XX_STREAM_STOPPED) {
-            if ((dbgCntI2SRelBuf > 4) && !Queue_empty(i2sBlockAvailOutQueue))
+            if (/*(dbgCntI2SRelBuf > 4) &&*/ !Queue_empty(i2sBlockAvailOutQueue))
             {
                 i2sBlockNextOut = Queue_get(i2sBlockAvailOutQueue);
 #ifdef I2S_DEBUG
@@ -665,7 +665,7 @@ static void I2SCC26XX_hwiFxn (UArg arg) {
             * attempts to perform another I2SCC26XX_bufferRequest call
             */
             notification = object->currentStream;
-            object->currentStream->arg = shadowQueueNodeTable;
+           // object->currentStream->arg = shadowQueueNodeTable;
 
             /* Notify caller about availability of buffer */
             object->callbackFxn((I2SCC26XX_Handle)arg, notification);

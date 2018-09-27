@@ -38,7 +38,7 @@ void max9860_I2C_Init(void){
 #ifdef DOUBLE_DATA_RATE
     i2cTxBuffer[6]  = 0x11;//!voice filter    0x11               //digital filtering        0x08
 #else
-    i2cTxBuffer[6]  = 0x00;//!voice filter    0x33               //digital filtering        0x08
+    i2cTxBuffer[6]  = 0x33;//!voice filter    0x33               //digital filtering        0x08
 #endif
     i2cTxBuffer[7]  = INIT_GAIN;//!DAC att                       //digital level control    0x09
 
