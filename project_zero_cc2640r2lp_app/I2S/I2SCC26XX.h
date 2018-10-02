@@ -241,7 +241,7 @@ extern "C" {
  *  Production code should set this to xI2S_DEBUG. To enable debug mode
  *  rename the define to \b I2S_DEBUG.
  */
-#define I2S_DEBUG
+//#define I2S_DEBUG
 
 /*!
  *  At least three elements must exist for good flow in driver

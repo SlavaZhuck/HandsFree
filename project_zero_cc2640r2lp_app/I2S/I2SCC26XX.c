@@ -202,11 +202,9 @@ I2SCC26XX_Handle I2SCC26XX_open(I2SCC26XX_Handle handle, I2SCC26XX_Params *param
     object->audioClkCfg.wclkPhase = I2SCC26XX_WordClockPhase_Dual;           /* I2S Word Clock Phase */
     object->audioClkCfg.wclkInverted = I2SCC26XX_ClockSource_Normal;         /* I2S Invert Word Clock */
     object->audioClkCfg.wclkSource = I2SCC26XX_WordClockSource_Int;          /* I2S Word Clock source */
-#ifdef DOUBLE_DATA_RATE
-    object->audioClkCfg.bclkDiv = 94;;//375/2;//375;94; 750                                   /* I2S Bit Clock divider override */
-#else
+
     object->audioClkCfg.bclkDiv = 188;//375/2;//375;94; 750                                   /* I2S Bit Clock divider override */
-#endif
+
     object->audioClkCfg.reserved = 0;
     object->audioClkCfg.bclkSource = I2SCC26XX_BitClockSource_Int;           /* I2S Bit Clock source */
     object->audioClkCfg.mclkDiv = 4;                                         /* I2S Master Clock divider override */
@@ -625,7 +623,7 @@ static void I2SCC26XX_hwiFxn (UArg arg) {
             object->currentStream->status = I2SCC26XX_STREAM_STOPPED;
         }
         else if (object->currentStream->status != I2SCC26XX_STREAM_STOPPED) {
-            if ((dbgCntI2SRelBuf > 4) && !Queue_empty(i2sBlockAvailOutQueue))
+            if (/*(dbgCntI2SRelBuf > 4) &&*/ !Queue_empty(i2sBlockAvailOutQueue))
             {
                 i2sBlockNextOut = Queue_get(i2sBlockAvailOutQueue);
 #ifdef I2S_DEBUG
@@ -655,7 +653,7 @@ static void I2SCC26XX_hwiFxn (UArg arg) {
             * attempts to perform another I2SCC26XX_bufferRequest call
             */
             notification = object->currentStream;
-            object->currentStream->arg = shadowQueueNodeTable;
+  //          object->currentStream->arg = shadowQueueNodeTable;
 
             /* Notify caller about availability of buffer */
             object->callbackFxn((I2SCC26XX_Handle)arg, notification);

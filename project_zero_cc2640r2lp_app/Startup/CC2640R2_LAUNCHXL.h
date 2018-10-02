@@ -120,7 +120,7 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_DIO24_ANALOG          IOID_24
 #define CC2640R2_LAUNCHXL_DIO25_ANALOG          IOID_25
 #define CC2640R2_LAUNCHXL_DIO26_ANALOG          IOID_26
-#define CC2640R2_LAUNCHXL_DIO27_ANALOG          PIN_UNASSIGNED//IOID_27
+#define CC2640R2_LAUNCHXL_DIO27_ANALOG          IOID_27
 #define CC2640R2_LAUNCHXL_DIO28_ANALOG          IOID_28
 #define CC2640R2_LAUNCHXL_DIO29_ANALOG          IOID_29
 #define CC2640R2_LAUNCHXL_DIO30_ANALOG          IOID_30
@@ -144,8 +144,14 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_29 //PIN_UNASSIGNED
     #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_30 //PIN_UNASSIGNED
 #else
+#ifdef HANDS_FREE_BOARD_VERSION3
+    #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_11 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_12 //PIN_UNASSIGNED
+    #define CC2640R2_LAUNCHXL_PIN_POWER              IOID_15 //PIN_UNASSIGNED
+#else
     #define CC2640R2_LAUNCHXL_PIN_BTN1              IOID_13 //PIN_UNASSIGNED
     #define CC2640R2_LAUNCHXL_PIN_BTN2              IOID_14 //PIN_UNASSIGNED
+#endif
 #endif
 #endif
 /* GPIO */
@@ -161,17 +167,15 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_19//IOID_4
     #define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_18//IOID_5
 #else
+#ifdef HANDS_FREE_BOARD_VERSION3
+    #define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_25//IOID_4
+    #define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_26//IOID_5
+#else
     #define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_2//IOID_4
     #define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_27//IOID_5
 #endif
 #endif
-/* LCD (430BOOST - Sharp96 Rev 1.1) */
-#define CC2640R2_LAUNCHXL_LCD_CS                IOID_24 /* SPI chip select */
-#define CC2640R2_LAUNCHXL_LCD_EXTCOMIN          PIN_UNASSIGNED /* External COM inversion */
-#define CC2640R2_LAUNCHXL_LCD_ENABLE            IOID_22 /* LCD enable */
-#define CC2640R2_LAUNCHXL_LCD_POWER             IOID_23 /* LCD power control */
-#define CC2640R2_LAUNCHXL_LCD_CS_ON             1
-#define CC2640R2_LAUNCHXL_LCD_CS_OFF            0
+#endif
 
 /* LEDs */
 #define CC2640R2_LAUNCHXL_PIN_LED_ON            1
@@ -185,53 +189,33 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_PIN_RLED              IOID_11
     #define CC2640R2_LAUNCHXL_PIN_GLED              IOID_9
 #else
+#ifdef HANDS_FREE_BOARD_VERSION3
+    #define CC2640R2_LAUNCHXL_PIN_RLED              IOID_14
+    #define CC2640R2_LAUNCHXL_PIN_GLED              IOID_13
+#else
     #define CC2640R2_LAUNCHXL_PIN_RLED              IOID_6
     #define CC2640R2_LAUNCHXL_PIN_GLED              IOID_7
 #endif
 #endif
-/* PWM Outputs */
-#define CC2640R2_LAUNCHXL_PWMPIN0               CC2640R2_LAUNCHXL_PIN_RLED
-#define CC2640R2_LAUNCHXL_PWMPIN1               CC2640R2_LAUNCHXL_PIN_GLED
-#define CC2640R2_LAUNCHXL_PWMPIN2               IOID_18
-#define CC2640R2_LAUNCHXL_PWMPIN3               PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_PWMPIN4               PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_PWMPIN5               PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_PWMPIN6               PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_PWMPIN7               PIN_UNASSIGNED
-
-/* SPI */
-#define CC2640R2_LAUNCHXL_SPI_FLASH_CS          IOID_20
-#define CC2640R2_LAUNCHXL_FLASH_CS_ON           0
-#define CC2640R2_LAUNCHXL_FLASH_CS_OFF          1
-
-/* SPI Board */
-#define CC2640R2_LAUNCHXL_SPI0_MISO             PIN_UNASSIGNED //IOID_8          /* RF1.20 */
-#define CC2640R2_LAUNCHXL_SPI0_MOSI             PIN_UNASSIGNED//IOID_9          /* RF1.18 */
-#define CC2640R2_LAUNCHXL_SPI0_CLK              PIN_UNASSIGNED //IOID_10         /* RF1.16 */
-#define CC2640R2_LAUNCHXL_SPI0_CSN              PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_SPI1_MISO             PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_SPI1_MOSI             PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_SPI1_CLK              PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_SPI1_CSN              PIN_UNASSIGNED
+#endif
 
 /* UART Board */
-#ifndef HANDS_FREE_NOT_BOARD_NEW_VERSION
-    #define CC2640R2_LAUNCHXL_UART_RX               IOID_8//IOID_2          /* RXD */
-    #define CC2640R2_LAUNCHXL_UART_TX               IOID_9          /* TXD */
+#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    #define CC2640R2_LAUNCHXL_UART_RX               PIN_UNASSIGNED//IOID_8       /* RXD */
+    #define CC2640R2_LAUNCHXL_UART_TX               PIN_UNASSIGNED//IOID_9      /* TXD */
+#else
+#ifdef HANDS_FREE_BOARD_VERSION3
+    #define CC2640R2_LAUNCHXL_UART_RX               IOID_2//IOID_2          /* RXD */
+    #define CC2640R2_LAUNCHXL_UART_TX               IOID_3          /* TXD */
 #else
     #define CC2640R2_LAUNCHXL_UART_RX               IOID_3//IOID_2          /* RXD */
     #define CC2640R2_LAUNCHXL_UART_TX               IOID_2          /* TXD */
 #endif
+#endif
+
 #define CC2640R2_LAUNCHXL_UART_CTS              PIN_UNASSIGNED         /* CTS */
 #define CC2640R2_LAUNCHXL_UART_RTS              PIN_UNASSIGNED         /* RTS */
 
-//#define Board_I2S_BCLK							IOID_14
-//#define Board_I2S_MCLK							(PIN_Id)IOID_UNUSED
-//#define Board_I2S_WCLK							(PIN_Id)IOID_UNUSED
-//
-//#define Board_I2S_ADI							IOID_13
-//#define Board_I2S_ADO							(PIN_Id)IOID_UNUSED
-//#define Board_MIC_POWER							IOID_15
 #ifdef HANDS_FREE_NOT_BOARD
     #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_22//IOID_0
     #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_21//IOID_1
@@ -248,6 +232,14 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_15//(PIN_Id)IOID_UNUSED
     #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_12//IOID_29
 #else
+#ifdef HANDS_FREE_BOARD_VERSION3
+    #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_19//IOID_0
+    #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_20//IOID_1
+    /* I2S */
+    #define CC2640R2_LAUNCHXL_I2S_BCLK              IOID_5//IOID_30
+    #define CC2640R2_LAUNCHXL_I2S_MCLK              IOID_21//(PIN_Id)IOID_UNUSED
+    #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_4//IOID_29
+#else
     #define CC2640R2_LAUNCHXL_I2S_ADO               IOID_3//IOID_0
     #define CC2640R2_LAUNCHXL_I2S_ADI               IOID_26//IOID_1 IOID_26
     /* I2S */
@@ -256,7 +248,7 @@ extern const PIN_Config BoardGpioInitTable[];
     #define CC2640R2_LAUNCHXL_I2S_WCLK              IOID_25//IOID_29
 #endif
 #endif
-
+#endif
 /*!
  *  @brief  Initialize the general board specific settings
  *
@@ -376,33 +368,6 @@ typedef enum CC2640R2_LAUNCHXL_I2CName {
 
     CC2640R2_LAUNCHXL_I2CCOUNT
 } CC2640R2_LAUNCHXL_I2CName;
-
-/*!
- *  @def    CC2640R2_LAUNCHXL_PWM
- *  @brief  Enum of PWM outputs
- */
-typedef enum CC2640R2_LAUNCHXL_PWMName {
-    CC2640R2_LAUNCHXL_PWM0 = 0,
-    CC2640R2_LAUNCHXL_PWM1,
-    CC2640R2_LAUNCHXL_PWM2,
-    CC2640R2_LAUNCHXL_PWM3,
-    CC2640R2_LAUNCHXL_PWM4,
-    CC2640R2_LAUNCHXL_PWM5,
-    CC2640R2_LAUNCHXL_PWM6,
-    CC2640R2_LAUNCHXL_PWM7,
-
-    CC2640R2_LAUNCHXL_PWMCOUNT
-} CC2640R2_LAUNCHXL_PWMName;
-/*!
- *  @def    CC2640R2_LAUNCHXL_SPIName
- *  @brief  Enum of SPI names
- */
-typedef enum CC2640R2_LAUNCHXL_SPIName {
-    CC2640R2_LAUNCHXL_SPI0 = 0,
-    CC2640R2_LAUNCHXL_SPI1,
-
-    CC2640R2_LAUNCHXL_SPICOUNT
-} CC2640R2_LAUNCHXL_SPIName;
 
 /*!
  *  @def    CC2640R2_LAUNCHXL_UARTName

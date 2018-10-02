@@ -288,7 +288,6 @@ DisplayUart_Object     displayUartObject;
 DisplaySharp_Object    displaySharpObject;
 
 static char uartStringBuf[BOARD_DISPLAY_UART_STRBUF_SIZE];
-static uint_least8_t sharpDisplayBuf[BOARD_DISPLAY_SHARP_SIZE * BOARD_DISPLAY_SHARP_SIZE / 8];
 
 const DisplayUart_HWAttrs displayUartHWAttrs = {
     .uartIdx      = CC2640R2_LAUNCHXL_UART0,
@@ -298,16 +297,6 @@ const DisplayUart_HWAttrs displayUartHWAttrs = {
     .strBufLen    = BOARD_DISPLAY_UART_STRBUF_SIZE,
 };
 
-const DisplaySharp_HWAttrs displaySharpHWattrs = {
-    .spiIndex    = CC2640R2_LAUNCHXL_SPI0,
-    .csPin       = CC2640R2_LAUNCHXL_LCD_CS,
-    .extcominPin = CC2640R2_LAUNCHXL_LCD_EXTCOMIN,
-    .powerPin    = CC2640R2_LAUNCHXL_LCD_POWER,
-    .enablePin   = CC2640R2_LAUNCHXL_LCD_ENABLE,
-    .pixelWidth  = BOARD_DISPLAY_SHARP_SIZE,
-    .pixelHeight = BOARD_DISPLAY_SHARP_SIZE,
-    .displayBuf  = sharpDisplayBuf,
-};
 
 #ifndef BOARD_DISPLAY_USE_UART
 #define BOARD_DISPLAY_USE_UART 1
@@ -472,12 +461,8 @@ const PIN_Config BoardGpioInitTable[] = {
     CC2640R2_LAUNCHXL_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
     CC2640R2_LAUNCHXL_PIN_BTN1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
     CC2640R2_LAUNCHXL_PIN_BTN2 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
-    CC2640R2_LAUNCHXL_SPI_FLASH_CS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */
-    CC2640R2_LAUNCHXL_UART_RX | PIN_INPUT_EN | PIN_PULLDOWN,                                              /* UART RX via debugger back channel */
-    CC2640R2_LAUNCHXL_UART_TX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL,                        /* UART TX via debugger back channel */
-    CC2640R2_LAUNCHXL_SPI0_MOSI | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master out - slave in */
-    CC2640R2_LAUNCHXL_SPI0_MISO | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master in - slave out */
-    CC2640R2_LAUNCHXL_SPI0_CLK | PIN_INPUT_EN | PIN_PULLDOWN,                                             /* SPI clock */
+//    CC2640R2_LAUNCHXL_UART_RX | PIN_INPUT_EN | PIN_PULLDOWN,                                              /* UART RX via debugger back channel */
+//    CC2640R2_LAUNCHXL_UART_TX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL,                        /* UART TX via debugger back channel */
 
     PIN_TERMINATE
 };
@@ -507,39 +492,6 @@ const PowerCC26XX_Config PowerCC26XX_config = {
 };
 
 /*
- *  =============================== PWM ===============================
- *  Remove unused entries to reduce flash usage both in Board.c and Board.h
- */
-#include <ti/drivers/PWM.h>
-#include <ti/drivers/pwm/PWMTimerCC26XX.h>
-
-PWMTimerCC26XX_Object pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWMCOUNT];
-
-const PWMTimerCC26XX_HwAttrs pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWMCOUNT] = {
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN0, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER0A },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN1, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER0B },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN2, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER1A },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN3, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER1B },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN4, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER2A },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN5, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER2B },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN6, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER3A },
-    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN7, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER3B },
-};
-
-const PWM_Config PWM_config[CC2640R2_LAUNCHXL_PWMCOUNT] = {
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM0], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM0] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM1], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM1] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM2], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM2] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM3], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM3] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM4], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM4] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM5], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM5] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM6], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM6] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM7], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM7] },
-};
-
-const uint_least8_t PWM_count = CC2640R2_LAUNCHXL_PWMCOUNT;
-
-/*
  *  =============================== RF Driver ===============================
  *  Note: The BLE-Stack requires RF SWI priorities to be set to 5.
  */
@@ -558,53 +510,10 @@ const RFCC26XX_HWAttrs RFCC26XX_hwAttrs = {
 #include <ti/drivers/SPI.h>
 #include <ti/drivers/spi/SPICC26XXDMA.h>
 
-SPICC26XXDMA_Object spiCC26XXDMAObjects[CC2640R2_LAUNCHXL_SPICOUNT];
 
-const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[CC2640R2_LAUNCHXL_SPICOUNT] = {
-    {
-        .baseAddr           = SSI0_BASE,
-        .intNum             = INT_SSI0_COMB,
-        .intPriority        = ~0,
-        .swiPriority        = 0,
-        .powerMngrId        = PowerCC26XX_PERIPH_SSI0,
-        .defaultTxBufValue  = 0,
-        .rxChannelBitMask   = 1<<UDMA_CHAN_SSI0_RX,
-        .txChannelBitMask   = 1<<UDMA_CHAN_SSI0_TX,
-        .mosiPin            = CC2640R2_LAUNCHXL_SPI0_MOSI,
-        .misoPin            = CC2640R2_LAUNCHXL_SPI0_MISO,
-        .clkPin             = CC2640R2_LAUNCHXL_SPI0_CLK,
-        .csnPin             = CC2640R2_LAUNCHXL_SPI0_CSN
-    },
-    {
-        .baseAddr           = SSI1_BASE,
-        .intNum             = INT_SSI1_COMB,
-        .intPriority        = ~0,
-        .swiPriority        = 0,
-        .powerMngrId        = PowerCC26XX_PERIPH_SSI1,
-        .defaultTxBufValue  = 0,
-        .rxChannelBitMask   = 1<<UDMA_CHAN_SSI1_RX,
-        .txChannelBitMask   = 1<<UDMA_CHAN_SSI1_TX,
-        .mosiPin            = CC2640R2_LAUNCHXL_SPI1_MOSI,
-        .misoPin            = CC2640R2_LAUNCHXL_SPI1_MISO,
-        .clkPin             = CC2640R2_LAUNCHXL_SPI1_CLK,
-        .csnPin             = CC2640R2_LAUNCHXL_SPI1_CSN
-    }
-};
 
-const SPI_Config SPI_config[CC2640R2_LAUNCHXL_SPICOUNT] = {
-    {
-         .fxnTablePtr = &SPICC26XXDMA_fxnTable,
-         .object      = &spiCC26XXDMAObjects[CC2640R2_LAUNCHXL_SPI0],
-         .hwAttrs     = &spiCC26XXDMAHWAttrs[CC2640R2_LAUNCHXL_SPI0]
-    },
-    {
-         .fxnTablePtr = &SPICC26XXDMA_fxnTable,
-         .object      = &spiCC26XXDMAObjects[CC2640R2_LAUNCHXL_SPI1],
-         .hwAttrs     = &spiCC26XXDMAHWAttrs[CC2640R2_LAUNCHXL_SPI1]
-    },
-};
 
-const uint_least8_t SPI_count = CC2640R2_LAUNCHXL_SPICOUNT;
+
 
 /*
  *  =============================== UART ===============================
@@ -730,65 +639,6 @@ void CC2640R2_LAUNCHXL_initGeneral(void)
         System_abort("Error with PIN_init\n");
     }
 }
-
-///*
-// *  ============================= PDM begin ===================================
-// */
-///* Place into subsections to allow the TI linker to remove items properly */
-//#if defined(__TI_COMPILER_VERSION__)
-//#pragma DATA_SECTION(PDMCC26XX_config, ".const:PDMCC26XX_config")
-//#pragma DATA_SECTION(pdmCC26XXHWAttrs, ".const:pdmCC26XXHWAttrs")
-//#endif
-//
-//#include <ti/drivers/pdm/PDMCC26XX.h>
-//PDMCC26XX_Object pdmCC26XXObject = {0};
-//
-//const PDMCC26XX_HWAttrs pdmCC26XXHWAttrs = {
-//     .micPower = Board_MIC_POWER,
-//     .taskPriority = 2,
-//};
-//
-///* PDM configuration structure */
-//const PDMCC26XX_Config PDMCC26XX_config[] = {
-//    {
-//        .object = &pdmCC26XXObject,
-//        .hwAttrs = &pdmCC26XXHWAttrs
-//    },
-//    {NULL, NULL}
-//};
-//
-///*
-// *  ============================= I2S begin =====================================
-// */
-///* Place into subsections to allow the TI linker to remove items properly */
-//#if defined(__TI_COMPILER_VERSION__)
-//#pragma DATA_SECTION(PDMCC26XX_I2S_config, ".const:PDMCC26XX_I2S_config")
-//#pragma DATA_SECTION(i2sCC26XXHWAttrs, ".const:i2sCC26XXHWAttrs")
-//#endif
-//
-//#include <ti/drivers/pdm/PDMCC26XX_util.h>
-//
-//PDMCC26XX_I2S_Object i2sCC26XXObject;
-//
-//const PDMCC26XX_I2S_HWAttrs i2sCC26XXHWAttrs = {
-//    .baseAddr = I2S0_BASE,
-//    .intNum = INT_I2S_IRQ,
-//    .intPriority = ~0,
-//    .powerMngrId = PowerCC26XX_PERIPH_I2S,
-//    .mclkPin = Board_I2S_MCLK,
-//    .bclkPin = Board_I2S_BCLK,
-//    .wclkPin = Board_I2S_WCLK,
-//    .ad0Pin = Board_I2S_ADI,
-//};
-//
-///* I2S configuration structure */
-//const PDMCC26XX_I2S_Config PDMCC26XX_I2S_config[] = {
-//    {
-//        .object = &i2sCC26XXObject,
-//        .hwAttrs = &i2sCC26XXHWAttrs
-//    },
-//    {NULL, NULL}
-//};
 
 /*
  *============================= I2S begin =====================================

@@ -202,10 +202,6 @@
 #endif
 #define NOISE_POWER 30000
 #define SOUND_DELAY 25
-
-#define MAX_NUM_RX_BYTES    100   // Maximum RX bytes to receive in one go
-#define MAX_NUM_TX_BYTES    100   // Maximum TX bytes to send in one go
-#define WANTED_RX_BYTES    1   // Maximum TX bytes to send in one go
 /*********************************************************************
  * TYPEDEFS
  */
@@ -557,12 +553,17 @@ void ProjectZero_createTask(void)
 }
 
 uint8_t macAddress[6];
+#define MAX_NUM_RX_BYTES    100   // Maximum RX bytes to receive in one go
+#define MAX_NUM_TX_BYTES    100   // Maximum TX bytes to send in one go
+#define WANTED_RX_BYTES    1   // Maximum TX bytes to send in one go
 static uint32_t wantedRxBytes = WANTED_RX_BYTES;            // Number of bytes received so far
 static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
+//static uint8_t txBuf[MAX_NUM_TX_BYTES];   // Transmit buffer
 // Callback function
 
 extern Serial_Data_Packet Tx_Data;
 extern Serial_Data_Packet Rx_Data;
+//static unsigned char test_CRC[262] ;
 
 
 static void writeCallback(UART_Handle handle_uart, void *rxBuf, size_t size)
