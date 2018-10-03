@@ -97,6 +97,7 @@
 #include "bcomdef.h"
 
 #include "driverlib/aon_batmon.h"
+#include "Noise_TRSH.h"
 #include "Uart_commands.h"
 #include "max9860_i2c.h"
 
@@ -124,7 +125,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1100
+#define PRZ_TASK_STACK_SIZE                   1300
 #endif
 
 // Internal Events for RTOS application
@@ -167,19 +168,14 @@
 #define INIT_VOL_ADDR                       BLE_NVID_CUST_START+1
 /******Crypto key End ******/
 
-
+/******Blink Timer Start ******/
 #define TMR_PERIOD                          96000000UL
 #define LOW_STATE_TIME                      ((TMR_PERIOD / 10) * 9)
 #define HIGH_STATE_TIME                     (TMR_PERIOD - LOW_STATE_TIME)
+/******Blink Timer End ******/
 
 
-
-#define BAT_LOW_VOLTAGE                     3000
-
-
-#define MAILBOX_DEPTH 10
-#define MIN_MAILBOX_USAGE 1
-
+/******ADC Start ******/
 #define ADCBUFSIZE      1
 #define SAMPFREQ        1000000
 #define ADC_VOLTAGE_MEASURE_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL7
@@ -192,29 +188,35 @@
 
     #define ADC_POWER_BUTTON_THRESHOLD 100
 #endif
+/******ADC End ******/
 
 
+/******Uart Start ******/
 #ifdef UART_DEBUG
   #define UART_BAUD_RATE 921600
 #endif
 #ifndef UART_DEBUG
   #define UART_BAUD_RATE 115200
 #endif
-#define NOISE_POWER 30000
-#define SOUND_DELAY 25
-
 #define MAX_NUM_RX_BYTES    100   // Maximum RX bytes to receive in one go
 #define MAX_NUM_TX_BYTES    100   // Maximum TX bytes to send in one go
-#define WANTED_RX_BYTES    1   // Maximum TX bytes to send in one go
+#define WANTED_RX_BYTES     1     // Maximum TX bytes to send in one go
+/******Uart End ******/
+
+
+#define BAT_LOW_VOLTAGE     3000
+
+#define MAILBOX_DEPTH       10
+#define MIN_MAILBOX_USAGE   1
+
+#define NOISE_POWER         30000
+#define SOUND_DELAY         25
+
 /*********************************************************************
  * TYPEDEFS
  */
 // Types of messages that can be sent to the user application task from other
 // tasks or interrupts. Note: Messages from BLE Stack are sent differently.
-static Mailbox_Handle mailbox;
-static uint8_t mailpost_usage = 0;
-
-
 
 // Struct for messages sent to the application task
 typedef struct
@@ -337,6 +339,7 @@ static PIN_Handle buttonPinHandle;
 /* Global memory storage for a PIN_Config table */
 static PIN_State buttonPinState;
 
+
 /************************************************ USER'S FUNCTIONS ****************************************/
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification);
 
@@ -366,7 +369,6 @@ uint16_t get_bat_voltage(void);
 
 /*********************************** USER'S VARIABLES ****************************************************/
 
-
 static PIN_Handle ledPinHandle;
 static PIN_State ledPinState;
 #ifdef HANDS_FREE_BOARD_VERSION3
@@ -376,7 +378,6 @@ static PIN_State ledPinState;
 
 static GPTimerCC26XX_Params tim_params;
 static GPTimerCC26XX_Handle blink_tim_hdl = NULL;
-//GPTimerCC26XX_Handle system_time = NULL;
 static GPTimerCC26XX_Handle samp_tim_hdl = NULL;
 
 static I2SCC26XX_StreamNotification i2sStream;
@@ -397,17 +398,16 @@ static I2SCC26XX_Params i2sParams =
     .currentStream          = &i2sStream
 };
 
-static uint16_t i2c_read_delay = 0;
+static uint16_t i2c_read_delay;
  int16_t raw_data_send[I2S_SAMP_PER_FRAME];
  uint8_t packet_data[V_STREAM_INPUT_LEN];
 
- static unsigned char pdm_val = 1;
- static unsigned char button_val = 1;
- static unsigned char vol_val = 1;
- static unsigned char i2c_val = 1;
+ static unsigned char pdm_val;
+ static unsigned char button_val;
+ static unsigned char vol_val;
+ static unsigned char i2c_val;
 
-static uint8_t current_volume;
-
+static uint8_t current_volume = INIT_GAIN;
 
 #ifdef HANDS_FREE_BOARD_VERSION3
 	static bool button_check = TRUE;
@@ -416,15 +416,16 @@ static uint8_t current_volume;
 	int16_t power_button_counter = 0;	
 #endif
 
- ADCBuf_Handle adc_hdl;
+ADCBuf_Handle adc_hdl;
 static ADCBuf_Params adc_params;
- ADCBuf_Conversion adc_conversion;
+ADCBuf_Conversion adc_conversion;
 int16_t batt_voltage[ADCBUFSIZE];
 static int16_t samp_buf1[ADCBUFSIZE];
 static int16_t samp_buf2[ADCBUFSIZE];
+static Mailbox_Handle mailbox;
+static uint8_t mailpost_usage;
 
-void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
-                  void *completedADCBuffer, uint32_t completedChannel);
+
 
 static struct ADPCMstate encoder_adpcm, decoder_adpcm;
 static int stream_on = 0;
@@ -435,6 +436,10 @@ static uint8_t *i2sContMgtBuffer = NULL;
 //static int16_t mic_data[I2S_SAMP_PER_FRAME*2];
 static int16_t mic_data_1ch[I2S_SAMP_PER_FRAME];
 //static int16_t mic_data_2ch[I2S_SAMP_PER_FRAME];
+bool gotBufferInOut = false;
+
+bool gotBufferIn = false;
+bool gotBufferOut = false;
 
 static CryptoCC26XX_Handle crypto_hdl;
 static CryptoCC26XX_Params crypto_params;
@@ -449,16 +454,24 @@ static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 uint32_t packet_counter = 0;
 UART_Handle uart;
 static UART_Params uartParams;
-unsigned char key_val;
 
+uint8_t macAddress[6];
+static uint32_t wantedRxBytes = WANTED_RX_BYTES;            // Number of bytes received so far
+static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
+
+extern Serial_Data_Packet Tx_Data;
+extern Serial_Data_Packet Rx_Data;
+
+unsigned char key_val;
 
 #ifdef UART_DEBUG
   int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
 #endif
 
-  uint64_t channel_power = 0;
-  bool sound_appeared = 0;
-  uint32_t sound_timestamp = 0;
+  uint64_t channel_power;
+  struct power_struct in_power;
+  bool sound_appeared;
+  uint32_t sound_timestamp;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -502,7 +515,8 @@ static void user_enqueueCharDataMsg( app_msg_types_t appMsgType, uint16_t connHa
 
 static char *Util_convertArrayToHexString(uint8_t const *src, uint8_t src_len,
                                           uint8_t *dst, uint8_t dst_len);
-
+void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
+                  void *completedADCBuffer, uint32_t completedChannel);
 /*********************************************************************
  * PROFILE CALLBACKS
  */
@@ -556,13 +570,7 @@ void ProjectZero_createTask(void)
   Task_construct(&przTask, ProjectZero_taskFxn, &taskParams, NULL);
 }
 
-uint8_t macAddress[6];
-static uint32_t wantedRxBytes = WANTED_RX_BYTES;            // Number of bytes received so far
-static uint8_t rxBuf[MAX_NUM_RX_BYTES];   // Receive buffer
-// Callback function
 
-extern Serial_Data_Packet Tx_Data;
-extern Serial_Data_Packet Rx_Data;
 
 
 static void writeCallback(UART_Handle handle_uart, void *rxBuf, size_t size)
@@ -903,10 +911,12 @@ void rt_OneStep(void)
   }
 #endif
 
+GPTimerCC26XX_Value timestamp_start;
+GPTimerCC26XX_Value timestamp_dif;
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
-    bool gotBufferInOut = false;
+    
 
     switch (pMsg->type)
     {
@@ -963,9 +973,9 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
 
 #ifdef  UART_DEBUG
-	            memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
-	            uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
-	            UART_write(uart, uart_data_send, sizeof(uart_data_send));
+		        memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+		        uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
+		        UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
 	            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
 	            bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
@@ -973,6 +983,13 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 	            gotBufferInOut = 0;
 	            i2c_read_delay++;
 
+#ifdef NOISE_GATE
+	            in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
+	            timestamp_start =  GPTimerCC26XX_getValue(samp_tim_hdl);
+	            //gain_reduce (mic_data_current, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log);
+	            amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
+	            timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start;
+#endif				
             }
             pdm_samp_hdl();
 //            if(i2c_read_delay % 30 == 0){
@@ -1021,7 +1038,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
         case APP_MSG_Decrypt_packet:
             mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
-            if(mailpost_usage>0){
+            if(mailpost_usage>0)
+            {
                 Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
                 decrypt_packet(packet_data);
                 decoder_adpcm.prevsample = ((int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
@@ -1032,30 +1050,30 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
                 ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
 
-                channel_power = 0;
-                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i++)
-                {
-                    channel_power += (uint64_t)((int32_t)raw_data_send[i] * (int32_t)raw_data_send[i]);
-                }
-                channel_power = channel_power/I2S_SAMP_PER_FRAME;
-
-                if (channel_power > NOISE_POWER)
-                {
-                    sound_appeared = true;
-                    sound_timestamp = SOUND_DELAY;
-                }
-
-                if(sound_timestamp> 0 )
-                {
-                    sound_timestamp--;
-                }
-                else
-                {
-                    sound_appeared = false;
-                    memset(raw_data_send, 0, sizeof(raw_data_send));
-                    memset(mic_data_1ch, 0, sizeof(mic_data_1ch));
-
-                }
+//                channel_power = 0;
+//                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i++)
+//                {
+//                    channel_power += (uint64_t)((int32_t)raw_data_send[i] * (int32_t)raw_data_send[i]);
+//                }
+//                channel_power = channel_power/I2S_SAMP_PER_FRAME;
+//
+//                if (channel_power > NOISE_POWER)
+//                {
+//                    sound_appeared = true;
+//                    sound_timestamp = SOUND_DELAY;
+//                }
+//
+//                if(sound_timestamp> 0 )
+//                {
+//                    sound_timestamp--;
+//                }
+//                else
+//                {
+//                    sound_appeared = false;
+//                    memset(raw_data_send, 0, sizeof(raw_data_send));
+//                    memset(mic_data_1ch, 0, sizeof(mic_data_1ch));
+//
+//                }
 
             }else{
                 memset ( packet_data,   0, sizeof(packet_data) );
@@ -1068,6 +1086,18 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 }
 
 
+static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
+{
+    I2SCC26XX_Status streamStatus = pStreamNotification->status;
+
+    if (streamStatus == I2SCC26XX_STREAM_BUFFER_READY || streamStatus == I2SCC26XX_STREAM_BUFFER_READY_BUT_NO_AVAILABLE_BUFFERS)
+    {
+//        gotBufferOut = true;
+//        gotBufferIn = true;
+//        gotBufferInOut = true;
+
+    }
+}
 /******************************************************************************
  *****************************************************************************
  *
@@ -1690,7 +1720,6 @@ static char *Util_convertArrayToHexString(uint8_t const *src, uint8_t src_len,
 }
 
 
-//GPTimerCC26XX_Value system_tick = 0;
 /* Functions for handle tx/rx packets of voice samples */
 
 
@@ -1854,12 +1883,6 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
    // ADCBuf_convertCancel(adc_hdl);
 }
 
-
-
-
-
-
-
 /*
 *  ======== buttonCallbackFxn ========
 *  Pin interrupt Callback function board buttons configured in the pinTable.
@@ -1868,10 +1891,8 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
 */
 
 
-
 void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
 
-   //CPUdelay(8000*50);
    if (!PIN_getInputValue(pinId)) {
        /* Toggle LED based on the button pressed */
        switch (pinId) {
@@ -1893,7 +1914,6 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
        }
    }
    user_enqueueRawAppMsg(APP_MSG_Buttons, &button_val, 1);
-
 }
 
 
@@ -1933,14 +1953,6 @@ void button_processing(void){
 
 }
 
-static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification)
-{
-    I2SCC26XX_Status streamStatus = pStreamNotification->status;
-
-    if (streamStatus == I2SCC26XX_STREAM_BUFFER_READY || streamStatus == I2SCC26XX_STREAM_BUFFER_READY_BUT_NO_AVAILABLE_BUFFERS)
-    {
-    }
-}
 
 static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
@@ -1993,11 +2005,10 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
 
-    if(stream_on){
-
+    if(stream_on)
+    {
         user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
-
     }
 }
 

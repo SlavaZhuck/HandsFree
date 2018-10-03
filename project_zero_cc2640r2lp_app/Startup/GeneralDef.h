@@ -14,6 +14,7 @@
 //#define HANDS_FREE_BOARD_VERSION3
 //#define UART_DEBUG
 //#define LPF //LPF FP = 2.5k FS = 3.5k stopband, 19 order
+//#define NOISE_GATE
 
 
 
