@@ -6,9 +6,9 @@ SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/icall/stack/ble_user_config.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/common/cc26xx/icall_startup.c \
-D:/ti/simplelink_academy_cc2640r2sdk_1_14_02_04/modules/projects/ble_projectzero/src/stack/osal_icall_ble.c 
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/icall/stack/ble_user_config.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/common/cc26xx/icall_startup.c \
+C:/ti/simplelink_academy_cc2640r2sdk_2_20_03_05/modules/projects/ble_projectzero/src/stack/osal_icall_ble.c 
 
 C_DEPS += \
 ./Startup/ble_user_config.d \
@@ -31,8 +31,8 @@ C_DEPS__QUOTED += \
 "Startup\osal_icall_ble.d" 
 
 C_SRCS__QUOTED += \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/icall/stack/ble_user_config.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/common/cc26xx/icall_startup.c" \
-"D:/ti/simplelink_academy_cc2640r2sdk_1_14_02_04/modules/projects/ble_projectzero/src/stack/osal_icall_ble.c" 
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/icall/stack/ble_user_config.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/common/cc26xx/icall_startup.c" \
+"C:/ti/simplelink_academy_cc2640r2sdk_2_20_03_05/modules/projects/ble_projectzero/src/stack/osal_icall_ble.c" 
 
 

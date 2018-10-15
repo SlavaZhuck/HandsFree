@@ -70,7 +70,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2014-2017, Texas Instruments Incorporated
+ Copyright (c) 2014-2018, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -101,8 +101,8 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  ******************************************************************************
- Release Name: simplelink_cc2640r2_sdk_1_40_00_45
- Release Date: 2017-07-20 17:16:59
+ Release Name: simplelink_cc2640r2_sdk_02_20_00_49
+ Release Date: 2018-07-16 13:19:56
  *****************************************************************************/
 #ifndef BLE_USER_CONFIG_H
 #define BLE_USER_CONFIG_H
@@ -238,14 +238,15 @@ extern "C"
   #endif // DEBUG_SW_TRACE | USE_FPGA
 #endif
 
+// The drivers handles the power up duration argument as:
+// 0: Use automatic power measurements to optimize the wakeup time.
+// X: Use the provided value, and disable automatic power management.
+#define RF_POWER_UP_DURATION_USE_AUTOMATIC  0
+
+
 // Powerup time in us
 #ifndef RF_POWER_UP_DURATION
-  #define RF_POWER_UP_DURATION          2500
-#endif
-
-// Always enable XOSC_HF at chip wakeup
-#ifndef RF_POWER_XOSC
-  #define RF_POWER_XOSC                 TRUE
+  #define RF_POWER_UP_DURATION          RF_POWER_UP_DURATION_USE_AUTOMATIC
 #endif
 
 // Powerup duration margin in us
@@ -253,7 +254,7 @@ extern "C"
   #ifdef CACHE_AS_RAM
     #define RF_POWER_UP_DURATION_MARGIN  550
   #else // !CACHE_AS_RAM
-    #define RF_POWER_UP_DURATION_MARGIN  (250+32)
+    #define RF_POWER_UP_DURATION_MARGIN  (314)
   #endif // CACHE_AS_RAM
 #endif
 
@@ -445,8 +446,8 @@ typedef struct
   uint32_t       powerUpDurationMargin;
   uint32_t       inactivityTimeout;
   uint32_t       powerUpDuration;
-  bool           powerUpXOSC;
   RF_Callback   *pErrCb;
+  RF_Mode       *pRfPatchOverride;  // Application specific RF patches
 } userConfigRfDriverParams_t;
 
 typedef struct

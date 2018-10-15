@@ -10,7 +10,7 @@
 
  ******************************************************************************
  
- Copyright (c) 2016-2017, Texas Instruments Incorporated
+ Copyright (c) 2016-2018, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,8 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  ******************************************************************************
- Release Name: simplelink_cc2640r2_sdk_1_40_00_45
- Release Date: 2017-07-20 17:16:59
+ Release Name: simplelink_cc2640r2_sdk_02_20_00_49
+ Release Date: 2018-07-16 13:19:56
  *****************************************************************************/
 
 /*******************************************************************************
@@ -53,11 +53,17 @@
 #include "ble_user_config.h"
 #include <ti/drivers/rf/RF.h>
 
+#if defined(BLE_LOCATIONING_AOA)
+#include "../../../devices/cc26x0r2/rf_patches/rf_patch_cpe_aoa_aod.h"
+#include "../../../devices/cc26x0r2/rf_patches/rf_patch_mce_aoa_aod.h"
+#endif // defined(BLE_LOCATIONING_AOA)
+
 #if defined(BLE_V42_FEATURES) && (BLE_V42_FEATURES & SECURE_CONNS_CFG)
 #include "ecc/ECCROMCC26XX.h"
 #endif //BLE_V42_FEATURES & SECURE_CONNS_CFG
 
 #include <ti/drivers/crypto/CryptoCC26XX.h>
+#include <ti/sysbios/knl/Swi.h>
 
 #include "TRNGCC26XX.h"
 
@@ -78,6 +84,11 @@
 // Override NOP
 #define OVERRIDE_NOP                   0xC0000001
 
+#if defined(BLE_LOCATIONING_AOA)
+// New parameter added to bleRadioPar
+#define _POSITION_bleRadioPar_pLocationSetup                    188
+#define _TYPE_bleRadioPar_pLocationSetup                        uint16_t*
+#endif // defined(BLE_LOCATIONING_AOA)
 /*******************************************************************************
  * TYPEDEFS
  */
@@ -95,6 +106,20 @@ void driverTable_fnSpinlock( void );
 /*******************************************************************************
  * GLOBAL VARIABLES
  */
+
+// Application RF patch overrides
+// Note: This can be used to pass application specific RF patches to LL.
+//       Once this structure is populated, the LL will use the patches
+//       provided here.
+//       If rfModeOverride is not populated, the LL will use pre-defined patches.
+#if defined(BLE_LOCATIONING_AOA)
+RF_Mode rfModeOverride= { 0x00000001,
+                          rf_patch_cpe_aoa_aod,
+			  rf_patch_mce_aoa_aod,
+                          NULL };
+#else
+RF_Mode rfModeOverride = {0, NULL, NULL, NULL};
+#endif // defined(BLE_LOCATIONING_AOA)
 
 // RF Override Registers
 // Note: Used with CMD_RADIO_SETUP; called at boot time and after wake.
@@ -127,13 +152,57 @@ void driverTable_fnSpinlock( void );
 #endif // R2/CC26xx
 
 #elif defined( CC26XX_R2 )
+#if defined(BLE_LOCATIONING_AOA)
   regOverride_t rfRegTbl[] = {
-    HW_REG_OVERRIDE(0x6084, 0x05F8), // RFC_RFE:SPARE0. Select R1-style gain table
+    MCE_RFE_OVERRIDE(1,0,0,0,0,0),
+
+    // BLE default overrides:
+    HW_REG_OVERRIDE(0x6084, 0x05F8),
+
+    // Choose different sync-word for debug (0xD3913D91).
+    //(uint32_t) 0xC0040241,
+    //(uint32_t) 0xD3913D91,
+
+    // Locationing specific overrides
+    0x00158000, // S2RCFG: Capture S2R from FrontEnd, on event (CM0 will arm)
+    0x000E5164, // After FRAC
+    0x02008004, // Use RFERAM
+    0x03FF8008, // Use RFERAM
+    SW_ARRAY_OVERRIDE(bleRadioPar, pLocationSetup, 4),
+    (uint32_t) NULL, // Pointer to location packet definition table, set to NULL to disable locationing
+    
+    // Normal BLE overrides
     0x04280243,  //10 us added to the RF SYNTH calibration
+    0x00FF8A43,  // set advLenMask to 0xFF to avoid ROM patch    
+#ifdef CACHE_AS_RAM
+    0x00018063,
+#endif //CACHE_AS_RAM    
+#else // AOA_TX and non AOA builds are usign the same overrides
+  regOverride_t rfRegTbl[] = {
+    // Synth: Use 24 MHz crystal, enable extra PLL filtering
+    0x02010403,
+    // Synth: Set fine top and bottom code to 127 and 0
+    HW_REG_OVERRIDE(0x4020, 0x7F00),
+    // Synth: Configure faster calibration
+    HW32_ARRAY_OVERRIDE(0x4004, 1),
+    // Synth: Configure faster calibration
+    0x1C0C0618,
+    // Synth: Configure faster calibration
+    0xC00401A1,
+    // Synth: Configure faster calibration
+    0x21010101,
+    // Synth: Configure faster calibration
+    0xC0040141,
+    // Synth: Configure faster calibration
+    0x00214AD3,
+    // Synth: Decrease synth programming time-out by 90 us (0x0298 RAT ticks = 166 us)
+    0x02980243,
+    HW_REG_OVERRIDE(0x6084, 0x05F8), // RFC_RFE:SPARE0. Select R1-style gain table
     0x00FF8A43,  // set advLenMask to 0xFF to avoid ROM patch
 #ifdef CACHE_AS_RAM
     0x00018063,
 #endif //CACHE_AS_RAM
+#endif // defined(BLE_LOCATIONING_AOA)
     0xFFFFFFFF };
 
 #elif defined( CC26XX_R1 )
@@ -513,9 +582,17 @@ txPwrTbl_t appTxPwrTbl = { TxPowerTable,
 rfDrvTblPtr_t rfDriverTableBLE[] =
   { (uint32)RF_open,
     (uint32)driverTable_fnSpinlock, // RF_close
+#ifdef RF_SINGLEMODE
     (uint32)RF_postCmd,
+#else // !RF_SINGLEMODE
+    (uint32)driverTable_fnSpinlock, // RF_postCmd
+#endif // RF_SINGLEMODE
     (uint32)driverTable_fnSpinlock, // RF_pendCmd
+#ifdef RF_SINGLEMODE
     (uint32)RF_runCmd,
+#else // !RF_SINGLEMODE
+    (uint32)driverTable_fnSpinlock, // RF_runCmd
+#endif // RF_SINGLEMODE
     (uint32)RF_cancelCmd,
     (uint32)RF_flushCmd,
     (uint32)driverTable_fnSpinlock, // RF_yield
@@ -524,13 +601,28 @@ rfDrvTblPtr_t rfDriverTableBLE[] =
     (uint32)RF_runDirectCmd,
     (uint32)driverTable_fnSpinlock, // RF_ratCompare
     (uint32)driverTable_fnSpinlock, // RF_ratCapture
-    (uint32)driverTable_fnSpinlock, // RF_ratHwOutput
+	(uint32)driverTable_fnSpinlock, // /* RF_ratHwOutput was removed from the RF driver */
     (uint32)driverTable_fnSpinlock, // RF_ratDisableChannel
     (uint32)RF_getCurrentTime,
     (uint32)RF_getRssi,
     (uint32)RF_getInfo,
-    (uint32)RF_getCmdOp };
-#endif // !DISABLE_RF_DRIVER
+    (uint32)RF_getCmdOp,
+    (uint32)RF_control,
+#ifndef RF_SINGLEMODE
+    (uint32)RF_scheduleCmd,
+    (uint32)RF_runScheduleCmd,
+    (uint32)driverTable_fnSpinlock, // RF_requestAccess
+#else // !RF_SINGLEMODE
+    (uint32)driverTable_fnSpinlock, // RF_scheduleCmd
+    (uint32)driverTable_fnSpinlock, // RF_runScheduleCmd
+    (uint32)driverTable_fnSpinlock, // RF_requestAccess
+#endif // !RF_SINGLEMODE
+    (uint32)driverTable_fnSpinlock, // RF_getTxPower
+    (uint32)driverTable_fnSpinlock, // RF_setTxPower
+    (uint32)driverTable_fnSpinlock, // RF_TxPowerTable_findPowerLevel
+    (uint32)driverTable_fnSpinlock, // RF_TxPowerTable_findValue
+  };
+  #endif // !DISABLE_RF_DRIVER
 
 cryptoDrvTblPtr_t cryptoDriverTableBLE[] =
   { (uint32)driverTable_fnSpinlock,          // CryptoCC26XX_close
@@ -545,6 +637,13 @@ cryptoDrvTblPtr_t cryptoDriverTableBLE[] =
     (uint32)driverTable_fnSpinlock,          // CryptoCC26XX_transactCallback
     (uint32)CryptoCC26XX_loadKey };
 
+// Swi APIs needed by BLE controller
+rtosApiTblPtr_t rtosApiTable[] =
+{
+  (uint32_t) Swi_disable,
+  (uint32_t) Swi_restore,
+};
+
 // BLE Stack Configuration Structure
 const stackSpecific_t bleStackConfig =
 {
@@ -558,8 +657,8 @@ const stackSpecific_t bleStackConfig =
   .rfDriverParams.powerUpDurationMargin = RF_POWER_UP_DURATION_MARGIN,
   .rfDriverParams.inactivityTimeout     = RF_INACTIVITY_TIMEOUT,
   .rfDriverParams.powerUpDuration       = RF_POWER_UP_DURATION,
-  .rfDriverParams.powerUpXOSC           = RF_POWER_XOSC,
-  .rfDriverParams.pErrCb                = &(RF_ERR_CB)
+  .rfDriverParams.pErrCb                = &(RF_ERR_CB),
+  .rfDriverParams.pRfPatchOverride	= &rfModeOverride
 };
 
 #ifdef OSAL_SNV_EXTFLASH
@@ -586,6 +685,7 @@ const drvTblPtr_t driverTable =
   .eccDrvTbl      = eccDriverTable,
   .cryptoDrvTbl   = cryptoDriverTableBLE,
   .trngDrvTbl     = trngDriverTable,
+  .rtosApiTbl     = rtosApiTable,
 #ifdef OSAL_SNV_EXTFLASH
   .extflashDrvTbl = extflashDriverTable,
 #endif // OSAL_SNV_EXTFLASH
@@ -606,9 +706,17 @@ rfDrvTblPtr_t rfDriverTable[] =
 {
   (uint32) RF_open,
   (uint32) driverTable_fnSpinlock, // RF_close
-  (uint32) RF_postCmd,
-  (uint32) driverTable_fnSpinlock, // RF_pendCmd
-  (uint32) RF_runCmd,
+#ifdef RF_SINGLEMODE
+  (uint32)RF_postCmd,
+#else // !RF_SINGLEMODE
+  (uint32)driverTable_fnSpinlock, // RF_postCmd
+#endif // RF_SINGLEMODE
+  (uint32)driverTable_fnSpinlock, // RF_pendCmd
+#ifdef RF_SINGLEMODE
+  (uint32)RF_runCmd,
+#else // !RF_SINGLEMODE
+  (uint32)driverTable_fnSpinlock, // RF_runCmd
+#endif // RF_SINGLEMODE
   (uint32) RF_cancelCmd,
   (uint32) RF_flushCmd,
   (uint32) driverTable_fnSpinlock, // RF_yield
@@ -617,12 +725,26 @@ rfDrvTblPtr_t rfDriverTable[] =
   (uint32) RF_runDirectCmd,
   (uint32) driverTable_fnSpinlock, // RF_ratCompare
   (uint32) driverTable_fnSpinlock, // RF_ratCapture
-  (uint32) driverTable_fnSpinlock, // RF_ratHwOutput
+  (uint32)driverTable_fnSpinlock, // /* RF_ratHwOutput was removed from the RF driver */
   (uint32) driverTable_fnSpinlock, // RF_ratDisableChannel
   (uint32) RF_getCurrentTime,
   (uint32) RF_getRssi,
   (uint32) RF_getInfo,
-  (uint32)RF_getCmdOp
+  (uint32) RF_getCmdOp,
+  (uint32) RF_control,
+#ifndef RF_SINGLEMODE
+  (uint32) RF_scheduleCmd,
+  (uint32) RF_runScheduleCmd,
+  (uint32) driverTable_fnSpinlock  // RF_requestAccess
+#else // !RF_SINGLEMODE
+    (uint32)driverTable_fnSpinlock, // RF_scheduleCmd
+    (uint32)driverTable_fnSpinlock, // RF_runScheduleCmd
+    (uint32)driverTable_fnSpinlock, // RF_requestAccess
+#endif // !RF_SINGLEMODE
+    (uint32)driverTable_fnSpinlock, // RF_getTxPower
+    (uint32)driverTable_fnSpinlock, // RF_setTxPower
+    (uint32)driverTable_fnSpinlock, // RF_TxPowerTable_findPowerLevel
+    (uint32)driverTable_fnSpinlock, // RF_TxPowerTable_findValue
 };
 #endif // !DISABLE_RF_DRIVER
 

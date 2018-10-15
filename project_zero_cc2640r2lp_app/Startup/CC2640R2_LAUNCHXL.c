@@ -497,13 +497,22 @@ const PowerCC26XX_Config PowerCC26XX_config = {
  */
 #include <ti/drivers/rf/RF.h>
 
-const RFCC26XX_HWAttrs RFCC26XX_hwAttrs = {
-    .hwiCpe0Priority = ~0,
-    .hwiHwPriority   = ~0,
-    .swiCpe0Priority =  5,
-    .swiHwPriority   =  5,
-};
+//const RFCC26XX_HWAttrs RFCC26XX_hwAttrs = {
+//    .hwiCpe0Priority = ~0,
+//    .hwiHwPriority   = ~0,
+//    .swiCpe0Priority =  5,
+//    .swiHwPriority   =  5,
+//};
+const RFCC26XX_HWAttrsV2 RFCC26XX_hwAttrs = {
+    .hwiPriority        = INT_PRI_LEVEL7,//INT_PRI_LEVEL7,  // Lowest HWI priority:  INT_PRI_LEVEL7
+                                           // Highest HWI priority: INT_PRI_LEVEL1
 
+    .swiPriority        = 0,               // Lowest SWI priority:  0
+                                           // Highest SWI priority: Swi.numPriorities - 1
+
+    .xoscHfAlwaysNeeded = true             // Power driver always starts XOSC-HF:       true
+                                           // RF driver will request XOSC-HF if needed: false
+};
 /*
  *  =============================== SPI DMA ===============================
  */

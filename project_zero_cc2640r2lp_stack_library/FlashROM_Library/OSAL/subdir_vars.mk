@@ -6,14 +6,14 @@ SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_bufmgr.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_cbtimer.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_clock.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_memory_icall.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_pwrmgr.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/mcu/cc26xx/osal_snv_wrapper.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_timers.c 
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_bufmgr.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_cbtimer.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_clock.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_memory_icall.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_pwrmgr.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/mcu/cc26xx/osal_snv_wrapper.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_timers.c 
 
 C_DEPS += \
 ./OSAL/osal.d \
@@ -56,13 +56,13 @@ C_DEPS__QUOTED += \
 "OSAL\osal_timers.d" 
 
 C_SRCS__QUOTED += \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_bufmgr.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_cbtimer.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_clock.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_memory_icall.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_pwrmgr.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/mcu/cc26xx/osal_snv_wrapper.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/common/osal_timers.c" 
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_bufmgr.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_cbtimer.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_clock.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_memory_icall.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_pwrmgr.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/mcu/cc26xx/osal_snv_wrapper.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/osal/src/common/osal_timers.c" 
 
 

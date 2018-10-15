@@ -48,7 +48,7 @@
  */
 //#include <string.h>
 #include <math.h>
-#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
+//#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
 
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Event.h>
@@ -379,6 +379,7 @@ static PIN_State ledPinState;
 static GPTimerCC26XX_Params tim_params;
 static GPTimerCC26XX_Handle blink_tim_hdl = NULL;
 static GPTimerCC26XX_Handle samp_tim_hdl = NULL;
+static GPTimerCC26XX_Handle measure_tim_hdl = NULL;
 
 static I2SCC26XX_StreamNotification i2sStream;
 static I2SCC26XX_BufferRelease bufferRelease;
@@ -451,7 +452,9 @@ static CryptoCC26XX_AESECB_Transaction trans;
 
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
-uint32_t packet_counter = 0;
+uint32_t packet_sent = 0;
+uint32_t packet_received = 0;
+uint32_t packet_lost = 0;
 UART_Handle uart;
 static UART_Params uartParams;
 
@@ -985,10 +988,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
 #ifdef NOISE_GATE
 	            in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
-	            timestamp_start =  GPTimerCC26XX_getValue(samp_tim_hdl);
 	            //gain_reduce (mic_data_current, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log);
 	            amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
-	            timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start;
 #endif				
             }
             pdm_samp_hdl();
@@ -1219,7 +1220,8 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
     case V_STREAM_INPUT_ID:  //rx data here!!!
       // Do something useful with pCharData->data here
       Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
-
+      packet_received++;
+      packet_lost = 100.0f * ((float)packet_sent - (float)packet_received) / (float)packet_sent;
       // -------------------------
       break;
 
@@ -1751,6 +1753,16 @@ static void voice_hdl_init(void)
     GPTimerCC26XX_setLoadValue(samp_tim_hdl, (GPTimerCC26XX_Value)SAMP_TIME);
     GPTimerCC26XX_registerInterrupt(samp_tim_hdl, samp_timer_callback, GPT_INT_TIMEOUT);
 
+
+    tim_params.width = GPT_CONFIG_32BIT;
+    tim_params.mode = GPT_MODE_PERIODIC_UP;
+    tim_params.debugStallMode = GPTimerCC26XX_DEBUG_STALL_ON;
+    measure_tim_hdl = GPTimerCC26XX_open(Board_GPTIMER1A, &tim_params);
+    //GPTimerCC26XX_start(system_time);
+    if (measure_tim_hdl == NULL) {
+        while (1);
+    }
+
     buttonPinHandle = PIN_open(&buttonPinState, buttonPinTable);
     if(!buttonPinHandle) {
         /* Error initializing button pins */
@@ -2007,6 +2019,8 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 
     if(stream_on)
     {
+        timestamp_start =  GPTimerCC26XX_getValue(measure_tim_hdl);
+
         user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
         user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
     }
@@ -2018,12 +2032,14 @@ static void start_voice_handle(void)
     user_enqueueRawAppMsg(APP_MSG_Load_vol, &vol_val, 1); // read global vol level
     PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
     GPTimerCC26XX_start(samp_tim_hdl);
+    GPTimerCC26XX_start(measure_tim_hdl);
     I2SCC26XX_startStream(i2sHandle);
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
-    packet_counter = 0;
 }
+
+uint32_t db_Vogatt_SetParameter_errors = 0;
 
 static void stop_voice_handle(void)
 {
@@ -2034,12 +2050,18 @@ static void stop_voice_handle(void)
            while(1);
         }
         GPTimerCC26XX_stop(samp_tim_hdl);
+        GPTimerCC26XX_stop(measure_tim_hdl);
     }
 
     PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_STD);
     stream_on = 0;
+    packet_lost = 0;
+    packet_sent = 0 ;
+    packet_received = 0;
+
+
 
     //clean buffers for quiet beginning of next stream
     while(mailpost_usage>0){
@@ -2055,6 +2077,8 @@ static void stop_voice_handle(void)
     user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
 }
 
+
+
 static void pdm_samp_hdl(void)
 {
     uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
@@ -2064,18 +2088,27 @@ static void pdm_samp_hdl(void)
     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
 
     //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
-    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
-    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
-    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
-    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
+    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
+    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
+    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
+    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
 
-    packet_counter++;
+    packet_sent++;
 
     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-
+    
     encrypt_packet(encode_buf);
 
-    Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+    bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+
+
+    if( send_BLE_status != SUCCESS )
+    {
+        db_Vogatt_SetParameter_errors++;
+    }
+
+    timestamp_dif = GPTimerCC26XX_getValue(measure_tim_hdl) - timestamp_start;
+
 }
 
 /*********************************************************************

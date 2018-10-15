@@ -352,9 +352,10 @@ bStatus_t Vogatt_SetParameter( uint8_t param, uint16_t len, void *value )
                                                     (attrConfig[0].value==1)?"Notification enabled":
                                                      "Indication enabled" ) );
       // Try to send notification.
-      GATTServApp_ProcessCharCfg( attrConfig, pAttrVal, needAuth,
+      bStatus_t send_BLE_status = GATTServApp_ProcessCharCfg( attrConfig, pAttrVal, needAuth,
                                   VoGATTAttrTbl, GATT_NUM_ATTRS( VoGATTAttrTbl ),
                                   v_icall_rsp_task_id,  VoGATT_ReadAttrCB);
+      ret = send_BLE_status;
     }
   }
   else

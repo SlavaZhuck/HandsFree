@@ -6,8 +6,8 @@ SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/rom/r2/common_rom_init.c \
-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/rom/r2/rom_init.c 
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/rom/r2/common_rom_init.c \
+C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/rom/r2/rom_init.c 
 
 C_DEPS += \
 ./ROM/common_rom_init.d \
@@ -26,7 +26,7 @@ C_DEPS__QUOTED += \
 "ROM\rom_init.d" 
 
 C_SRCS__QUOTED += \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/rom/r2/common_rom_init.c" \
-"D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/rom/r2/rom_init.c" 
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/rom/r2/common_rom_init.c" \
+"C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/rom/r2/rom_init.c" 
 
 
