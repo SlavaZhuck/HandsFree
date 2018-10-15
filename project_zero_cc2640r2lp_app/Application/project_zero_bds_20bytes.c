@@ -451,6 +451,10 @@ static CryptoCC26XX_AESECB_Transaction trans;
 
 static GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
 
+
+uint32_t packet_sent = 0;
+uint32_t packet_received = 0;
+uint32_t packet_lost = 0;
 uint32_t packet_counter = 0;
 UART_Handle uart;
 static UART_Params uartParams;
@@ -1219,7 +1223,8 @@ void user_Vogatt_ValueChangeHandler(char_data_t *pCharData)
     case V_STREAM_INPUT_ID:  //rx data here!!!
       // Do something useful with pCharData->data here
       Mailbox_post(mailbox, pCharData->data, BIOS_NO_WAIT);
-
+      packet_received++;
+      packet_lost = 100.0f * ((float)packet_sent - (float)packet_received) / (float)packet_sent;
       // -------------------------
       break;
 
@@ -2012,6 +2017,8 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
     }
 }
 
+uint32_t db_Vogatt_SetParameter_errors = 0;
+
 static void start_voice_handle(void)
 {
     max9860_I2C_Shutdown_state(0);//disable shutdown_mode
@@ -2022,7 +2029,10 @@ static void start_voice_handle(void)
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
-    packet_counter = 0;
+    packet_sent = 0;
+    packet_lost  = 0;
+    packet_received  = 0;
+    db_Vogatt_SetParameter_errors = 0;
 }
 
 static void stop_voice_handle(void)
@@ -2064,18 +2074,25 @@ static void pdm_samp_hdl(void)
     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
 
     //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
-    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_counter >> 24;
-    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_counter >> 16;
-    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_counter >> 8;
-    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_counter;
+    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
+    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
+    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
+    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
 
-    packet_counter++;
+    packet_sent++;
 
     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
 
     encrypt_packet(encode_buf);
 
-    Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+    bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+
+
+    if( send_BLE_status != SUCCESS )
+    {
+        db_Vogatt_SetParameter_errors++;
+    }
+
 }
 
 /*********************************************************************
