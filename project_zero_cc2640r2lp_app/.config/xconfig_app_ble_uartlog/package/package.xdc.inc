@@ -1,0 +1,12 @@
+package.xdc
+package.xs
+package/xconfig_app_ble_uartlog.sch
+package/.vers_g200
+package/.vers_r200
+package/.vers_b200
+package/.xdc-D20
+package/xconfig_app_ble_uartlog.java
+package/xconfig_app_ble_uartlog.class
+package/package_xconfig_app_ble_uartlog.c
+package/package.defs.h
+package/xconfig_app_ble_uartlog.ccs

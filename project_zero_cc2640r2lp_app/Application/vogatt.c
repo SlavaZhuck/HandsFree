@@ -54,7 +54,7 @@
 #  include "UartLog.h"
 #endif
 
-#include <icall.h>
+//#include <icall.h>
 #include "util.h"
 /* This Header file contains all BLE API and icall structure definition */
 #include "icall_ble_api.h"

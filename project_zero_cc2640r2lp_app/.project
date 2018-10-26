@@ -325,12 +325,12 @@
 		<link>
 			<name>Middleware/extflash/ExtFlash.c</name>
 			<type>1</type>
-			<locationURI>TI_RTOS_DRIVERS_BASE/ti/mw/extflash/ExtFlash.c</locationURI>
+			<locationURI>TI_RTOS_DRIVERS_BASE/ti/blestack/common/cc26xx/flash_interface/external/ExtFlash.c</locationURI>
 		</link>
 		<link>
 			<name>Middleware/extflash/ExtFlash.h</name>
 			<type>1</type>
-			<locationURI>TI_RTOS_DRIVERS_BASE/ti/mw/extflash/ExtFlash.h</locationURI>
+			<locationURI>TI_RTOS_DRIVERS_BASE/ti/blestack/common/cc26xx/flash_interface/external/ExtFlash.h</locationURI>
 		</link>
 	</linkedResources>
 	<variableList>
@@ -345,6 +345,10 @@
 		<variable>
 			<name>TI_RTOS_DRIVERS_BASE</name>
 			<value>$%7BCOM_TI_SIMPLELINK_CC2640R2_SDK_INSTALL_DIR%7D/source</value>
+		</variable>
+		<variable>
+			<name>cfg_files</name>
+			<value>file:/C:/ti/simplelink_cc2640r2_sdk_2_20_00_49/source/ti/blestack/common/cc26xx/kernel/cc2640/config</value>
 		</variable>
 	</variableList>
 </projectDescription>

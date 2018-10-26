@@ -59,8 +59,8 @@
 
 
 /* This Header file contains all BLE API and icall structure definition */
+//#include <icall.h>
 #include "icall_ble_api.h"
-#include <icall.h>
 
 #include <osal_snv.h>
 #include <peripheral.h>
@@ -94,7 +94,7 @@
 #include "I2S/I2SCC26XX.h"
 
 #include <osal/src/inc/osal_snv.h>
-#include "bcomdef.h"
+#include <bcomdef.h>
 
 #include "driverlib/aon_batmon.h"
 #include "Noise_TRSH.h"
@@ -112,8 +112,14 @@
  * CONSTANTS
  */
 // Advertising interval when device is discoverable (units of 625us, 160=100ms)
-#define DEFAULT_ADVERTISING_INTERVAL          160
+#define DEFAULT_ADVERTISING_INTERVAL        160
 #define TIMEOUT                             2000
+#define APP_MIN_CONN_INTERVAL               8
+#define APP_MAX_CONN_INTERVAL               8
+#define SLAVE_LATENCY                       3
+
+
+
 // Limited discoverable mode advertises for 30.72s, and then stops
 // General discoverable mode advertises indefinitely
 #define DEFAULT_DISCOVERABLE_MODE             GAP_ADTYPE_FLAGS_GENERAL
@@ -125,7 +131,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1300
+#define PRZ_TASK_STACK_SIZE                   900
 #endif
 
 // Internal Events for RTOS application
@@ -206,7 +212,7 @@
 
 #define BAT_LOW_VOLTAGE     3000
 
-#define MAILBOX_DEPTH       10
+#define MAILBOX_DEPTH       5
 #define MIN_MAILBOX_USAGE   1
 
 #define NOISE_POWER         30000
@@ -771,6 +777,7 @@ static void ProjectZero_init(void)
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);//HCI_EXT_TX_POWER_MINUS_21_DBM HCI_EXT_TX_POWER_5_DBM
   user_enqueueRawAppMsg(APP_MSG_Read_key, &key_val, 1);
   mailbox = Mailbox_create(sizeof(packet_data), MAILBOX_DEPTH, NULL, NULL);
+   //Mailbox_construct(mailbox, sizeof(packet_data), MAILBOX_DEPTH, NULL, NULL);
   if (mailbox == NULL) {
       while (1);
   }
@@ -1270,7 +1277,7 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       if (configValue) // 0x0001 and 0x0002 both indicate turned on.
       {
           if(stream_on != 1){
-              GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
+              GAPRole_SendUpdateParam(APP_MIN_CONN_INTERVAL, APP_MAX_CONN_INTERVAL, SLAVE_LATENCY, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
               start_voice_handle();
           }
       }
@@ -1415,7 +1422,7 @@ static void ProjectZero_sendAttRsp(void)
     if ((status != blePending) && (status != MSG_BUFFER_NOT_AVAIL))
     {
       // Disable connection event end notice
-      HCI_EXT_ConnEventNoticeCmd(pAttRsp->connHandle, selfEntity, 0);
+      HCI_EXT_ConnEventNoticeCmd(pAttRsp->connHandle, selfEntity, 0); //TODO end of connection event
 
       // We're done with the response message
       ProjectZero_freeAttRsp(status);

@@ -507,7 +507,7 @@ const RFCC26XX_HWAttrsV2 RFCC26XX_hwAttrs = {
     .hwiPriority        = INT_PRI_LEVEL7,//INT_PRI_LEVEL7,  // Lowest HWI priority:  INT_PRI_LEVEL7
                                            // Highest HWI priority: INT_PRI_LEVEL1
 
-    .swiPriority        = 0,               // Lowest SWI priority:  0
+    .swiPriority        = 5,               // Lowest SWI priority:  0
                                            // Highest SWI priority: Swi.numPriorities - 1
 
     .xoscHfAlwaysNeeded = true             // Power driver always starts XOSC-HF:       true

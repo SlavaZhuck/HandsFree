@@ -575,7 +575,8 @@ txPwrTbl_t appTxPwrTbl = { TxPowerTable,
 
 
 #ifdef ICALL_JT
-#include <icall.h>
+//#include <icall.h>
+#include "icall_ble_api.h"
 
 #ifndef DISABLE_RF_DRIVER
 // RF Driver API Table

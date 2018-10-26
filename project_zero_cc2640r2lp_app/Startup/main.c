@@ -60,19 +60,19 @@
 #include <ti/sysbios/family/arm/m3/Hwi.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
-#include <ti/display/Display.h>
+//#include <ti/display/Display.h>
 //#include <ti/drivers/I2C.h>
 
-#include <icall.h>
+//#include <icall.h>
 #include "hal_assert.h"
 #include "bcomdef.h"
 #include "peripheral.h"
 #include "project_zero.h"
 //#include "I2S/I2S_task.h"
-#include "I2C/I2C_task.h"
+//#include "I2C/I2C_task.h"
 
 #include <ti/drivers/UART.h>
-#include <UartLog.h>
+//#include <UartLog.h>
 
 
 #ifndef USE_DEFAULT_USER_CFG
@@ -85,7 +85,7 @@ bleUserCfg_t user0Cfg = BLE_USER_CFG;
 #  endif /* ICALL_JT */
 #endif // USE_DEFAULT_USER_CFG
 
-
+#include "icall_ble_api.h"
 /*******************************************************************************
  * MACROS
  */
@@ -117,7 +117,7 @@ void execHandlerHook(Hwi_ExcContext *ctx)
 
 extern void AssertHandler(uint8 assertCause, uint8 assertSubcause);
 
-extern Display_Handle dispHandle;
+
 
 /*******************************************************************************
  * @fn          Main
@@ -229,53 +229,53 @@ void AssertHandler(uint8 assertCause, uint8 assertSubcause)
   //   dispHandle = Display_open(Display_Type_LCD, NULL);
   // }
 
-  Log_error0(">>>STACK ASSERT");
-
-  // check the assert cause
-  switch (assertCause)
-  {
-    case HAL_ASSERT_CAUSE_OUT_OF_MEMORY:
-      Log_error0("***ERROR***");
-      Log_error0(">> OUT OF MEMORY!");
-      break;
-
-    case HAL_ASSERT_CAUSE_INTERNAL_ERROR:
-      // check the subcause
-      if (assertSubcause == HAL_ASSERT_SUBCAUSE_FW_INERNAL_ERROR)
-      {
-        Log_error0("***ERROR***");
-        Log_error0(">> INTERNAL FW ERROR!");
-      }
-      else
-      {
-        Log_error0("***ERROR***");
-        Log_error0(">> INTERNAL ERROR!");
-      }
-      break;
-
-    case HAL_ASSERT_CAUSE_ICALL_ABORT:
-      Log_error0("***ERROR***");
-      Log_error0(">> ICALL ABORT!");
-      HAL_ASSERT_SPINLOCK;
-      break;
-
-    case HAL_ASSERT_CAUSE_ICALL_TIMEOUT:
-      Log_error0("***ERROR***");
-      Log_error0(">> ICALL TIMEOUT!");
-      HAL_ASSERT_SPINLOCK;
-      break;
-
-    case HAL_ASSERT_CAUSE_WRONG_API_CALL:
-      Log_error0("***ERROR***");
-      Log_error0(">> WRONG API CALL!");
-      HAL_ASSERT_SPINLOCK;
-      break;
-
-  default:
-      Log_error0("***ERROR***");
-      Log_error0(">> DEFAULT SPINLOCK!");
-      HAL_ASSERT_SPINLOCK;
-  }
+//  Log_error0(">>>STACK ASSERT");
+//
+//  // check the assert cause
+//  switch (assertCause)
+//  {
+//    case HAL_ASSERT_CAUSE_OUT_OF_MEMORY:
+//      Log_error0("***ERROR***");
+//      Log_error0(">> OUT OF MEMORY!");
+//      break;
+//
+//    case HAL_ASSERT_CAUSE_INTERNAL_ERROR:
+//      // check the subcause
+//      if (assertSubcause == HAL_ASSERT_SUBCAUSE_FW_INERNAL_ERROR)
+//      {
+//        Log_error0("***ERROR***");
+//        Log_error0(">> INTERNAL FW ERROR!");
+//      }
+//      else
+//      {
+//        Log_error0("***ERROR***");
+//        Log_error0(">> INTERNAL ERROR!");
+//      }
+//      break;
+//
+//    case HAL_ASSERT_CAUSE_ICALL_ABORT:
+//      Log_error0("***ERROR***");
+//      Log_error0(">> ICALL ABORT!");
+//      HAL_ASSERT_SPINLOCK;
+//      break;
+//
+//    case HAL_ASSERT_CAUSE_ICALL_TIMEOUT:
+//      Log_error0("***ERROR***");
+//      Log_error0(">> ICALL TIMEOUT!");
+//      HAL_ASSERT_SPINLOCK;
+//      break;
+//
+//    case HAL_ASSERT_CAUSE_WRONG_API_CALL:
+//      Log_error0("***ERROR***");
+//      Log_error0(">> WRONG API CALL!");
+//      HAL_ASSERT_SPINLOCK;
+//      break;
+//
+//  default:
+//      Log_error0("***ERROR***");
+//      Log_error0(">> DEFAULT SPINLOCK!");
+//      HAL_ASSERT_SPINLOCK;
+//  }
 
   return;
 }
