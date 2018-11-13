@@ -206,7 +206,7 @@ extern "C"
 // Maximum number of BLE HCI PDUs. If the maximum number connections (above)
 // is set to 0 then this number should also be set to 0.
 #ifndef MAX_NUM_PDU
-  #define MAX_NUM_PDU                   1
+  #define MAX_NUM_PDU                   5
 #endif
 
 // Maximum size in bytes of the BLE HCI PDU. Valid range: 27 to 255

@@ -165,7 +165,8 @@
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
-#define SAMP_TIME                           479999UL
+#define CYCLES_IN_CONN_INTERVAL         5
+#define SAMP_TIME                           (479999UL/CYCLES_IN_CONN_INTERVAL)
 /******I2S End ******/
 
 /******Crypto key Start ******/
@@ -217,6 +218,8 @@
 
 #define NOISE_POWER         30000
 #define SOUND_DELAY         25
+
+
 
 /*********************************************************************
  * TYPEDEFS
@@ -378,8 +381,8 @@ uint16_t get_bat_voltage(void);
 static PIN_Handle ledPinHandle;
 static PIN_State ledPinState;
 #ifdef HANDS_FREE_BOARD_VERSION3
-	static PIN_Handle powerPinHandle;
-	static PIN_State powerPinState;
+    static PIN_Handle powerPinHandle;
+    static PIN_State powerPinState;
 #endif
 
 static GPTimerCC26XX_Params tim_params;
@@ -413,14 +416,15 @@ static uint16_t i2c_read_delay;
  static unsigned char button_val;
  static unsigned char vol_val;
  static unsigned char i2c_val;
+ uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
 static uint8_t current_volume = INIT_GAIN;
 
 #ifdef HANDS_FREE_BOARD_VERSION3
-	static bool button_check = TRUE;
-	static bool power_state  = FALSE;
-	int16_t power_button_voltage[ADCBUFSIZE];
-	int16_t power_button_counter = 0;	
+    static bool button_check = TRUE;
+    static bool power_state  = FALSE;
+    int16_t power_button_voltage[ADCBUFSIZE];
+    int16_t power_button_counter = 0;
 #endif
 
 ADCBuf_Handle adc_hdl;
@@ -436,6 +440,9 @@ static uint8_t mailpost_usage;
 
 static struct ADPCMstate encoder_adpcm, decoder_adpcm;
 static int stream_on = 0;
+static uint8_t cycle_counter = 0;
+static bool success_transmit_flag = FALSE;
+uint32_t db_Vogatt_SetParameter_errors = 0;
 
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
@@ -983,26 +990,46 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
 
 #ifdef  UART_DEBUG
-		        memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
-		        uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
-		        UART_write(uart, uart_data_send, sizeof(uart_data_send));
+                memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+                uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
+                UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
-	            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
-	            bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
-	            I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
-	            gotBufferInOut = 0;
-	            i2c_read_delay++;
+                bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
+                bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
+                I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
+                gotBufferInOut = 0;
+                i2c_read_delay++;
 
 #ifdef NOISE_GATE
-	            in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
-	            //gain_reduce (mic_data_current, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log);
-	            amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
-#endif				
+                in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
+                //gain_reduce (mic_data_current, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log);
+                amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
+#endif
             }
             pdm_samp_hdl();
 //            if(i2c_read_delay % 30 == 0){
 //                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
 //            }
+        break;
+
+        case APP_MSG_Send_BLE_Packet:
+
+
+
+            bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+
+
+            if( send_BLE_status != SUCCESS )
+            {
+                db_Vogatt_SetParameter_errors++;
+                success_transmit_flag = FALSE;
+            }
+            else
+            {
+                success_transmit_flag = TRUE;
+            }
+
+            timestamp_dif = GPTimerCC26XX_getValue(measure_tim_hdl) - timestamp_start;
         break;
 
         case APP_MSG_Buttons:
@@ -1830,12 +1857,12 @@ static void voice_hdl_init(void)
 //
     adc_conversion.arg = NULL;
 #ifdef HANDS_FREE_BOARD_VERSION3
-	adc_conversion.adcChannel = ADC_POWER_BUTTON_PIN;
+    adc_conversion.adcChannel = ADC_POWER_BUTTON_PIN;
 #else
-#ifdef 	HANDS_FREE_NOT_BOARD_NEW_VERSION
+#ifdef  HANDS_FREE_NOT_BOARD_NEW_VERSION
     adc_conversion.adcChannel = CC2640R2_LAUNCHXL_ADCBUF0CHANNEL5;
 #endif
-#endif	
+#endif
     adc_conversion.sampleBuffer = samp_buf1;
     adc_conversion.sampleBufferTwo = samp_buf2;
     adc_conversion.samplesRequestedCount = ADCBUFSIZE;
@@ -1852,8 +1879,8 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     countAdc++;
     int16_t *buf_ptr = (int16_t*)completedADCBuffer;
     /* handle receive data */
-#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION	
-	batt_voltage[0] = buf_ptr[0] ;	
+#ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION
+    batt_voltage[0] = buf_ptr[0] ;
 #else
 #ifdef HANDS_FREE_BOARD_VERSION3
     if(button_check)
@@ -2026,11 +2053,27 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 
     if(stream_on)
     {
-        timestamp_start =  GPTimerCC26XX_getValue(measure_tim_hdl);
+        if(cycle_counter == 0)
+        {
+            timestamp_start =  GPTimerCC26XX_getValue(measure_tim_hdl);
 
-        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
-        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+            user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
+            user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+
+        }
+        if(success_transmit_flag == FALSE)
+        {
+            user_enqueueRawAppMsg(APP_MSG_Send_BLE_Packet, &pdm_val, 1);
+        }
+
+        cycle_counter++;
+        if(cycle_counter >= CYCLES_IN_CONN_INTERVAL)
+        {
+            cycle_counter = 0;
+            success_transmit_flag = FALSE;
+        }
     }
+
 }
 
 static void start_voice_handle(void)
@@ -2044,9 +2087,11 @@ static void start_voice_handle(void)
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
+    cycle_counter = 0;
+    success_transmit_flag = FALSE;
+    db_Vogatt_SetParameter_errors = 0;
 }
 
-uint32_t db_Vogatt_SetParameter_errors = 0;
 
 static void stop_voice_handle(void)
 {
@@ -2088,33 +2133,23 @@ static void stop_voice_handle(void)
 
 static void pdm_samp_hdl(void)
 {
-    uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
-    encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
-    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
-    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
+     encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
+     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
+     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
 
-    //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
-    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
-    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
-    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
-    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
+     //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
+     encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
+     encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
+     encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
+     encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
 
-    packet_sent++;
+     packet_sent++;
 
-    ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-    
-    encrypt_packet(encode_buf);
+     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
 
-    bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+     encrypt_packet(encode_buf);
 
-
-    if( send_BLE_status != SUCCESS )
-    {
-        db_Vogatt_SetParameter_errors++;
-    }
-
-    timestamp_dif = GPTimerCC26XX_getValue(measure_tim_hdl) - timestamp_start;
 
 }
 
