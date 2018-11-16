@@ -165,7 +165,7 @@
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
-#define CYCLES_IN_CONN_INTERVAL         5
+#define CYCLES_IN_CONN_INTERVAL         1
 #define SAMP_TIME                           (479999UL/CYCLES_IN_CONN_INTERVAL)
 /******I2S End ******/
 
@@ -2053,25 +2053,27 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 
     if(stream_on)
     {
-        if(cycle_counter == 0)
-        {
+//        if(cycle_counter >= CYCLES_IN_CONN_INTERVAL)
+//        {
+//            cycle_counter = 0;
+//            success_transmit_flag = FALSE;
+//        }
+//
+//        if(cycle_counter == 0)
+//        {
             timestamp_start =  GPTimerCC26XX_getValue(measure_tim_hdl);
 
             user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
             user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
 
-        }
-        if(success_transmit_flag == FALSE)
-        {
+//        }
+//        if(success_transmit_flag == FALSE)
+//        {
             user_enqueueRawAppMsg(APP_MSG_Send_BLE_Packet, &pdm_val, 1);
-        }
+//        }
 
         cycle_counter++;
-        if(cycle_counter >= CYCLES_IN_CONN_INTERVAL)
-        {
-            cycle_counter = 0;
-            success_transmit_flag = FALSE;
-        }
+
     }
 
 }
