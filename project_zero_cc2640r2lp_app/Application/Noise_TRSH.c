@@ -1,13 +1,17 @@
 /*
  * Power_calc.c
  *
- *  Created on: 25 ñåíò. 2018 ã.
+ *  Created on: 25 Ã±Ã¥Ã­Ã². 2018 Ã£.
  *      Author: CIT_007
  */
 
 #include <math.h>
 #include <stdint.h>
 #include "Noise_TRSH.h"
+
+static float power_average;
+static float power_dif;
+static float amplify_gain;
 
 
 struct power_struct power_calculation (int16_t *in, uint16_t samp_number){
@@ -25,23 +29,17 @@ struct power_struct power_calculation (int16_t *in, uint16_t samp_number){
     return out;
 }
 
-
-
 void amplify (int16_t *in, uint16_t samp_number, int16_t power)
 {
-    float power_dif;
-    float amplify_gain;
-
-    float power_average;
 
     power_dif = START_POWER_REDUCE-power;
-    power_average = power_average*0.9 + power_dif * 0.1;
+    power_average = power_average*0.95 + power_dif * 0.05;//power_dif
 
     if(power_average < 0 )
     {
         power_average = 0;
     }
-    amplify_gain = 1/(1.23* pow(100, power_average / 20));
+    amplify_gain = 1/(pow(100, power_average / 20));
 
     for(uint8_t i = 0 ; i < samp_number ; i++)
     {
@@ -50,4 +48,3 @@ void amplify (int16_t *in, uint16_t samp_number, int16_t power)
 
 
 }
-

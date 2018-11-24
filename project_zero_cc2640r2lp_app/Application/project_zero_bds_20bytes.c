@@ -917,6 +917,8 @@ void rt_OneStep(void)
 
 GPTimerCC26XX_Value timestamp_start;
 GPTimerCC26XX_Value timestamp_dif;
+
+uint32_t db_Vogatt_SetParameter_errors = 0;
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
@@ -996,6 +998,32 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 #endif				
             }
             pdm_samp_hdl();
+
+            uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
+
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
+
+            //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
+            encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
+            encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
+            encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
+            encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
+
+            packet_sent++;
+
+            ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
+
+            encrypt_packet(encode_buf);
+
+            bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+
+
+            if( send_BLE_status != SUCCESS )
+            {
+                db_Vogatt_SetParameter_errors++;
+            }
 //            if(i2c_read_delay % 30 == 0){
 //                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
 //            }
@@ -2017,7 +2045,7 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
     }
 }
 
-uint32_t db_Vogatt_SetParameter_errors = 0;
+
 
 static void start_voice_handle(void)
 {
@@ -2067,31 +2095,7 @@ static void stop_voice_handle(void)
 
 static void pdm_samp_hdl(void)
 {
-    uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
-    encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
-    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
-    encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
-
-    //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
-    encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
-    encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
-    encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
-    encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
-
-    packet_sent++;
-
-    ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-
-    encrypt_packet(encode_buf);
-
-    bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
-
-
-    if( send_BLE_status != SUCCESS )
-    {
-        db_Vogatt_SetParameter_errors++;
-    }
 
 }
 
