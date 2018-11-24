@@ -20,7 +20,7 @@ struct power_struct power_calculation (int16_t *in, uint16_t samp_number);
 
 void amplify (int16_t *in, uint16_t samp_number, int16_t power);
 
-#define START_POWER_REDUCE -50
+#define START_POWER_REDUCE -60 // decrease all power below this value  -50 is very much, -70 is uneffective
 
 
 
