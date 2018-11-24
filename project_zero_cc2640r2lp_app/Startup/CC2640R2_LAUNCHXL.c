@@ -270,82 +270,6 @@ const CryptoCC26XX_Config CryptoCC26XX_config[CC2640R2_LAUNCHXL_CRYPTOCOUNT] = {
 };
 
 /*
- *  =============================== Display ===============================
- */
-#include <ti/display/Display.h>
-#include <ti/display/DisplayUart.h>
-#include <ti/display/DisplaySharp.h>
-
-#ifndef BOARD_DISPLAY_UART_STRBUF_SIZE
-#define BOARD_DISPLAY_UART_STRBUF_SIZE    1024
-#endif
-
-#ifndef BOARD_DISPLAY_SHARP_SIZE
-#define BOARD_DISPLAY_SHARP_SIZE    96
-#endif
-
-DisplayUart_Object     displayUartObject;
-DisplaySharp_Object    displaySharpObject;
-
-static char uartStringBuf[BOARD_DISPLAY_UART_STRBUF_SIZE];
-
-const DisplayUart_HWAttrs displayUartHWAttrs = {
-    .uartIdx      = CC2640R2_LAUNCHXL_UART0,
-    .baudRate     = 115200,
-    .mutexTimeout = (unsigned int)(-1),
-    .strBuf       = uartStringBuf,
-    .strBufLen    = BOARD_DISPLAY_UART_STRBUF_SIZE,
-};
-
-
-#ifndef BOARD_DISPLAY_USE_UART
-#define BOARD_DISPLAY_USE_UART 1
-#endif
-#ifndef BOARD_DISPLAY_USE_UART_ANSI
-#define BOARD_DISPLAY_USE_UART_ANSI 0
-#endif
-#ifndef BOARD_DISPLAY_USE_LCD
-#define BOARD_DISPLAY_USE_LCD 0
-#endif
-
-/*
- * This #if/#else is needed to workaround a problem with the
- * IAR compiler. The IAR compiler doesn't like the empty array
- * initialization. (IAR Error[Pe1345])
- */
-#if (BOARD_DISPLAY_USE_UART || BOARD_DISPLAY_USE_LCD)
-
-const Display_Config Display_config[] = {
-#if (BOARD_DISPLAY_USE_UART)
-    {
-#  if (BOARD_DISPLAY_USE_UART_ANSI)
-        .fxnTablePtr = &DisplayUartAnsi_fxnTable,
-#  else /* Default to minimal UART with no cursor placement */
-        .fxnTablePtr = &DisplayUartMin_fxnTable,
-#  endif
-        .object      = &displayUartObject,
-        .hwAttrs     = &displayUartHWAttrs,
-    },
-#endif
-#if (BOARD_DISPLAY_USE_LCD)
-    {
-        .fxnTablePtr = &DisplaySharp_fxnTable,
-        .object      = &displaySharpObject,
-        .hwAttrs     = &displaySharpHWattrs
-    },
-#endif
-};
-
-const uint_least8_t Display_count = sizeof(Display_config) / sizeof(Display_Config);
-
-#else
-
-const Display_Config *Display_config = NULL;
-const uint_least8_t Display_count = 0;
-
-#endif /* (BOARD_DISPLAY_USE_UART || BOARD_DISPLAY_USE_LCD) */
-
-/*
  *  =============================== GPIO ===============================
  */
 #include <ti/drivers/GPIO.h>
@@ -504,7 +428,7 @@ const PowerCC26XX_Config PowerCC26XX_config = {
 //    .swiHwPriority   =  5,
 //};
 const RFCC26XX_HWAttrsV2 RFCC26XX_hwAttrs = {
-    .hwiPriority        = INT_PRI_LEVEL7,//INT_PRI_LEVEL7,  // Lowest HWI priority:  INT_PRI_LEVEL7
+    .hwiPriority        = INT_PRI_LEVEL1,//INT_PRI_LEVEL7,  // Lowest HWI priority:  INT_PRI_LEVEL7
                                            // Highest HWI priority: INT_PRI_LEVEL1
 
     .swiPriority        = 5,               // Lowest SWI priority:  0
@@ -513,16 +437,6 @@ const RFCC26XX_HWAttrsV2 RFCC26XX_hwAttrs = {
     .xoscHfAlwaysNeeded = true             // Power driver always starts XOSC-HF:       true
                                            // RF driver will request XOSC-HF if needed: false
 };
-/*
- *  =============================== SPI DMA ===============================
- */
-#include <ti/drivers/SPI.h>
-#include <ti/drivers/spi/SPICC26XXDMA.h>
-
-
-
-
-
 
 /*
  *  =============================== UART ===============================

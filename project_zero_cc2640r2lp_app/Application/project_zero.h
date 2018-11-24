@@ -83,7 +83,6 @@ typedef enum
   APP_MSG_BUTTON_DEBOUNCED,    /* A button has been debounced with new value    */
   APP_MSG_SEND_PASSCODE,       /* A pass-code/PIN is requested during pairing   */
   APP_MSG_GET_VOICE_SAMP,
-  APP_MSG_Send_BLE_Packet,
   APP_MSG_Buttons,
   APP_MSG_I2C_Read_Status,
   APP_MSG_Read_key,
@@ -91,7 +90,8 @@ typedef enum
   APP_MSG_Load_vol,
   APP_MSG_Write_vol,
   APP_MSG_Read_ADC_Voltage,
-  APP_MSG_Decrypt_packet
+  APP_MSG_Decrypt_packet,
+  APP_MSG_Encrypt_And_Send_packet
 } app_msg_types_t;
 
 void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData,

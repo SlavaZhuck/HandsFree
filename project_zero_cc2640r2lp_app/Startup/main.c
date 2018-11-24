@@ -70,9 +70,8 @@
 #include "project_zero.h"
 //#include "I2S/I2S_task.h"
 //#include "I2C/I2C_task.h"
+#include <driverlib/vims.h>
 
-#include <ti/drivers/UART.h>
-//#include <UartLog.h>
 
 
 #ifndef USE_DEFAULT_USER_CFG
@@ -146,6 +145,9 @@ int main()
   PIN_init(BoardGpioInitTable);
   //UART_init();
   //UartLog_init(UART_open(Board_UART0, NULL));
+  Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
+  Power_setConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
+  VIMSModeSafeSet(VIMS_BASE, VIMS_MODE_DISABLED, true);
 
 
 #if !defined( POWER_SAVING )

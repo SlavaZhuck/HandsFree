@@ -46,8 +46,7 @@
 /*
  * INCLUDES
  */
-//#include <string.h>
-#include <math.h>
+//#include <math.h>
 //#define xdc_runtime_Log_DISABLE_ALL 1  // Add to disable logs from this file
 
 #include <ti/sysbios/knl/Task.h>
@@ -81,12 +80,11 @@
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Mailbox.h>
 
-#include <xdc/runtime/Memory.h>
-#include <xdc/runtime/Error.h>
+//#include <xdc/runtime/Memory.h>
+//#include <xdc/runtime/Error.h>
 
 #include "codec/SitADPCM.h"
 
-#include <driverlib/vims.h>
 #include <driverlib/flash.h>
 #include <ti/sysbios/family/arm/m3/Hwi.h>
 
@@ -113,9 +111,12 @@
  */
 // Advertising interval when device is discoverable (units of 625us, 160=100ms)
 #define DEFAULT_ADVERTISING_INTERVAL        160
-#define TIMEOUT                             2000
-#define APP_MIN_CONN_INTERVAL               8
-#define APP_MAX_CONN_INTERVAL               8
+#define TIMEOUT                             4000
+
+#define CONN_INTERVAL_MS                    10.0f
+
+#define APP_MIN_CONN_INTERVAL               8//(uint16_t)(CONN_INTERVAL_MS/1.25f)
+#define APP_MAX_CONN_INTERVAL               8//(uint16_t)(CONN_INTERVAL_MS/1.25f)
 #define SLAVE_LATENCY                       3
 
 
@@ -165,8 +166,8 @@
 #define I2S_BUF                             sizeof(int16_t) * (I2S_SAMP_PER_FRAME *   \
                                             I2SCC26XX_QUEUE_SIZE * NUM_OF_CHANNELS)
 
-#define CYCLES_IN_CONN_INTERVAL         1
-#define SAMP_TIME                           (479999UL/CYCLES_IN_CONN_INTERVAL)
+#define CPU_FREQ                            47999999UL //48 MHz
+#define SAMP_TIME                           (uint32_t)(CPU_FREQ*CONN_INTERVAL_MS/1000.0f)
 /******I2S End ******/
 
 /******Crypto key Start ******/
@@ -352,8 +353,6 @@ static PIN_State buttonPinState;
 /************************************************ USER'S FUNCTIONS ****************************************/
 static void bufRdy_callback(I2SCC26XX_Handle handle, I2SCC26XX_StreamNotification *pStreamNotification);
 
-static void AudioDuplex_disableCache();
-static void AudioDuplex_enableCache();
 
 
 void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId);
@@ -415,7 +414,6 @@ static uint16_t i2c_read_delay;
  static unsigned char pdm_val;
  static unsigned char button_val;
  static unsigned char vol_val;
- static unsigned char i2c_val;
  uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
 static uint8_t current_volume = INIT_GAIN;
@@ -440,8 +438,6 @@ static uint8_t mailpost_usage;
 
 static struct ADPCMstate encoder_adpcm, decoder_adpcm;
 static int stream_on = 0;
-static uint8_t cycle_counter = 0;
-static bool success_transmit_flag = FALSE;
 uint32_t db_Vogatt_SetParameter_errors = 0;
 
 static int16_t *audio_decoded = NULL;
@@ -933,8 +929,8 @@ GPTimerCC26XX_Value timestamp_dif;
 static void user_processApplicationMessage(app_msg_t *pMsg)
 {
     char_data_t *pCharData = (char_data_t *)pMsg->pdu;
+    uint8_t status;
     
-
     switch (pMsg->type)
     {
         case APP_MSG_SERVICE_WRITE: /* Message about received value write */
@@ -972,7 +968,58 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         }
         break;
 
+        case APP_MSG_Encrypt_And_Send_packet:
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
+            encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
+
+            //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
+            encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
+            encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
+            encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
+            encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
+
+            packet_sent++;
+
+            ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
+
+            encrypt_packet(encode_buf);
+            bStatus_t send_BLE_status;
+            send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
+
+            if( send_BLE_status != SUCCESS )
+            {
+                db_Vogatt_SetParameter_errors++;
+            }
+
+            timestamp_dif = GPTimerCC26XX_getValue(measure_tim_hdl) - timestamp_start;
+
+
+        break;
+        case APP_MSG_Decrypt_packet:
+
+
+            mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
+            if(mailpost_usage>0)
+            {
+                Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
+                decrypt_packet(packet_data);
+                decoder_adpcm.prevsample = ((int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
+                        (int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 1]);
+
+                decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 2]));
+
+                ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
+            }else{
+                memset ( packet_data,   0, sizeof(packet_data) );
+                memset ( raw_data_send, 0, sizeof(raw_data_send));
+                memset ( mic_data_1ch,  0, sizeof(mic_data_1ch));
+            }
+
+            break;
+
         case APP_MSG_GET_VOICE_SAMP:
+
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
             gotBufferInOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferInOut)
@@ -1012,25 +1059,6 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 //            }
         break;
 
-        case APP_MSG_Send_BLE_Packet:
-
-
-
-            bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
-
-
-            if( send_BLE_status != SUCCESS )
-            {
-                db_Vogatt_SetParameter_errors++;
-                success_transmit_flag = FALSE;
-            }
-            else
-            {
-                success_transmit_flag = TRUE;
-            }
-
-            timestamp_dif = GPTimerCC26XX_getValue(measure_tim_hdl) - timestamp_start;
-        break;
 
         case APP_MSG_Buttons:
             button_processing();
@@ -1048,7 +1076,6 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_Load_vol:
-            uint8_t status = 0;
             status = osal_snv_read(INIT_VOL_ADDR, 1, &current_volume);
                 if(status != SUCCESS)
                 {
@@ -1071,52 +1098,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             }
         break;
 
-        case APP_MSG_Decrypt_packet:
-            mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
-            if(mailpost_usage>0)
-            {
-                Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
-                decrypt_packet(packet_data);
-                decoder_adpcm.prevsample = ((int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN]) << 8) |
-                        (int16_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 1]);
 
-                decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 2]));
-
-
-                ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
-
-//                channel_power = 0;
-//                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i++)
-//                {
-//                    channel_power += (uint64_t)((int32_t)raw_data_send[i] * (int32_t)raw_data_send[i]);
-//                }
-//                channel_power = channel_power/I2S_SAMP_PER_FRAME;
-//
-//                if (channel_power > NOISE_POWER)
-//                {
-//                    sound_appeared = true;
-//                    sound_timestamp = SOUND_DELAY;
-//                }
-//
-//                if(sound_timestamp> 0 )
-//                {
-//                    sound_timestamp--;
-//                }
-//                else
-//                {
-//                    sound_appeared = false;
-//                    memset(raw_data_send, 0, sizeof(raw_data_send));
-//                    memset(mic_data_1ch, 0, sizeof(mic_data_1ch));
-//
-//                }
-
-            }else{
-                memset ( packet_data,   0, sizeof(packet_data) );
-                memset ( raw_data_send, 0, sizeof(raw_data_send));
-                memset ( mic_data_1ch,  0, sizeof(mic_data_1ch));
-            }
-
-            break;
     }
 }
 
@@ -1810,7 +1792,6 @@ static void voice_hdl_init(void)
 
     I2SCC26XX_init(i2sHandle);
     I2SCC26XX_Handle i2sHandleTmp = NULL;
-    AudioDuplex_disableCache();
 
     i2sContMgtBuffer = (uint8_t *)(I2S_MEM_BASE + I2S_BUF + 1);
     audio_decoded = (int16_t *)I2S_MEM_BASE;
@@ -2053,26 +2034,15 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 
     if(stream_on)
     {
-//        if(cycle_counter >= CYCLES_IN_CONN_INTERVAL)
-//        {
-//            cycle_counter = 0;
-//            success_transmit_flag = FALSE;
-//        }
-//
-//        if(cycle_counter == 0)
-//        {
-            timestamp_start =  GPTimerCC26XX_getValue(measure_tim_hdl);
 
-            user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
-            user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+        timestamp_start =  GPTimerCC26XX_getValue(measure_tim_hdl);
 
-//        }
-//        if(success_transmit_flag == FALSE)
-//        {
-            user_enqueueRawAppMsg(APP_MSG_Send_BLE_Packet, &pdm_val, 1);
-//        }
+        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
+        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+        user_enqueueRawAppMsg(APP_MSG_Encrypt_And_Send_packet, &pdm_val, 1);
 
-        cycle_counter++;
+
+        //user_enqueueRawAppMsg(APP_MSG_Send_BLE_Packet, &pdm_val, 1);
 
     }
 
@@ -2089,8 +2059,6 @@ static void start_voice_handle(void)
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
     stream_on = 1;
-    cycle_counter = 0;
-    success_transmit_flag = FALSE;
     db_Vogatt_SetParameter_errors = 0;
 }
 
@@ -2136,65 +2104,11 @@ static void stop_voice_handle(void)
 static void pdm_samp_hdl(void)
 {
 
-     encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
-     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
-     encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
-
-     //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
-     encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
-     encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
-     encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
-     encode_buf[V_STREAM_OUTPUT_LEN - 1] = packet_sent;
-
-     packet_sent++;
-
-     ADPCMEncoderBuf2(mic_data_1ch, (char*)(encode_buf), &encoder_adpcm);
-
-     encrypt_packet(encode_buf);
 
 
 }
 
-/*********************************************************************
- *********************************************************************/
 
-/*********************************************************************
- * @fn      AudioDuplex_disableCache
- *
- * @brief   Disables the instruction cache and sets power constaints
- *          This prevents the device from sleeping while streaming
- *
- * @param   None.
- *
- * @return  None.
- */
-static void AudioDuplex_disableCache()
-{
-    uint_least16_t hwiKey = Hwi_disable();
-//    Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
-//    Power_setConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
-    VIMSModeSafeSet(VIMS_BASE, VIMS_MODE_DISABLED, true);
-    Hwi_restore(hwiKey);
-}
-
-/*********************************************************************
- * @fn      AudioDuplex_enableCache
- *
- * @brief   Enables the instruction cache and releases power constaints
- *          Allows device to sleep again
- *
- * @param   None.
- *
- * @return  None.
- */
-static void AudioDuplex_enableCache()
-{
-    uint_least16_t hwiKey = Hwi_disable();
-    Power_releaseConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
-    Power_releaseConstraint(PowerCC26XX_NEED_FLASH_IN_IDLE);
-    VIMSModeSafeSet(VIMS_BASE, VIMS_MODE_ENABLED, true);
-    Hwi_restore(hwiKey);
-}
 
 static void encrypt_packet(uint8_t *packet)
 {

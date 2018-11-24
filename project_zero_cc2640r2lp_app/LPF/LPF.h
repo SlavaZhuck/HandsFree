@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'LPF'.
  *
- * Model version                  : 1.2
+ * Model version                  : 1.46
  * Simulink Coder version         : 8.13 (R2017b) 24-Jul-2017
- * C/C++ source code generated on : Mon Apr  2 20:36:57 2018
+ * C/C++ source code generated on : Wed Nov 21 19:57:54 2018
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex
@@ -34,16 +34,16 @@
 
 /* Block signals and states (auto storage) for system '<Root>' */
 typedef struct {
-  int32_T Filter1_circBuf;             /* '<S1>/Filter1' */
-  int16_T Filter1_states[19];          /* '<S1>/Filter1' */
+  int32_T Filter1_circBuf;             /* '<Root>/Filter1' */
+  int16_T Filter1_states[10];          /* '<Root>/Filter1' */
 } DW;
 
 /* Constant parameters (auto storage) */
 typedef struct {
   /* Computed Parameter: Filter1_Coefficients
-   * Referenced by: '<S1>/Filter1'
+   * Referenced by: '<Root>/Filter1'
    */
-  int16_T Filter1_Coefficients[20];
+  int16_T Filter1_Coefficients[11];
 } ConstP;
 
 /* External inputs (root inport signals with auto storage) */
@@ -78,19 +78,15 @@ extern void LPF_step(void);
  * is <system>/block_name, where system is the system number (uniquely
  * assigned by Simulink) and block_name is the name of the block.
  *
- * Note that this particular code originates from a subsystem build,
- * and has its own system numbers different from the parent model.
- * Refer to the system hierarchy for this subsystem below, and use the
- * MATLAB hilite_system command to trace the generated code back
- * to the parent model.  For example,
+ * Use the MATLAB hilite_system command to trace the generated code back
+ * to the model.  For example,
  *
- * hilite_system('filterC/LPF')    - opens subsystem filterC/LPF
- * hilite_system('filterC/LPF/Kp') - opens and selects block Kp
+ * hilite_system('<S3>')    - opens system 3
+ * hilite_system('<S3>/Kp') - opens and selects block Kp which resides in S3
  *
  * Here is the system hierarchy for this model
  *
- * '<Root>' : 'filterC'
- * '<S1>'   : 'filterC/LPF'
+ * '<Root>' : 'LPF'
  */
 #endif                                 /* RTW_HEADER_LPF_h_ */
 

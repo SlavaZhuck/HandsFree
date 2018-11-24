@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'LPF'.
  *
- * Model version                  : 1.2
+ * Model version                  : 1.46
  * Simulink Coder version         : 8.13 (R2017b) 24-Jul-2017
- * C/C++ source code generated on : Mon Apr  2 20:36:57 2018
+ * C/C++ source code generated on : Wed Nov 21 19:57:54 2018
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex
@@ -96,12 +96,12 @@ void LPF_step(void)
   int32_T cff;
   int64_T q1;
 
-  /* DiscreteFir: '<S1>/Filter1' incorporates:
+  /* DiscreteFir: '<Root>/Filter1' incorporates:
    *  Inport: '<Root>/In1'
    */
-  acc1 = rtU.In1 * -63;
+  acc1 = rtU.In1 * 423;
   cff = 1;
-  for (j = rtDW.Filter1_circBuf; j < 19; j++) {
+  for (j = rtDW.Filter1_circBuf; j < 10; j++) {
     q1 = rtDW.Filter1_states[j] * rtConstP.Filter1_Coefficients[cff];
     if ((acc1 < 0LL) && (q1 < MIN_int64_T - acc1)) {
       acc1 = MIN_int64_T;
@@ -127,7 +127,7 @@ void LPF_step(void)
     cff++;
   }
 
-  acc1 >>= 15;
+  acc1 = ((acc1 & 32767LL) != 0LL) + (acc1 >> 15);
   if (acc1 > 32767LL) {
     acc1 = 32767LL;
   } else {
@@ -137,23 +137,23 @@ void LPF_step(void)
   }
 
   /* Outport: '<Root>/Out1' incorporates:
-   *  DiscreteFir: '<S1>/Filter1'
+   *  DiscreteFir: '<Root>/Filter1'
    */
   rtY.Out1 = (int16_T)acc1;
 
-  /* Update for DiscreteFir: '<S1>/Filter1' incorporates:
+  /* Update for DiscreteFir: '<Root>/Filter1' incorporates:
    *  Inport: '<Root>/In1'
    */
   /* Update circular buffer index */
   rtDW.Filter1_circBuf--;
   if (rtDW.Filter1_circBuf < 0) {
-    rtDW.Filter1_circBuf = 18;
+    rtDW.Filter1_circBuf = 9;
   }
 
   /* Update circular buffer */
   rtDW.Filter1_states[rtDW.Filter1_circBuf] = rtU.In1;
 
-  /* End of Update for DiscreteFir: '<S1>/Filter1' */
+  /* End of Update for DiscreteFir: '<Root>/Filter1' */
 }
 
 /* Model initialize function */
