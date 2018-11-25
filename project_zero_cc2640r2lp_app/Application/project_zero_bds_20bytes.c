@@ -587,7 +587,8 @@ static void readCallback(UART_Handle handle, void *rxBuf, size_t size)
  //   memset(&test_CRC,0,sizeof(test_CRC));
 
     OnRxByte(((unsigned char*)rxBuf)[0]);
-    if(PackProcessing()){
+    if(PackProcessing())
+    {
 
     }
 
@@ -638,7 +639,8 @@ static void ProjectZero_init(void)
     }
 
     uint64_t temp = *((uint64_t *)(0x500012E8)) & 0xFFFFFFFFFFFFFF;
-    for(uint8_t i = 0 ; i < 6 ; i++){
+    for(uint8_t i = 0 ; i < 6 ; i++)
+    {
         macAddress[i]=*(((uint8_t *)&temp)+i);
     }
     //macAddress = *((uint64_t *)(0x500012E8)) & 0xFFFFFFFFFFFFFF;
@@ -962,19 +964,27 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_GET_VOICE_SAMP:
+            timestamp_start =  GPTimerCC26XX_getValue(samp_tim_hdl);
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
             gotBufferInOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
             if (gotBufferInOut)
             {
                 memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
                 memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
-#ifdef  LPF
-                for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++){
-                    rtU.In1 = mic_data_1ch[i];
-                    rt_OneStep();
-                    mic_data_1ch[i] = rtY.Out1;
-                }
-#endif
+
+                #ifdef NOISE_GATE
+                    in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
+                    amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
+                #endif
+
+                #ifdef  LPF
+                    for(uint8_t i = 0 ; i< I2S_SAMP_PER_FRAME; i++)
+                    {
+                        rtU.In1 = mic_data_1ch[i];
+                        rt_OneStep();
+                        mic_data_1ch[i] = rtY.Out1;
+                    }
+                #endif
 
 
 
@@ -989,13 +999,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 	            gotBufferInOut = 0;
 	            i2c_read_delay++;
 
-#ifdef NOISE_GATE
-	            in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
-	            timestamp_start =  GPTimerCC26XX_getValue(samp_tim_hdl);
-	            //gain_reduce (mic_data_current, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log);
-	            amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
-	            timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start;
-#endif				
+
             }
             pdm_samp_hdl();
 
@@ -1024,6 +1028,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             {
                 db_Vogatt_SetParameter_errors++;
             }
+            timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start;
 //            if(i2c_read_delay % 30 == 0){
 //                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
 //            }
@@ -1300,7 +1305,8 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       // ... In the generated example we turn periodic clocks on/off
       if (configValue) // 0x0001 and 0x0002 both indicate turned on.
       {
-          if(stream_on != 1){
+          if(stream_on != 1)
+          {
               GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
               start_voice_handle();
           }
@@ -1816,7 +1822,8 @@ static void voice_hdl_init(void)
     i2sHandle = (I2SCC26XX_Handle)&(I2SCC26XX_config);
     i2sHandleTmp = I2SCC26XX_open(i2sHandle, &i2sParams);
 
-    if(!i2sHandleTmp){//pdmHandle){
+    if(!i2sHandleTmp)
+    {
         while(1);
     }
 
@@ -1853,13 +1860,16 @@ static void voice_hdl_init(void)
     adc_conversion.sampleBuffer = samp_buf1;
     adc_conversion.sampleBufferTwo = samp_buf2;
     adc_conversion.samplesRequestedCount = ADCBUFSIZE;
-    if (!adc_hdl){
+    if (!adc_hdl)
+    {
         while(1);
     }
     /* Start converting. */
 }
 
 static uint16_t countAdc = 0;
+static bool enable_blink = TRUE;
+
 
 void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
@@ -1887,9 +1897,14 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
             {
                 power_button_counter = 3;
                 if (power_state == FALSE)
+                {
                     PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_ON); //turn ON power
+                }
                 else
+                {
                     PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_OFF); //turn OFF power
+                    enable_blink = FALSE; // disable blinking after power OFF
+                }
 
             }
             else if (power_button_counter <= 0)
@@ -1904,10 +1919,6 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     }
     else
     {
-//        for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
-//        {
-//            batt_voltage[i] = buf_ptr[i] ;
-//        }
         batt_voltage[0] = buf_ptr[0] ;
         button_check = TRUE;
     }
@@ -1950,8 +1961,8 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
 }
 
 
-void button_processing(void){
-
+void button_processing(void)
+{
     if(buttonVol_UP_pressed)
     {
         if(current_volume<=0)
@@ -2033,6 +2044,13 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
             PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
         }
     }
+#ifdef HANDS_FREE_BOARD_VERSION3
+    if(!enable_blink)
+    {
+        PIN_setOutputValue(ledPinHandle, Board_RLED, 1);
+        PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
+    }
+#endif
 }
 
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
@@ -2068,7 +2086,8 @@ static void stop_voice_handle(void)
     max9860_I2C_Shutdown_state(1);//enable shutdown_mode
     if(stream_on)
     {
-        if(!I2SCC26XX_stopStream(i2sHandle)){
+        if(!I2SCC26XX_stopStream(i2sHandle))
+        {
            while(1);
         }
         GPTimerCC26XX_stop(samp_tim_hdl);
@@ -2080,7 +2099,8 @@ static void stop_voice_handle(void)
     stream_on = 0;
 
     //clean buffers for quiet beginning of next stream
-    while(mailpost_usage>0){
+    while(mailpost_usage>0)
+    {
         Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
         mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
     }
