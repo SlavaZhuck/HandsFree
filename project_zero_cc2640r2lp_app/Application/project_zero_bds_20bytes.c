@@ -178,15 +178,22 @@
 /******ADC Start ******/
 #define ADCBUFSIZE      1
 #define SAMPFREQ        1000000
-#define ADC_VOLTAGE_MEASURE_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL7
+
 
 #ifdef HANDS_FREE_BOARD_VERSION3
+	#define ADC_VOLTAGE_MEASURE_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL7
     #define ADC_POWER_BUTTON_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL6
-
     #define POWER_ON 0
     #define POWER_OFF 1
-
     #define ADC_POWER_BUTTON_THRESHOLD 100
+#else
+#ifdef HANDS_FREE_BOARD_VERSION4
+	#define ADC_VOLTAGE_MEASURE_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL5
+    #define ADC_POWER_BUTTON_PIN CC2640R2_LAUNCHXL_ADCBUF0CHANNEL4
+    #define POWER_ON 1
+    #define POWER_OFF 0
+    #define ADC_POWER_BUTTON_THRESHOLD 100
+#endif
 #endif
 /******ADC End ******/
 
@@ -208,9 +215,6 @@
 
 #define MAILBOX_DEPTH       10
 #define MIN_MAILBOX_USAGE   1
-
-#define NOISE_POWER         30000
-#define SOUND_DELAY         25
 
 /*********************************************************************
  * TYPEDEFS
@@ -319,7 +323,7 @@ PIN_Config buttonPinTable[] = {
     CC2640R2_LAUNCHXL_PIN_BTN2  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
     PIN_TERMINATE
 };
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
 PIN_Config powerPinTable[] = {
     CC2640R2_LAUNCHXL_PIN_POWER  | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MAX,
     PIN_TERMINATE
@@ -357,13 +361,9 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask);
 static void start_voice_handle(void);
 static void stop_voice_handle(void);
-static void pdm_samp_hdl(void);
 
 static void encrypt_packet(uint8_t *packet);
 static void decrypt_packet(uint8_t *packet);
-
-uint8_t write_aes_key(uint8_t *key);
-uint8_t read_aes_key(uint8_t *key);
 
 uint16_t get_bat_voltage(void);
 
@@ -371,7 +371,7 @@ uint16_t get_bat_voltage(void);
 
 static PIN_Handle ledPinHandle;
 static PIN_State ledPinState;
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
 	static PIN_Handle powerPinHandle;
 	static PIN_State powerPinState;
 #endif
@@ -399,21 +399,18 @@ static I2SCC26XX_Params i2sParams =
 };
 
 static uint16_t i2c_read_delay;
- int16_t raw_data_send[I2S_SAMP_PER_FRAME];
- uint8_t packet_data[V_STREAM_INPUT_LEN];
+static int16_t raw_data_send[I2S_SAMP_PER_FRAME];
+static uint8_t packet_data[V_STREAM_INPUT_LEN];
 
- static unsigned char pdm_val;
- static unsigned char button_val;
- static unsigned char vol_val;
- static unsigned char i2c_val;
+ static unsigned char return_val;
 
 static uint8_t current_volume = INIT_GAIN;
 
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
 	static bool button_check = TRUE;
 	static bool power_state  = FALSE;
-	int16_t power_button_voltage[ADCBUFSIZE];
-	int16_t power_button_counter = 0;	
+	static int16_t power_button_voltage[ADCBUFSIZE];
+	static int16_t power_button_counter = 0;
 #endif
 
 ADCBuf_Handle adc_hdl;
@@ -428,7 +425,7 @@ static uint8_t mailpost_usage;
 
 
 static struct ADPCMstate encoder_adpcm, decoder_adpcm;
-static int stream_on = 0;
+static bool stream_on = FALSE;
 
 static int16_t *audio_decoded = NULL;
 static uint8_t *i2sContMgtBuffer = NULL;
@@ -672,7 +669,7 @@ static void ProjectZero_init(void)
   }
 
   PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
   powerPinHandle = PIN_open(&powerPinState, powerPinTable);
   if(!powerPinHandle)
   {
@@ -989,7 +986,8 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
 
 #ifdef  UART_DEBUG
-		        memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+              memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+//                memcpy(&uart_data_send[1], raw_data_send, sizeof(raw_data_send));
 		        uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
 		        UART_write(uart, uart_data_send, sizeof(uart_data_send));
 #endif
@@ -1001,15 +999,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
 
             }
-            pdm_samp_hdl();
 
+            /*  START encode and packet send   */
             uint8_t encode_buf[V_STREAM_OUTPUT_LEN];
 
             encode_buf[V_STREAM_OUTPUT_SOUND_LEN] = encoder_adpcm.prevsample >> 8;
             encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 1] = encoder_adpcm.prevsample;
             encode_buf[V_STREAM_OUTPUT_SOUND_LEN + 2] = encoder_adpcm.previndex;
 
-            //encode_buf[V_STREAM_OUTPUT_LEN - 4] = mailpost_usage;
             encode_buf[V_STREAM_OUTPUT_LEN - 4] = packet_sent >> 24;
             encode_buf[V_STREAM_OUTPUT_LEN - 3] = packet_sent >> 16;
             encode_buf[V_STREAM_OUTPUT_LEN - 2] = packet_sent >> 8;
@@ -1022,15 +1019,16 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             encrypt_packet(encode_buf);
 
             bStatus_t send_BLE_status = Vogatt_SetParameter(V_STREAM_OUTPUT_ID, V_STREAM_OUTPUT_LEN, encode_buf);
-
+            /*  END encode and packet send   */
 
             if( send_BLE_status != SUCCESS )
             {
                 db_Vogatt_SetParameter_errors++;
             }
-            timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start;
+            timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start; //time of packet processing
+
 //            if(i2c_read_delay % 30 == 0){
-//                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
+//                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &return_val, 1);
 //            }
         break;
 
@@ -1064,7 +1062,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         break;
 
         case APP_MSG_Read_ADC_Voltage:
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
             adc_conversion.adcChannel = ADC_VOLTAGE_MEASURE_PIN;
             button_check = FALSE;
 #endif
@@ -1086,38 +1084,11 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 
 
                 ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
-
-//                channel_power = 0;
-//                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i++)
-//                {
-//                    channel_power += (uint64_t)((int32_t)raw_data_send[i] * (int32_t)raw_data_send[i]);
-//                }
-//                channel_power = channel_power/I2S_SAMP_PER_FRAME;
-//
-//                if (channel_power > NOISE_POWER)
-//                {
-//                    sound_appeared = true;
-//                    sound_timestamp = SOUND_DELAY;
-//                }
-//
-//                if(sound_timestamp> 0 )
-//                {
-//                    sound_timestamp--;
-//                }
-//                else
-//                {
-//                    sound_appeared = false;
-//                    memset(raw_data_send, 0, sizeof(raw_data_send));
-//                    memset(mic_data_1ch, 0, sizeof(mic_data_1ch));
-//
-//                }
-
             }else{
                 memset ( packet_data,   0, sizeof(packet_data) );
                 memset ( raw_data_send, 0, sizeof(raw_data_send));
                 memset ( mic_data_1ch,  0, sizeof(mic_data_1ch));
             }
-
             break;
     }
 }
@@ -1305,7 +1276,7 @@ void user_Vogatt_CfgChangeHandler(char_data_t *pCharData)
       // ... In the generated example we turn periodic clocks on/off
       if (configValue) // 0x0001 and 0x0002 both indicate turned on.
       {
-          if(stream_on != 1)
+          if(stream_on == FALSE)
           {
               GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
               start_voice_handle();
@@ -1850,7 +1821,7 @@ static void voice_hdl_init(void)
     adc_hdl = ADCBuf_open(Board_ADCBUF0, &adc_params);//Board_ADCBUF0
 //
     adc_conversion.arg = NULL;
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
 	adc_conversion.adcChannel = ADC_POWER_BUTTON_PIN;
 #else
 #ifdef 	HANDS_FREE_NOT_BOARD_NEW_VERSION
@@ -1879,43 +1850,44 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
 #ifdef HANDS_FREE_NOT_BOARD_NEW_VERSION	
 	batt_voltage[0] = buf_ptr[0] ;	
 #else
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
     if(button_check)
     {
-        for(uint32_t i = 0 ; i < ADCBUFSIZE; i++)
+
+        power_button_voltage[0] = buf_ptr[0] ;
+
+        if (power_button_voltage[0] < ADC_POWER_BUTTON_THRESHOLD)
         {
-            power_button_voltage[i] = buf_ptr[i] ;
-            if (power_button_voltage[i] < ADC_POWER_BUTTON_THRESHOLD)
+            power_button_counter++;
+        }
+        else
+        {
+            power_button_counter--;
+        }
+
+        if(power_button_counter>3)
+        {
+            power_button_counter = 3;
+            if (power_state == FALSE)
             {
-                power_button_counter++;
+                PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_ON); //turn ON power
             }
             else
             {
-                power_button_counter--;
+                PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_OFF); //turn OFF power
+                enable_blink = FALSE; // disable blinking after power OFF
             }
-            if(power_button_counter>3)
-            {
-                power_button_counter = 3;
-                if (power_state == FALSE)
-                {
-                    PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_ON); //turn ON power
-                }
-                else
-                {
-                    PIN_setOutputValue(powerPinHandle, CC2640R2_LAUNCHXL_PIN_POWER, POWER_OFF); //turn OFF power
-                    enable_blink = FALSE; // disable blinking after power OFF
-                }
 
-            }
-            else if (power_button_counter <= 0)
-            {
-                power_button_counter = 0;
-                if (PIN_getOutputValue(CC2640R2_LAUNCHXL_PIN_POWER))
-                    power_state = FALSE;
-                else
-                    power_state = TRUE;
-            }
         }
+        else if (power_button_counter <= 0)
+        {
+            power_button_counter = 0;
+            if (!PIN_getOutputValue(CC2640R2_LAUNCHXL_PIN_POWER))
+                power_state = FALSE;
+            else
+                power_state = TRUE;
+        }
+
     }
     else
     {
@@ -1957,7 +1929,7 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
                break;
        }
    }
-   user_enqueueRawAppMsg(APP_MSG_Buttons, &button_val, 1);
+   user_enqueueRawAppMsg(APP_MSG_Buttons, &return_val, 1);
 }
 
 
@@ -2002,7 +1974,7 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 {
     static bool blink = false;
     static bool bat_low = false;
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
     if(button_check)
     {    adc_conversion.adcChannel = ADC_POWER_BUTTON_PIN;
         if (ADCBuf_convert(adc_hdl, &adc_conversion, 1) != ADCBuf_STATUS_SUCCESS) {
@@ -2024,7 +1996,7 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
             PIN_setOutputValue(ledPinHandle, Board_RLED, 0);
         }
 
-        if(!stream_on)
+        if(stream_on == FALSE)
         {
             PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
         }
@@ -2039,12 +2011,12 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
             PIN_setOutputValue(ledPinHandle, Board_RLED, 1);
         }
 
-        if(!stream_on)
+        if(stream_on == FALSE)
         {
             PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
         }
     }
-#ifdef HANDS_FREE_BOARD_VERSION3
+#if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
     if(!enable_blink)
     {
         PIN_setOutputValue(ledPinHandle, Board_RLED, 1);
@@ -2056,10 +2028,10 @@ static void blink_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntM
 static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMask interruptMask)
 {
 
-    if(stream_on)
+    if(stream_on == TRUE)
     {
-        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
-        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &return_val, 1);
+        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &return_val, 1);
     }
 }
 
@@ -2068,13 +2040,13 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 static void start_voice_handle(void)
 {
     max9860_I2C_Shutdown_state(0);//disable shutdown_mode
-    user_enqueueRawAppMsg(APP_MSG_Load_vol, &vol_val, 1); // read global vol level
+    user_enqueueRawAppMsg(APP_MSG_Load_vol, &return_val, 1); // read global vol level
     PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
     GPTimerCC26XX_start(samp_tim_hdl);
     I2SCC26XX_startStream(i2sHandle);
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_HIGH);
-    stream_on = 1;
+    stream_on = TRUE;
     packet_sent = 0;
     packet_lost  = 0;
     packet_received  = 0;
@@ -2084,7 +2056,7 @@ static void start_voice_handle(void)
 static void stop_voice_handle(void)
 {
     max9860_I2C_Shutdown_state(1);//enable shutdown_mode
-    if(stream_on)
+    if(stream_on == TRUE)
     {
         if(!I2SCC26XX_stopStream(i2sHandle))
         {
@@ -2096,28 +2068,23 @@ static void stop_voice_handle(void)
     PIN_setOutputValue(ledPinHandle, Board_GLED, 0);
     HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_0_DBM);
     HCI_EXT_SetRxGainCmd(LL_EXT_RX_GAIN_STD);
-    stream_on = 0;
+    stream_on = FALSE;
 
     //clean buffers for quiet beginning of next stream
-    while(mailpost_usage>0)
+    while(mailpost_usage > 0)
     {
         Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
         mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
     }
     memset ( packet_data,   0, sizeof(packet_data) );
     memset ( raw_data_send, 0, sizeof(raw_data_send) );
-    memset ( mic_data_1ch, 0, sizeof(mic_data_1ch));
+    memset ( mic_data_1ch,  0, sizeof(mic_data_1ch));
 #ifdef LPF
     memset ( &rtDW, 0, sizeof(rtDW) );
 #endif
-    user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
+    user_enqueueRawAppMsg(APP_MSG_Write_vol, &return_val, 1);
 }
 
-static void pdm_samp_hdl(void)
-{
-
-
-}
 
 /*********************************************************************
  *********************************************************************/
@@ -2252,7 +2219,7 @@ static void decrypt_packet(uint8_t *packet)
     }
 }
 
-uint8_t read_aes_key(uint8_t *key)
+uint8_t read_aes_key(void *key)
 {
     uint8_t status;
     static uint8_t default_key[] =
@@ -2268,7 +2235,7 @@ uint8_t read_aes_key(uint8_t *key)
     return status;
 }
 
-uint8_t write_aes_key(uint8_t *key)
+uint8_t write_aes_key(void *key)
 {
     return (osal_snv_write(KEY_SNV_ID, KEY_SIZE, key));
 }

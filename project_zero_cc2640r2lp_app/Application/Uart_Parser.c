@@ -91,7 +91,7 @@ unsigned short Crc16(unsigned char*pcBlock, unsigned short len)
 
 void OnRxByte( unsigned char Chr){
 
-    static GPTimerCC26XX_Value timestamp = 0;
+//    static GPTimerCC26XX_Value timestamp = 0;
 
 //    if(GPTimerCC26XX_getValue(system_time)-timestamp > UART_BYTE_DELAY_TIME){
 //        uiState = stHEADER;
@@ -176,7 +176,7 @@ uint16_t PackProcessing(void){
     if(!NewPack){
 
 
-        return 0;         //Ничего не делать
+        return 0;         //Do nothing
     }
 //    statusRx.Word = m_pcPacketRx.ucCmd;
 //    last_time = CSystemCore::getSysTick();
@@ -184,7 +184,6 @@ uint16_t PackProcessing(void){
     switch(receive_command){
 
         case GET_STATUS:{//we should send our status
-
             if(1){
                 send_answer_for_command(STATUS_OK);
             }else{
@@ -193,7 +192,6 @@ uint16_t PackProcessing(void){
         break;}
 
         case SEND_DATA :{//we receive data from host
-
             if(send_data()){
                 send_answer_for_command(REC_OK);
             }else{
@@ -209,7 +207,6 @@ uint16_t PackProcessing(void){
         break;}
 
         case SEND_FH_CR_TP :{//send encription type
-
             send_fh_cr_tp();
 
         break;}
@@ -223,11 +220,9 @@ uint16_t PackProcessing(void){
         case GET_FH_KEY :{//get encryption key
             user_enqueueRawAppMsg(APP_MSG_Read_key, &uart_val, 1);
 
-
         break;}
 
         case GET_FH_CR_TP :{//get encryption type
-
             get_fh_cr_tp();
 
         break;}
@@ -239,7 +234,7 @@ uint16_t PackProcessing(void){
 
     }
 
-    // Чтоп не принимал новые данные пока не обработал старые, чистим этот флаг только в конце обработки
+    // Clean this flag at the end of processing, not to receive new data before process previous
     NewPack = 0;
-    return 1;// Уже пакета нет
+    return 1;// packet processed
 }

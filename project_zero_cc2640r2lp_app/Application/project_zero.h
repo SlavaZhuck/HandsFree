@@ -97,4 +97,7 @@ typedef enum
 void user_enqueueRawAppMsg(app_msg_types_t appMsgType, uint8_t *pData,
                                   uint16_t len);
 
+uint8_t write_aes_key(void *key);
+uint8_t read_aes_key(void *key);
+
 #endif /* PROJECTZERO_H */
