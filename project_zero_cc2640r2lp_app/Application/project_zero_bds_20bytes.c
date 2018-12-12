@@ -125,7 +125,7 @@
 #define PRZ_TASK_PRIORITY                     1
 
 #ifndef PRZ_TASK_STACK_SIZE
-#define PRZ_TASK_STACK_SIZE                   1300
+#define PRZ_TASK_STACK_SIZE                   700
 #endif
 
 // Internal Events for RTOS application
@@ -212,7 +212,7 @@
 
 #define BAT_LOW_VOLTAGE     3000
 
-#define MAILBOX_DEPTH       10
+#define MAILBOX_DEPTH       3
 #define MIN_MAILBOX_USAGE   1
 
 /*********************************************************************
@@ -402,14 +402,27 @@ static I2SCC26XX_Params i2sParams =
 };
 
 static uint16_t i2c_read_delay;
- int16_t raw_data_send[I2S_SAMP_PER_FRAME];
- uint8_t packet_data[V_STREAM_INPUT_LEN];
 
- static unsigned char pdm_val;
- static unsigned char button_val;
- static unsigned char vol_val;
- static unsigned char i2c_val;
 
+#ifdef ECHO_COMPENSATION
+    #define COMPENSATE_BUFFER_NUMBER    (6)
+    #define MAX_COMPENSATE_BUFFER_SIZE  ((I2S_SAMP_PER_FRAME)*COMPENSATE_BUFFER_NUMBER)
+    #define COMPENSATE_DELAY            (338)// 259+78
+    #define TAIL_OFFSET                 (MAX_COMPENSATE_BUFFER_SIZE - COMPENSATE_DELAY)
+
+    int16_t compensation_data[I2S_SAMP_PER_FRAME];
+    int16_t compensation_buffer[MAX_COMPENSATE_BUFFER_SIZE];
+    uint16_t tail = 0;
+    uint16_t head= 0;
+    uint16_t delay = 258;
+#endif
+
+uint8_t packet_data[V_STREAM_INPUT_LEN];
+int16_t raw_data_received[I2S_SAMP_PER_FRAME];
+
+
+
+static unsigned char return_val;
 static uint8_t current_volume = INIT_GAIN;
 
 #if defined HANDS_FREE_BOARD_VERSION3 || defined HANDS_FREE_BOARD_VERSION4
@@ -472,7 +485,8 @@ extern Serial_Data_Packet Rx_Data;
 unsigned char key_val;
 
 #ifdef UART_DEBUG
-  int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+//int16_t uart_data_send[I2S_SAMP_PER_FRAME+1];
+int16_t uart_data_send[I2S_SAMP_PER_FRAME*2+1];
 #endif
 
   uint64_t channel_power;
@@ -780,6 +794,7 @@ static void ProjectZero_init(void)
   if (mailbox == NULL) {
       while (1);
   }
+
 }
 
 
@@ -969,12 +984,43 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
         case APP_MSG_GET_VOICE_SAMP:
             timestamp_start =  GPTimerCC26XX_getValue(samp_tim_hdl);
             bufferRequest.buffersRequested = I2SCC26XX_BUFFER_IN_AND_OUT;
+
+            #ifdef ECHO_COMPENSATION
+                for(uint16_t i = 0; i < I2S_SAMP_PER_FRAME; i++)
+                {
+                    compensation_buffer[head + i] = (int16_t)(((float)raw_data_received[i])*0.27f);
+                }
+                head += I2S_SAMP_PER_FRAME;
+                head = head % MAX_COMPENSATE_BUFFER_SIZE;
+                int16_t *pointer;
+                tail = head + TAIL_OFFSET;
+                tail = tail % MAX_COMPENSATE_BUFFER_SIZE;
+
+                if(tail > (MAX_COMPENSATE_BUFFER_SIZE - I2S_SAMP_PER_FRAME))
+                {
+                    uint16_t piece = MAX_COMPENSATE_BUFFER_SIZE - tail;
+                    pointer= &compensation_buffer[tail];
+                    memcpy(compensation_data,          pointer, sizeof(compensation_buffer[0]) * piece);
+                    memcpy(&compensation_data[piece] , compensation_buffer, sizeof(compensation_buffer[0]) * (I2S_SAMP_PER_FRAME - piece));
+                }
+                else
+                {
+                    pointer= &compensation_buffer[tail];
+                    memcpy(compensation_data, pointer, sizeof(compensation_data));
+                }
+            #endif
             gotBufferInOut = I2SCC26XX_requestBuffer(i2sHandle, &bufferRequest);
+
             if (gotBufferInOut)
             {
-                memcpy(bufferRequest.bufferOut, raw_data_send, sizeof(raw_data_send));
+                memcpy(bufferRequest.bufferOut, raw_data_received, sizeof(raw_data_received));
                 memcpy(mic_data_1ch, bufferRequest.bufferIn, sizeof(mic_data_1ch));
-
+                #ifdef ECHO_COMPENSATION
+                    for(uint16_t i = 0; i < I2S_SAMP_PER_FRAME; i++)
+                    {
+                        mic_data_1ch[i] = mic_data_1ch[i]-(int16_t)((float)compensation_data[i]);
+                    }
+                #endif
                 #ifdef NOISE_GATE
                     in_power = power_calculation(mic_data_1ch, I2S_SAMP_PER_FRAME);//5100 - 5600 ticks
                     amplify (mic_data_1ch, I2S_SAMP_PER_FRAME, (int16_t)in_power.power_log); //6000-8000
@@ -989,13 +1035,16 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                     }
                 #endif
 
-
-
-#ifdef  UART_DEBUG
-		        memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
-		        uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
-		        UART_write(uart, uart_data_send, sizeof(uart_data_send));
-#endif
+                #ifdef  UART_DEBUG
+                    memcpy(&uart_data_send[1], mic_data_1ch, sizeof(mic_data_1ch));
+                    #ifdef  ECHO_COMPENSATION
+                        memcpy(&uart_data_send[81], compensation_data, sizeof(compensation_data));
+                    #else
+                        memcpy(&uart_data_send[81], raw_data_received, sizeof(raw_data_received));
+                    #endif
+                    uart_data_send[0]=40*pow(2,8)+41;   //start bytes for MATLAB ")("
+                    UART_write(uart, uart_data_send, sizeof(uart_data_send));
+                #endif
 	            bufferRelease.bufferHandleOut = bufferRequest.bufferHandleOut;
 	            bufferRelease.bufferHandleIn = bufferRequest.bufferHandleIn;
 	            I2SCC26XX_releaseBuffer(i2sHandle, &bufferRelease);
@@ -1033,7 +1082,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             }
             timestamp_dif = GPTimerCC26XX_getValue(samp_tim_hdl) - timestamp_start;
 //            if(i2c_read_delay % 30 == 0){
-//                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &i2c_val, 1);
+//                user_enqueueRawAppMsg(APP_MSG_I2C_Read_Status, &return_val, 1);
 //            }
         break;
 
@@ -1088,12 +1137,12 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
                 decoder_adpcm.previndex = ((int32_t)(packet_data[V_STREAM_OUTPUT_SOUND_LEN + 2]));
 
 
-                ADPCMDecoderBuf2((char*)(packet_data), raw_data_send, &decoder_adpcm);
+                ADPCMDecoderBuf2((char*)(packet_data), raw_data_received, &decoder_adpcm);
 
 //                channel_power = 0;
 //                for(uint8_t i = 0 ; i < I2S_SAMP_PER_FRAME ; i++)
 //                {
-//                    channel_power += (uint64_t)((int32_t)raw_data_send[i] * (int32_t)raw_data_send[i]);
+//                    channel_power += (uint64_t)((int32_t)raw_data_received[i] * (int32_t)raw_data_received[i]);
 //                }
 //                channel_power = channel_power/I2S_SAMP_PER_FRAME;
 //
@@ -1110,14 +1159,14 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
 //                else
 //                {
 //                    sound_appeared = false;
-//                    memset(raw_data_send, 0, sizeof(raw_data_send));
+//                    memset(raw_data_received, 0, sizeof(raw_data_received));
 //                    memset(mic_data_1ch, 0, sizeof(mic_data_1ch));
 //
 //                }
 
             }else{
                 memset ( packet_data,   0, sizeof(packet_data) );
-                memset ( raw_data_send, 0, sizeof(raw_data_send));
+                memset ( raw_data_received, 0, sizeof(raw_data_received));
                 memset ( mic_data_1ch,  0, sizeof(mic_data_1ch));
             }
 
@@ -1960,7 +2009,7 @@ void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId) {
                break;
        }
    }
-   user_enqueueRawAppMsg(APP_MSG_Buttons, &button_val, 1);
+   user_enqueueRawAppMsg(APP_MSG_Buttons, &return_val, 1);
 }
 
 
@@ -2061,8 +2110,8 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 
     if(stream_on)
     {
-        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &pdm_val, 1);
-        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &pdm_val, 1);
+        user_enqueueRawAppMsg(APP_MSG_Decrypt_packet, &return_val, 1);
+        user_enqueueRawAppMsg(APP_MSG_GET_VOICE_SAMP, &return_val, 1);
     }
 }
 
@@ -2071,7 +2120,7 @@ static void samp_timer_callback(GPTimerCC26XX_Handle handle, GPTimerCC26XX_IntMa
 static void start_voice_handle(void)
 {
     max9860_I2C_Shutdown_state(0);//disable shutdown_mode
-    user_enqueueRawAppMsg(APP_MSG_Load_vol, &vol_val, 1); // read global vol level
+    user_enqueueRawAppMsg(APP_MSG_Load_vol, &return_val, 1); // read global vol level
     PIN_setOutputValue(ledPinHandle, Board_GLED, 1);
     GPTimerCC26XX_start(samp_tim_hdl);
     I2SCC26XX_startStream(i2sHandle);
@@ -2107,13 +2156,14 @@ static void stop_voice_handle(void)
         Mailbox_pend(mailbox, packet_data, BIOS_NO_WAIT);
         mailpost_usage = Mailbox_getNumPendingMsgs(mailbox);
     }
+
     memset ( packet_data,   0, sizeof(packet_data) );
-    memset ( raw_data_send, 0, sizeof(raw_data_send) );
+    memset ( raw_data_received, 0, sizeof(raw_data_received) );
     memset ( mic_data_1ch, 0, sizeof(mic_data_1ch));
 #ifdef LPF
     memset ( &rtDW, 0, sizeof(rtDW) );
 #endif
-    user_enqueueRawAppMsg(APP_MSG_Write_vol, &vol_val, 1);
+    user_enqueueRawAppMsg(APP_MSG_Write_vol, &return_val, 1);
 }
 
 static void pdm_samp_hdl(void)
