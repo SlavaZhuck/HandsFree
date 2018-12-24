@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'LPF'.
  *
- * Model version                  : 1.2
+ * Model version                  : 1.66
  * Simulink Coder version         : 8.13 (R2017b) 24-Jul-2017
- * C/C++ source code generated on : Mon Apr  2 20:36:57 2018
+ * C/C++ source code generated on : Thu Dec 13 20:28:47 2018
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex
@@ -17,34 +17,27 @@
 
 #ifndef RTW_HEADER_LPF_h_
 #define RTW_HEADER_LPF_h_
-#include "rtwtypes.h"
 #ifndef LPF_COMMON_INCLUDES_
 # define LPF_COMMON_INCLUDES_
 #include "rtwtypes.h"
 #endif                                 /* LPF_COMMON_INCLUDES_ */
 
 /* Macros for accessing real-time model data structure */
-#ifndef SS_INT64
-#define SS_INT64                       17
+#ifndef rtmGetErrorStatus
+# define rtmGetErrorStatus(rtm)        ((rtm)->errorStatus)
 #endif
 
-#ifndef SS_UINT64
-#define SS_UINT64                      18
+#ifndef rtmSetErrorStatus
+# define rtmSetErrorStatus(rtm, val)   ((rtm)->errorStatus = (val))
 #endif
+
+/* Forward declaration for rtModel */
+typedef struct tag_RTM RT_MODEL;
 
 /* Block signals and states (auto storage) for system '<Root>' */
 typedef struct {
-  int32_T Filter1_circBuf;             /* '<S1>/Filter1' */
-  int16_T Filter1_states[19];          /* '<S1>/Filter1' */
+  int16_T Filter_FILT_STATES[2];       /* '<Root>/Filter' */
 } DW;
-
-/* Constant parameters (auto storage) */
-typedef struct {
-  /* Computed Parameter: Filter1_Coefficients
-   * Referenced by: '<S1>/Filter1'
-   */
-  int16_T Filter1_Coefficients[20];
-} ConstP;
 
 /* External inputs (root inport signals with auto storage) */
 typedef struct {
@@ -56,6 +49,11 @@ typedef struct {
   int16_T Out1;                        /* '<Root>/Out1' */
 } ExtY;
 
+/* Real-time Model Data Structure */
+struct tag_RTM {
+  const char_T * volatile errorStatus;
+};
+
 /* Block signals and states (auto storage) */
 extern DW rtDW;
 
@@ -65,12 +63,12 @@ extern ExtU rtU;
 /* External outputs (root outports fed by signals with auto storage) */
 extern ExtY rtY;
 
-/* Constant parameters (auto storage) */
-extern const ConstP rtConstP;
-
 /* Model entry point functions */
 extern void LPF_initialize(void);
 extern void LPF_step(void);
+
+/* Real-time Model object */
+extern RT_MODEL *const rtM;
 
 /*-
  * The generated code includes comments that allow you to trace directly
@@ -78,19 +76,15 @@ extern void LPF_step(void);
  * is <system>/block_name, where system is the system number (uniquely
  * assigned by Simulink) and block_name is the name of the block.
  *
- * Note that this particular code originates from a subsystem build,
- * and has its own system numbers different from the parent model.
- * Refer to the system hierarchy for this subsystem below, and use the
- * MATLAB hilite_system command to trace the generated code back
- * to the parent model.  For example,
+ * Use the MATLAB hilite_system command to trace the generated code back
+ * to the model.  For example,
  *
- * hilite_system('filterC/LPF')    - opens subsystem filterC/LPF
- * hilite_system('filterC/LPF/Kp') - opens and selects block Kp
+ * hilite_system('<S3>')    - opens system 3
+ * hilite_system('<S3>/Kp') - opens and selects block Kp which resides in S3
  *
  * Here is the system hierarchy for this model
  *
- * '<Root>' : 'filterC'
- * '<S1>'   : 'filterC/LPF'
+ * '<Root>' : 'LPF'
  */
 #endif                                 /* RTW_HEADER_LPF_h_ */
 

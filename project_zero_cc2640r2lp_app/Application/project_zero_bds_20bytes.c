@@ -409,7 +409,7 @@ static uint16_t i2c_read_delay;
     #define MAX_COMPENSATE_BUFFER_SIZE  ((I2S_SAMP_PER_FRAME)*COMPENSATE_BUFFER_NUMBER)
     #define COMPENSATE_DELAY            (338)// 259+78
     #define TAIL_OFFSET                 (MAX_COMPENSATE_BUFFER_SIZE - COMPENSATE_DELAY)
-
+    #define COMPENSATION_COEFF          (0.27f)//0...1
     int16_t compensation_data[I2S_SAMP_PER_FRAME];
     int16_t compensation_buffer[MAX_COMPENSATE_BUFFER_SIZE];
     uint16_t tail = 0;
@@ -988,7 +988,7 @@ static void user_processApplicationMessage(app_msg_t *pMsg)
             #ifdef ECHO_COMPENSATION
                 for(uint16_t i = 0; i < I2S_SAMP_PER_FRAME; i++)
                 {
-                    compensation_buffer[head + i] = (int16_t)(((float)raw_data_received[i])*0.27f);
+                    compensation_buffer[head + i] = (int16_t)(((float)raw_data_received[i])*COMPENSATION_COEFF);
                 }
                 head += I2S_SAMP_PER_FRAME;
                 head = head % MAX_COMPENSATE_BUFFER_SIZE;
@@ -1962,10 +1962,18 @@ void adc_callback(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
             else if (power_button_counter <= 0)
             {
                 power_button_counter = 0;
+#ifdef HANDS_FREE_BOARD_VERSION3
                 if (PIN_getOutputValue(CC2640R2_LAUNCHXL_PIN_POWER))
                     power_state = FALSE;
                 else
                     power_state = TRUE;
+#endif
+#ifdef HANDS_FREE_BOARD_VERSION4
+                if (PIN_getOutputValue(CC2640R2_LAUNCHXL_PIN_POWER))
+                    power_state = TRUE;
+                else
+                    power_state = FALSE;
+#endif
             }
         }
     }
