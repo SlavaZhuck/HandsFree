@@ -1,0 +1,14 @@
+eclipse.preferences.version=1
+encoding//Release_unsecure/Application/subdir_rules.mk=UTF-8
+encoding//Release_unsecure/Application/subdir_vars.mk=UTF-8
+encoding//Release_unsecure/ExternalFlash/subdir_rules.mk=UTF-8
+encoding//Release_unsecure/ExternalFlash/subdir_vars.mk=UTF-8
+encoding//Release_unsecure/SPI/subdir_rules.mk=UTF-8
+encoding//Release_unsecure/SPI/subdir_vars.mk=UTF-8
+encoding//Release_unsecure/TOOLS/defines/subdir_rules.mk=UTF-8
+encoding//Release_unsecure/TOOLS/defines/subdir_vars.mk=UTF-8
+encoding//Release_unsecure/TOOLS/subdir_rules.mk=UTF-8
+encoding//Release_unsecure/TOOLS/subdir_vars.mk=UTF-8
+encoding//Release_unsecure/makefile=UTF-8
+encoding//Release_unsecure/objects.mk=UTF-8
+encoding//Release_unsecure/sources.mk=UTF-8
