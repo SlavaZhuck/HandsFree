@@ -183,19 +183,9 @@
 			<locationURI>COM_TI_SIMPLELINK_CC2640R2_SDK_INSTALL_DIR/source/ti/blestack/host/gattservapp_util.c</locationURI>
 		</link>
 		<link>
-			<name>Startup/ccfg_app_ble_rcosc.c</name>
-			<type>1</type>
-			<locationURI>COM_TI_SIMPLELINK_CC2640R2_SDK_INSTALL_DIR/source/ti/blestack/common/cc26xx/rcosc/ccfg_app_ble_rcosc.c</locationURI>
-		</link>
-		<link>
 			<name>TOOLS/UartLog.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_BUILD_BASE/support_files/Components/uart_log/UartLog.c</locationURI>
-		</link>
-		<link>
-			<name>TOOLS/cc26xx_app.cmd</name>
-			<type>1</type>
-			<locationURI>COM_TI_SIMPLELINK_CC2640R2_SDK_INSTALL_DIR/source/ti/blestack/common/cc26xx/ccs/cc26xx_app.cmd</locationURI>
 		</link>
 		<link>
 			<name>Drivers/Display/Display.c</name>

@@ -4,7 +4,7 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := D:/ti/ccsv8/tools/compiler/ti-cgt-arm_16.9.7.LTS
+CG_TOOL_ROOT := D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -183,7 +183,7 @@ project_zero_cc2640r2lp_stack_library.lib: $(OBJS)
 ifneq ($(strip $(ORDERED_OBJS)),)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Archiver'
-	"D:/ti/ccsv8/tools/compiler/ti-cgt-arm_16.9.7.LTS/bin/armar" r "project_zero_cc2640r2lp_stack_library.lib" $(ORDERED_OBJS)
+	"D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/bin/armar" r "project_zero_cc2640r2lp_stack_library.lib" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 endif
@@ -197,7 +197,7 @@ clean:
 	-@echo ' '
 
 pre-build:
-	-D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search         D:/HandsFree/project_zero_cc2640r2lp_stack_library/TOOLS/build_config.opt         D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/blelib         D:/HandsFree/project_zero_cc2640r2lp_stack_library/FlashROM_Library/lib_linker.cmd         cc2640         D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search.xml         D:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/symbols
+	-C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search         D:/HandsFree/project_zero_cc2640r2lp_stack_library/TOOLS/build_config.opt         C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/blelib         D:/HandsFree/project_zero_cc2640r2lp_stack_library/FlashROM_Library/lib_linker.cmd         cc2640         C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/tools/blestack/lib_search/lib_search.xml         C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/symbols
 	-@echo ' '
 
 .PHONY: all clean dependents

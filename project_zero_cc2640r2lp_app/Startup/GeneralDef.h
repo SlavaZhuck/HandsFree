@@ -14,11 +14,11 @@
 #define HANDS_FREE_BOARD_VERSION3
 //#define HANDS_FREE_BOARD_VERSION4
 
-#define UART_DEBUG
+//#define UART_DEBUG
 
-#define ECHO_COMPENSATION
-//#define LPF //LPF IIR Fpass = 140 Hz, order = 8
-//#define NOISE_GATE
+//#define ECHO_COMPENSATION
+#define LPF //LPF IIR Fpass = 140 Hz, order = 8
+#define NOISE_GATE
 
 
 #endif /* STARTUP_GENERALDEF_H_ */
