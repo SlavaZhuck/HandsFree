@@ -5,3 +5,13 @@
 /dvt
 /.tempFiles
 /RemoteSystemsTempFiles
+*.d
+*.obj
+*.mk
+*.map
+*.hex
+*.out
+*.opt
+*.xml
+cfg
+configPkg
