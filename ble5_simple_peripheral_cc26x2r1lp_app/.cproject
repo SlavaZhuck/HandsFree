@@ -156,7 +156,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="TOOLS/src|TOOLS/cc13x2_cc26x2_app.cmd|ICallBLE/icall_hci_tl.c|TOOLS/ble_debug.cfg|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_PTM_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_RCOSC_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Debug.opt|Startup/ccfg_app_ble_rcosc_agama.c|Application/rcosc_calibration.h|Application/rcosc_calibration.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="TOOLS/src|TOOLS/cc13x2_cc26x2_app.cmd|ICallBLE/icall_hci_tl.c|TOOLS/ble_debug.cfg|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_PTM_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_RCOSC_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Debug.opt|Startup/ccfg_app_ble_rcosc_agama.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -319,7 +319,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="TOOLS/src|TOOLS/cc13x2_cc26x2_app.cmd|TOOLS/ble_debug.cfg|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_RCOSC_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Debug.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Release.opt|Startup/ccfg_app_ble_rcosc_agama.c|Application/rcosc_calibration.h|Application/rcosc_calibration.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="TOOLS/src|TOOLS/cc13x2_cc26x2_app.cmd|TOOLS/ble_debug.cfg|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_RCOSC_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Debug.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Release.opt|Startup/ccfg_app_ble_rcosc_agama.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -480,7 +480,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="TOOLS/src|TOOLS/cc13x2_cc26x2_app.cmd|ICallBLE/icall_hci_tl.c|TOOLS/ble_release.cfg|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_PTM_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_RCOSC_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Release.opt|Startup/ccfg_app_ble_rcosc_agama.c|Application/rcosc_calibration.h|Application/rcosc_calibration.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="TOOLS/src|TOOLS/cc13x2_cc26x2_app.cmd|ICallBLE/icall_hci_tl.c|TOOLS/ble_release.cfg|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_PTM_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_RCOSC_Release.opt|TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Release.opt|Startup/ccfg_app_ble_rcosc_agama.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

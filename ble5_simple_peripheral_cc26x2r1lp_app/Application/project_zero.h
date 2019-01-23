@@ -1,16 +1,16 @@
 /******************************************************************************
 
- @file  simple_peripheral.h
+   @file  project_zero.h
 
- @brief This file contains the Simple Peripheral sample application
+   @brief This file contains the Project Zero sample application
         definitions and prototypes.
 
- Group: CMCU, LPRF
- Target Device: CC2652
+   Group: CMCU, LPRF
+   Target Device: CC2652
 
  ******************************************************************************
- 
- Copyright (c) 2013-2018, Texas Instruments Incorporated
+   
+ Copyright (c) 2015-2018, Texas Instruments Incorporated
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -41,12 +41,12 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  ******************************************************************************
- Release Name: simplelink_cc26x2_sdk_2_30_00_34
- Release Date: 2018-10-04 14:27:27
+   Release Name: simplelink_cc26x2_sdk_2_30_00_34
+   Release Date: 2018-10-04 14:27:27
  *****************************************************************************/
 
-#ifndef SIMPLEPERIPHERAL_H
-#define SIMPLEPERIPHERAL_H
+#ifndef APP_H
+#define APP_H
 
 #ifdef __cplusplus
 extern "C"
@@ -56,11 +56,15 @@ extern "C"
 /*********************************************************************
  * INCLUDES
  */
-#include <menu/two_btn_menu.h>
+#include <stdint.h>
+#include <ti/sysbios/knl/Queue.h>
+#include <ti/drivers/PIN.h>
+
+#include <bcomdef.h>
 
 /*********************************************************************
-*  EXTERNAL VARIABLES
-*/
+ *  EXTERNAL VARIABLES
+ */
 
 /*********************************************************************
  * CONSTANTS
@@ -71,22 +75,17 @@ extern "C"
  */
 
 /*********************************************************************
+ * TYPEDEFS
+ */
+
+/*********************************************************************
  * FUNCTIONS
  */
 
 /*
- * Task creation function for the Simple Peripheral.
+ * Task creation function for the Project Zero.
  */
-extern void SimplePeripheral_createTask(void);
-
-/*
- * Functions for menu action
- */
-/* Actions for Menu: Choose connection to work with */
-bool SimplePeripheral_doSelectConn(uint8 index);
-
-/* Actions for Menu: Set PHY - Select */
-bool SimplePeripheral_doSetConnPhy(uint8 index);
+extern void ProjectZero_createTask(void);
 
 /*********************************************************************
 *********************************************************************/
@@ -95,4 +94,4 @@ bool SimplePeripheral_doSetConnPhy(uint8 index);
 }
 #endif
 
-#endif /* SIMPLEPERIPHERAL_H */
+#endif /* APP_H */
