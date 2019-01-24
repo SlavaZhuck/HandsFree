@@ -48,40 +48,11 @@
 /*********************************************************************
  * INCLUDES
  */
-#include <string.h>
 
-#if !(defined __TI_COMPILER_VERSION__)
-#include <intrinsics.h>
-#endif
-
-#include <ti/sysbios/knl/Task.h>
-#include <ti/sysbios/knl/Clock.h>
-#include <ti/sysbios/knl/Event.h>
-#include <ti/sysbios/knl/Queue.h>
-#include <ti/drivers/utils/List.h>
-
-//#include <xdc/runtime/Log.h> // Comment this in to use xdc.runtime.Log
-#include <ti/common/cc26xx/uartlog/UartLog.h>  // Comment out if using xdc Log
-
-#include <ti/display/AnsiColor.h>
-
-#include <ti/devices/DeviceFamily.h>
-#include DeviceFamily_constructPath(driverlib/sys_ctrl.h)
-
-#include <icall.h>
-#include <bcomdef.h>
-/* This Header file contains all BLE API and icall structure definition */
-#include <icall_ble_api.h>
-
-/* Bluetooth Profiles */
-#include <devinfoservice.h>
-#include "./services/data_service.h"
-
-/* Application specific includes */
-#include <Board.h>
 
 #include <project_zero.h>
 #include <util.h>
+#include "HandsFree.h"
 
 /*********************************************************************
  * MACROS
@@ -96,150 +67,6 @@
 /*********************************************************************
  * CONSTANTS
  */
-// Task configuration
-#define PZ_TASK_PRIORITY                     1
-
-#ifndef PZ_TASK_STACK_SIZE
-#define PZ_TASK_STACK_SIZE                   2048
-#endif
-
-// Internal Events for RTOS application
-#define PZ_ICALL_EVT                         ICALL_MSG_EVENT_ID  // Event_Id_31
-#define PZ_APP_MSG_EVT                       Event_Id_30
-
-// Bitwise OR of all RTOS events to pend on
-#define PZ_ALL_EVENTS                        (PZ_ICALL_EVT | \
-                                              PZ_APP_MSG_EVT)
-
-// Types of messages that can be sent to the user application task from other
-// tasks or interrupts. Note: Messages from BLE Stack are sent differently.
-#define PZ_SERVICE_WRITE_EVT     0  /* A characteristic value has been written     */
-#define PZ_SERVICE_CFG_EVT       1  /* A characteristic configuration has changed  */
-#define PZ_UPDATE_CHARVAL_EVT    2  /* Request from ourselves to update a value    */
-#define PZ_BUTTON_DEBOUNCED_EVT  3  /* A button has been debounced with new value  */
-#define PZ_PAIRSTATE_EVT         4  /* The pairing state is updated                */
-#define PZ_PASSCODE_EVT          5  /* A pass-code/PIN is requested during pairing */
-#define PZ_ADV_EVT               6  /* A subscribed advertisement activity         */
-#define PZ_START_ADV_EVT         7  /* Request advertisement start from task ctx   */
-#define PZ_SEND_PARAM_UPD_EVT    8  /* Request parameter update req be sent        */
-#define PZ_CONN_EVT              9  /* Connection Event End notice                 */
-
-// General discoverable mode: advertise indefinitely
-#define DEFAULT_DISCOVERABLE_MODE             GAP_ADTYPE_FLAGS_GENERAL
-
-// Minimum connection interval (units of 1.25ms, 80=100ms) for parameter update request
-#define DEFAULT_DESIRED_MIN_CONN_INTERVAL     12
-
-// Maximum connection interval (units of 1.25ms, 800=1000ms) for  parameter update request
-#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     36
-
-// Slave latency to use for parameter update request
-#define DEFAULT_DESIRED_SLAVE_LATENCY         0
-
-// Supervision timeout value (units of 10ms, 1000=10s) for parameter update request
-#define DEFAULT_DESIRED_CONN_TIMEOUT          200
-
-// Supervision timeout conversion rate to miliseconds
-#define CONN_TIMEOUT_MS_CONVERSION            10
-
-// Connection interval conversion rate to miliseconds
-#define CONN_INTERVAL_MS_CONVERSION           1.25
-
-// Pass parameter updates to the app for it to decide.
-#define DEFAULT_PARAM_UPDATE_REQ_DECISION     GAP_UPDATE_REQ_PASS_TO_APP
-
-// Delay (in ms) after connection establishment before sending a parameter update requst
-#define PZ_SEND_PARAM_UPDATE_DELAY            6000
-
-/*********************************************************************
- * TYPEDEFS
- */
-// Struct for messages sent to the application task
-typedef struct
-{
-    uint8_t event;
-    void    *pData;
-} pzMsg_t;
-
-// Struct for messages about characteristic data
-typedef struct
-{
-    uint16_t svcUUID; // UUID of the service
-    uint16_t dataLen; //
-    uint8_t paramID; // Index of the characteristic
-    uint8_t data[]; // Flexible array member, extended to malloc - sizeof(.)
-} pzCharacteristicData_t;
-
-// Struct for message about sending/requesting passcode from peer.
-typedef struct
-{
-    uint16_t connHandle;
-    uint8_t uiInputs;
-    uint8_t uiOutputs;
-    uint32_t numComparison;
-} pzPasscodeReq_t;
-
-// Struct for message about a pending parameter update request.
-typedef struct
-{
-    uint16_t connHandle;
-} pzSendParamReq_t;
-
-// Struct for message about button state
-typedef struct
-{
-    PIN_Id pinId;
-    uint8_t state;
-} pzButtonState_t;
-
-// Container to store passcode data when passing from gapbondmgr callback
-// to app event. See the pfnPairStateCB_t documentation from the gapbondmgr.h
-// header file for more information on each parameter.
-typedef struct
-{
-    uint8_t state;
-    uint16_t connHandle;
-    uint8_t status;
-} pzPairStateData_t;
-
-// Container to store passcode data when passing from gapbondmgr callback
-// to app event. See the pfnPasscodeCB_t documentation from the gapbondmgr.h
-// header file for more information on each parameter.
-typedef struct
-{
-    uint8_t deviceAddr[B_ADDR_LEN];
-    uint16_t connHandle;
-    uint8_t uiInputs;
-    uint8_t uiOutputs;
-    uint32_t numComparison;
-} pzPasscodeData_t;
-
-// Container to store advertising event data when passing from advertising
-// callback to app event. See the respective event in GapAdvScan_Event_IDs
-// in gap_advertiser.h for the type that pBuf should be cast to.
-typedef struct
-{
-    uint32_t event;
-    void *pBuf;
-} pzGapAdvEventData_t;
-
-// List element for parameter update and PHY command status lists
-typedef struct
-{
-    List_Elem elem;
-    uint16_t *connHandle;
-} pzConnHandleEntry_t;
-
-// Connected device information
-typedef struct
-{
-    uint16_t connHandle;                    // Connection Handle
-    Clock_Struct* pUpdateClock;             // pointer to clock struct
-    bool phyCngRq;                          // Set to true if PHY change request is in progress
-    uint8_t currPhy;                        // The active PHY for a connection
-    uint8_t rqPhy;                          // The requested PHY for a connection
-    uint8_t phyRqFailCnt;                   // PHY change request fail count
-} pzConnRec_t;
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -356,6 +183,7 @@ static Clock_Handle button1DebounceClockHandle;
 static uint8_t button0State = 0;
 static uint8_t button1State = 0;
 
+extern int stream_on;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -378,11 +206,6 @@ static void ProjectZero_processAdvEvent(pzGapAdvEventData_t *pEventData);
 
 /* Profile value change handlers */
 static void ProjectZero_updateCharVal(pzCharacteristicData_t *pCharData);
-static void ProjectZero_DataService_ValueChangeHandler(
-    pzCharacteristicData_t *pCharData);
-static void ProjectZero_DataService_CfgChangeHandler(
-    pzCharacteristicData_t *pCharData);
-
 /* Stack or profile callback function */
 static void ProjectZero_advCallback(uint32_t event,
                                     void *pBuf,
@@ -434,8 +257,8 @@ static char * util_arrtohex(uint8_t const *src,
                             uint8_t       *dst,
                             uint8_t dst_len,
                             uint8_t reverse);
-static char * util_getLocalNameStr(const uint8_t *advData, uint8_t len);
 static void ProjectZero_processL2CAPMsg(l2capSignalEvent_t *pMsg);
+
 
 /*********************************************************************
  * EXTERN FUNCTIONS
@@ -657,6 +480,7 @@ static void ProjectZero_init(void)
     //Initialize GAP layer for Peripheral role and register to receive GAP events
     GAP_DeviceInit(GAP_PROFILE_PERIPHERAL, selfEntity, ADDRMODE_PUBLIC, NULL);
 
+    HandsFree_init();
     // Process the Service changed flag
 //    ProjectZero_checkSvcChgndFlag(sendSvcChngdOnNextBoot);
 }
@@ -925,31 +749,6 @@ static void ProjectZero_processApplicationMessage(pzMsg_t *pMsg)
           AssertHandler(HAL_ASSERT_CAUSE_HARDWARE_ERROR,0);
           break;
 
-      case PZ_SERVICE_WRITE_EVT: /* Message about received value write */
-          /* Call different handler per service */
-          switch(pCharData->svcUUID)
-          {
-//            case LED_SERVICE_SERV_UUID:
-//                ProjectZero_LedService_ValueChangeHandler(pCharData);
-//                break;
-            case DATA_SERVICE_SERV_UUID:
-                ProjectZero_DataService_ValueChangeHandler(pCharData);
-                break;
-          }
-          break;
-
-      case PZ_SERVICE_CFG_EVT: /* Message about received CCCD write */
-          /* Call different handler per service */
-          switch(pCharData->svcUUID)
-          {
-//            case BUTTON_SERVICE_SERV_UUID:
-//                ProjectZero_ButtonService_CfgChangeHandler(pCharData);
-//                break;
-            case DATA_SERVICE_SERV_UUID:
-                ProjectZero_DataService_CfgChangeHandler(pCharData);
-                break;
-          }
-          break;
 
       case PZ_UPDATE_CHARVAL_EVT: /* Message from ourselves to send  */
           ProjectZero_updateCharVal(pCharData);
@@ -998,6 +797,7 @@ static void ProjectZero_processApplicationMessage(pzMsg_t *pMsg)
         break;
 
       default:
+          task_Handler(pMsg);
         break;
     }
 
@@ -1069,10 +869,10 @@ static void ProjectZero_processGapMessage(gapEventHdr_t *pMsg)
                                    &advHandleLegacy);
             APP_ASSERT(status == SUCCESS);
 
-            Log_info1("Name in advertData array: " \
-                      ANSI_COLOR(FG_YELLOW) "%s" ANSI_COLOR(ATTR_RESET),
-                      (uintptr_t)util_getLocalNameStr(advertData,
-                                                      sizeof(advertData)));
+//            Log_info1("Name in advertData array: " \
+//                      ANSI_COLOR(FG_YELLOW) "%s" ANSI_COLOR(ATTR_RESET),
+//                      (uintptr_t)util_getLocalNameStr(advertData,
+//                                                      sizeof(advertData)));
 
             // Load advertising data for set #1 that is statically allocated by the app
             status = GapAdv_loadByHandle(advHandleLegacy, GAP_ADV_DATA_TYPE_ADV,
@@ -1113,6 +913,7 @@ static void ProjectZero_processGapMessage(gapEventHdr_t *pMsg)
 
         if(pPkt->hdr.status == SUCCESS)
         {
+            stream_on = 0;
             // Add connection to list
             ProjectZero_addConn(pPkt->connectionHandle);
 
@@ -1147,6 +948,7 @@ static void ProjectZero_processGapMessage(gapEventHdr_t *pMsg)
 
     case GAP_LINK_TERMINATED_EVENT:
     {
+        stream_on = 0;
         gapTerminateLinkEvent_t *pPkt = (gapTerminateLinkEvent_t *)pMsg;
 
         // Display the amount of current connections
@@ -1297,10 +1099,10 @@ static void ProjectZero_processAdvEvent(pzGapAdvEventData_t *pEventData)
      * connection establishment */
     case GAP_EVT_ADV_SET_TERMINATED:
     {
-        GapAdv_setTerm_t *advSetTerm = (GapAdv_setTerm_t *)(pEventData->pBuf);
-
-        Log_info2("Adv Set %d disabled after conn %d",
-                  advSetTerm->handle, advSetTerm->connHandle);
+//        GapAdv_setTerm_t *advSetTerm = (GapAdv_setTerm_t *)(pEventData->pBuf);
+//
+//        Log_info2("Adv Set %d disabled after conn %d",
+//                  advSetTerm->handle, advSetTerm->connHandle);
     }
     break;
 
@@ -1531,15 +1333,15 @@ static void ProjectZero_handleUpdateLinkEvent(gapLinkUpdateEvent_t *pEvt)
 
     if(pEvt->status == SUCCESS)
     {
-        uint8_t ConnIntervalFracture = 25*(pEvt->connInterval % 4);   
-        // Display the address of the connection update
-        Log_info5(
-            "Updated params for %s, interval: %d.%d ms, latency: %d, timeout: %d ms",
-            (uintptr_t)addrStr,
-            (uintptr_t)(pEvt->connInterval*CONN_INTERVAL_MS_CONVERSION),
-            ConnIntervalFracture,
-            pEvt->connLatency,
-            pEvt->connTimeout*CONN_TIMEOUT_MS_CONVERSION);
+//        uint8_t ConnIntervalFracture = 25*(pEvt->connInterval % 4);
+//        // Display the address of the connection update
+//        Log_info5(
+//            "Updated params for %s, interval: %d.%d ms, latency: %d, timeout: %d ms",
+//            (uintptr_t)addrStr,
+//            (uintptr_t)(pEvt->connInterval*CONN_INTERVAL_MS_CONVERSION),
+//            ConnIntervalFracture,
+//            pEvt->connLatency,
+//            pEvt->connTimeout*CONN_TIMEOUT_MS_CONVERSION);
     }
     else
     {
@@ -1945,35 +1747,23 @@ void ProjectZero_DataService_CfgChangeHandler(pzCharacteristicData_t *pCharData)
 {
     // Cast received data to uint16, as that's the format for CCCD writes.
     uint16_t configValue = *(uint16_t *)pCharData->data;
-    char *configValString;
-
-    // Determine what to tell the user
-    switch(configValue)
-    {
-    case GATT_CFG_NO_OPERATION:
-        configValString = "Noti/Ind disabled";
-        break;
-    case GATT_CLIENT_CFG_NOTIFY:
-        configValString = "Notifications enabled";
-        break;
-    case GATT_CLIENT_CFG_INDICATE:
-        configValString = "Indications enabled";
-        break;
-    default:
-        configValString = "Unsupported operation";
-    }
 
     switch(pCharData->paramID)
     {
-    case DS_STREAM_INPUT_ID:
-        Log_info3("CCCD Change msg: %s %s: %s",
-                  (uintptr_t)"Data Service",
-                  (uintptr_t)"Stream",
-                  (uintptr_t)configValString);
-        // -------------------------
-        // Do something useful with configValue here. It tells you whether someone
-        // wants to know the state of this characteristic.
-        // ...
+    case DS_STREAM_OUTPUT_ID:
+
+        if (configValue) // 0x0001 and 0x0002 both indicate turned on.
+        {
+            if(stream_on != 1)
+            {
+                //GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
+                start_voice_handle();
+            }
+        }
+        else
+        {
+            stop_voice_handle();
+        }
         break;
     }
 }
@@ -2395,43 +2185,3 @@ char * util_arrtohex(uint8_t const *src, uint8_t src_len,
     return((char *)dst);
 }
 
-/*********************************************************************
- * @fn     util_getLocalNameStr
- *
- * @brief   Extract the LOCALNAME from Scan/AdvData
- *
- * @param   data - Pointer to the advertisement or scan response data
- * @param   len  - Length of advertisment or scan repsonse data
- *
- * @return  Pointer to null-terminated string with the adv local name.
- */
-static char * util_getLocalNameStr(const uint8_t *data, uint8_t len)
-{
-    uint8_t nuggetLen = 0;
-    uint8_t nuggetType = 0;
-    uint8_t advIdx = 0;
-
-    static char localNameStr[32] = { 0 };
-    memset(localNameStr, 0, sizeof(localNameStr));
-
-    for(advIdx = 0; advIdx < len; )
-    {
-        nuggetLen = data[advIdx++];
-        nuggetType = data[advIdx];
-        if((nuggetType == GAP_ADTYPE_LOCAL_NAME_COMPLETE ||
-            nuggetType == GAP_ADTYPE_LOCAL_NAME_SHORT) && nuggetLen < 31)
-        {
-            memcpy(localNameStr, &data[advIdx + 1], nuggetLen - 1);
-            break;
-        }
-        else
-        {
-            advIdx += nuggetLen;
-        }
-    }
-
-    return(localNameStr);
-}
-
-/*********************************************************************
-*********************************************************************/
