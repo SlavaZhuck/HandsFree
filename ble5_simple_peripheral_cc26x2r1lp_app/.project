@@ -33,6 +33,21 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>ICall</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>ICallBLE</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>NPI</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>Drivers/ECC</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -46,6 +61,61 @@
 			<name>Drivers/nv</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>ICall/icall.c</name>
+			<type>1</type>
+			<locationURI>SRC_COMMON_DIR/icall/src/icall.c</locationURI>
+		</link>
+		<link>
+			<name>ICall/icall.h</name>
+			<type>1</type>
+			<locationURI>SRC_COMMON_DIR/icall/src/inc/icall.h</locationURI>
+		</link>
+		<link>
+			<name>ICall/icall_addrs.h</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/icall/inc/icall_addrs.h</locationURI>
+		</link>
+		<link>
+			<name>ICall/icall_cc2650.c</name>
+			<type>1</type>
+			<locationURI>SRC_COMMON_DIR/icall/src/icall_cc2650.c</locationURI>
+		</link>
+		<link>
+			<name>ICall/icall_platform.h</name>
+			<type>1</type>
+			<locationURI>SRC_COMMON_DIR/icall/src/icall_platform.h</locationURI>
+		</link>
+		<link>
+			<name>ICall/icall_user_config.c</name>
+			<type>1</type>
+			<locationURI>SRC_COMMON_DIR/icall/src/icall_user_config.c</locationURI>
+		</link>
+		<link>
+			<name>ICallBLE/ble_user_config.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/icall/app/ble_user_config.c</locationURI>
+		</link>
+		<link>
+			<name>ICallBLE/ble_user_config.h</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/icall/inc/ble_user_config.h</locationURI>
+		</link>
+		<link>
+			<name>ICallBLE/icall_api_lite.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/icall/app/icall_api_lite.c</locationURI>
+		</link>
+		<link>
+			<name>ICallBLE/icall_ble_apimsg.h</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/icall/inc/icall_ble_apimsg.h</locationURI>
+		</link>
+		<link>
+			<name>ICallBLE/icall_hci_tl.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/icall/app/icall_hci_tl.c</locationURI>
 		</link>
 		<link>
 			<name>Include/gap.h</name>
@@ -71,6 +141,36 @@
 			<name>Include/osal_snv.h</name>
 			<type>1</type>
 			<locationURI>SRC_COMMON_DIR/osal/src/inc/osal_snv.h</locationURI>
+		</link>
+		<link>
+			<name>NPI/npi_frame_hci.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/npi/src/npi_frame_hci.c</locationURI>
+		</link>
+		<link>
+			<name>NPI/npi_rxbuf.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/npi/src/npi_rxbuf.c</locationURI>
+		</link>
+		<link>
+			<name>NPI/npi_task.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/npi/src/npi_task.c</locationURI>
+		</link>
+		<link>
+			<name>NPI/npi_tl.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/npi/src/npi_tl.c</locationURI>
+		</link>
+		<link>
+			<name>NPI/npi_tl_uart.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/npi/src/npi_tl_uart.c</locationURI>
+		</link>
+		<link>
+			<name>Startup/board.c</name>
+			<type>1</type>
+			<locationURI>SRC_BLE_DIR/target/board.c</locationURI>
 		</link>
 		<link>
 			<name>TOOLS/cc13x2_cc26x2_app.cmd</name>

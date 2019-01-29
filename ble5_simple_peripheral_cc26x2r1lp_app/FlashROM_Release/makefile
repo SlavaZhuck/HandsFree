@@ -4,12 +4,13 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS
+CG_TOOL_ROOT := C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS
 
 GEN_OPTS__FLAG := --cmd_file="configPkg/compiler.opt"
 GEN_CMDS__FLAG := -l"configPkg/linker.cmd"
 
 ORDERED_OBJS += \
+"./Application/HandsFree.obj" \
 "./Application/project_zero.obj" \
 "./Application/util.obj" \
 "./Application/services/data_service.obj" \
@@ -26,8 +27,7 @@ ORDERED_OBJS += \
 "./PROFILES/gatt_uuid.obj" \
 "./PROFILES/gattservapp_util.obj" \
 "./PROFILES/simple_gatt_profile.obj" \
-"./Startup/CC26X2R1_LAUNCHXL.obj" \
-"./Startup/CC26X2R1_LAUNCHXL_fxns.obj" \
+"./Startup/board.obj" \
 "./Startup/ccfg_app_ble.obj" \
 "./Startup/main.obj" \
 $(GEN_CMDS__FLAG) \
@@ -190,7 +190,7 @@ dependents:
 ble5_simple_peripheral_cc26x2r1lp_app.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS) D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_stack_library/FlashROM_Library/ble5_simple_peripheral_cc26x2r1lp_stack_library.lib
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/bin/armcl" --cmd_file="D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_app/TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Release.opt" --cmd_file="C:/ti/simplelink_cc26x2_sdk_2_30_00_34/source/ti/ble5stack/config/build_components.opt" --cmd_file="C:/ti/simplelink_cc26x2_sdk_2_30_00_34/source/ti/ble5stack/config/factory_config.opt" --cmd_file="D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_stack_library/TOOLS/build_config.opt"  -mv7M4 --code_state=16 -me -O4 --opt_for_speed=0 --define=DeviceFamily_CC26X2 -g --c99 --gcc --diag_warning=225 --diag_wrap=off --display_error_number --gen_func_subsections=on --abi=eabi -z -m"ble5_simple_peripheral_cc26x2r1lp_app.map" --heap_size=0 --stack_size=256 -i"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/lib" -i"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/include" --reread_libs --define=CC26X2ROM=1 --diag_suppress=16002-D --diag_suppress=10247-D --diag_suppress=10325-D --diag_suppress=10229-D --diag_suppress=16032-D --diag_wrap=off --display_error_number --warn_sections --xml_link_info="ble5_simple_peripheral_cc26x2r1lp_app_linkInfo.xml" --rom_model -o "ble5_simple_peripheral_cc26x2r1lp_app.out" $(ORDERED_OBJS)
+	"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/bin/armcl" --cmd_file="D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_app/TOOLS/defines/ble5_simple_peripheral_cc26x2r1lp_app_FlashROM_Release.opt" --cmd_file="C:/ti/simplelink_cc26x2_sdk_2_30_00_34/source/ti/ble5stack/config/build_components.opt" --cmd_file="C:/ti/simplelink_cc26x2_sdk_2_30_00_34/source/ti/ble5stack/config/factory_config.opt" --cmd_file="D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_stack_library/TOOLS/build_config.opt"  -mv7M4 --code_state=16 -me -O4 --opt_for_speed=0 --define=DeviceFamily_CC26X2 -g --c99 --gcc --diag_warning=225 --diag_wrap=off --display_error_number --gen_func_subsections=on --abi=eabi -z -m"ble5_simple_peripheral_cc26x2r1lp_app.map" --heap_size=0 --stack_size=256 -i"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/lib" -i"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include" --reread_libs --define=CC26X2ROM=1 --diag_suppress=16002-D --diag_suppress=10247-D --diag_suppress=10325-D --diag_suppress=10229-D --diag_suppress=16032-D --diag_wrap=off --display_error_number --warn_sections --xml_link_info="ble5_simple_peripheral_cc26x2r1lp_app_linkInfo.xml" --rom_model -o "ble5_simple_peripheral_cc26x2r1lp_app.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -198,7 +198,7 @@ ble5_simple_peripheral_cc26x2r1lp_app.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS) D:/Ha
 ble5_simple_peripheral_cc26x2r1lp_app.hex: $(EXE_OUTPUTS)
 	@echo 'Building files: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo 'Invoking: ARM Hex Utility'
-	"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/bin/armhex" --memwidth=8 --romwidth=8 --intel -o "ble5_simple_peripheral_cc26x2r1lp_app.hex" $(EXE_OUTPUTS__QUOTED)
+	"C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/bin/armhex" --memwidth=8 --romwidth=8 --intel -o "ble5_simple_peripheral_cc26x2r1lp_app.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -207,13 +207,13 @@ ble5_simple_peripheral_cc26x2r1lp_app.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_CMDS__QUOTED)$(GEN_MISC_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "Application\project_zero.obj" "Application\util.obj" "Application\services\data_service.obj" "Drivers\ECC\ECCROMCC26XX.obj" "Drivers\TRNG\TRNGCC26XX.obj" "Drivers\nv\crc.obj" "Drivers\nv\nvoctp.obj" "ICall\icall.obj" "ICall\icall_cc2650.obj" "ICall\icall_user_config.obj" "ICallBLE\ble_user_config.obj" "ICallBLE\icall_api_lite.obj" "PROFILES\devinfoservice.obj" "PROFILES\gatt_uuid.obj" "PROFILES\gattservapp_util.obj" "PROFILES\simple_gatt_profile.obj" "Startup\CC26X2R1_LAUNCHXL.obj" "Startup\CC26X2R1_LAUNCHXL_fxns.obj" "Startup\ccfg_app_ble.obj" "Startup\main.obj" 
-	-$(RM) "Application\project_zero.d" "Application\util.d" "Application\services\data_service.d" "Drivers\ECC\ECCROMCC26XX.d" "Drivers\TRNG\TRNGCC26XX.d" "Drivers\nv\crc.d" "Drivers\nv\nvoctp.d" "ICall\icall.d" "ICall\icall_cc2650.d" "ICall\icall_user_config.d" "ICallBLE\ble_user_config.d" "ICallBLE\icall_api_lite.d" "PROFILES\devinfoservice.d" "PROFILES\gatt_uuid.d" "PROFILES\gattservapp_util.d" "PROFILES\simple_gatt_profile.d" "Startup\CC26X2R1_LAUNCHXL.d" "Startup\CC26X2R1_LAUNCHXL_fxns.d" "Startup\ccfg_app_ble.d" "Startup\main.d" 
+	-$(RM) "Application\HandsFree.obj" "Application\project_zero.obj" "Application\util.obj" "Application\services\data_service.obj" "Drivers\ECC\ECCROMCC26XX.obj" "Drivers\TRNG\TRNGCC26XX.obj" "Drivers\nv\crc.obj" "Drivers\nv\nvoctp.obj" "ICall\icall.obj" "ICall\icall_cc2650.obj" "ICall\icall_user_config.obj" "ICallBLE\ble_user_config.obj" "ICallBLE\icall_api_lite.obj" "PROFILES\devinfoservice.obj" "PROFILES\gatt_uuid.obj" "PROFILES\gattservapp_util.obj" "PROFILES\simple_gatt_profile.obj" "Startup\board.obj" "Startup\ccfg_app_ble.obj" "Startup\main.obj" 
+	-$(RM) "Application\HandsFree.d" "Application\project_zero.d" "Application\util.d" "Application\services\data_service.d" "Drivers\ECC\ECCROMCC26XX.d" "Drivers\TRNG\TRNGCC26XX.d" "Drivers\nv\crc.d" "Drivers\nv\nvoctp.d" "ICall\icall.d" "ICall\icall_cc2650.d" "ICall\icall_user_config.d" "ICallBLE\ble_user_config.d" "ICallBLE\icall_api_lite.d" "PROFILES\devinfoservice.d" "PROFILES\gatt_uuid.d" "PROFILES\gattservapp_util.d" "PROFILES\simple_gatt_profile.d" "Startup\board.d" "Startup\ccfg_app_ble.d" "Startup\main.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
 post-build:
-	-C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/bin/armhex -order MS --memwidth=8 --romwidth=8 --intel -o ble5_simple_peripheral_cc26x2r1lp_app.hex ble5_simple_peripheral_cc26x2r1lp_app.out
+	-C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/bin/armhex -order MS --memwidth=8 --romwidth=8 --intel -o ble5_simple_peripheral_cc26x2r1lp_app.hex ble5_simple_peripheral_cc26x2r1lp_app.out
 	-@echo ' '
 
 .PHONY: all clean dependents

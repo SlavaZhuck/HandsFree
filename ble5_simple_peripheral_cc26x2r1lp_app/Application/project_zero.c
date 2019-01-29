@@ -1364,7 +1364,7 @@ static uint8_t ProjectZero_addConn(uint16_t connHandle)
             }
 
             // Set default PHY to 1M
-            connList[i].currPhy = HCI_PHY_1_MBPS; // TODO: Is this true, neccessarily?
+            connList[i].currPhy = HCI_PHY_2_MBPS; // TODO: Is this true, neccessarily?
 
             break;
         }

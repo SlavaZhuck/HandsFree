@@ -5,7 +5,7 @@
 	<deviceVariant value="Cortex M.CC2652R1F"/>
 	<deviceFamily value="TMS470"/>
 	<deviceEndianness value="little"/>
-	<codegenToolVersion value="18.1.1.LTS"/>
+	<codegenToolVersion value="18.1.5.LTS"/>
 	<isElfFormat value="true"/>
 	<connection value="common/targetdb/connections/TIXDS110_Connection.xml"/>
 	<linkerCommandFile value="cc13x2_cc26x2_app.cmd"/>
