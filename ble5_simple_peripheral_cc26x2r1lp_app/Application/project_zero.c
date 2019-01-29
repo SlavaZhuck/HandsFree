@@ -144,8 +144,8 @@ static List_List setPhyCommStatList;
 static List_List paramUpdateList;
 
 /* Pin driver handles */
-static PIN_Handle buttonPinHandle;
-static PIN_Handle ledPinHandle;
+PIN_Handle buttonPinHandle;
+PIN_Handle ledPinHandle;
 
 /* Global memory storage for a PIN_Config table */
 static PIN_State buttonPinState;
@@ -250,8 +250,6 @@ static void buttonCallbackFxn(PIN_Handle handle,
 static void ProjectZero_handleButtonPress(pzButtonState_t *pState);
 
 /* Utility functions */
-static status_t ProjectZero_enqueueMsg(uint8_t event,
-                                   void *pData);
 static char * util_arrtohex(uint8_t const *src,
                             uint8_t src_len,
                             uint8_t       *dst,
@@ -439,12 +437,14 @@ static void ProjectZero_init(void)
     DataService_RegisterAppCBs(&ProjectZero_Data_ServiceCBs);
 
     // Placeholder variable for characteristic intialization
-    uint8_t initVal[40] = {0};
+    uint8_t initVal_input[DS_STREAM_INPUT_LEN] = {0};
+    uint8_t initVal_output[DS_STREAM_OUTPUT_LEN] = {0};
     uint8_t initString[] = "This is a pretty long string, isn't it!";
 
     // Initalization of characteristics in Data_Service that can provide data.
     DataService_SetParameter(DS_STREAM_START_ID, sizeof(initString), initString);
-    DataService_SetParameter(DS_STREAM_INPUT_ID, DS_STREAM_INPUT_LEN, initVal);
+    DataService_SetParameter(DS_STREAM_INPUT_ID, DS_STREAM_INPUT_LEN, initVal_input);
+    DataService_SetParameter(DS_STREAM_OUTPUT_ID, DS_STREAM_OUTPUT_LEN, initVal_output);
 
     // Start Bond Manager and register callback
     VOID GAPBondMgr_Register(&ProjectZero_BondMgrCBs);
@@ -582,40 +582,6 @@ static void ProjectZero_taskFxn(UArg a0, UArg a1)
                 }
             }
 
-            // OAD events
-//            if(events & PZ_OAD_QUEUE_EVT)
-//            {
-//                // Process the OAD Message Queue
-//                uint8_t status = OAD_processQueue();
-//
-//                // If the OAD state machine encountered an error, print it
-//                // Return codes can be found in oad_constants.h
-//                if(status == OAD_DL_COMPLETE)
-//                {
-//                    Log_info0("OAD DL Complete, wait for enable");
-//                }
-//                else if(status == OAD_IMG_ID_TIMEOUT)
-//                {
-//                    Log_info0("ImgID Timeout, disconnecting");
-//
-//                    // This may be an attack, terminate the link,
-//                    // Note HCI_DISCONNECT_REMOTE_USER_TERM seems to most closet reason for
-//                    // termination at this state
-//                    MAP_GAP_TerminateLinkReq(
-//                        OAD_getactiveCxnHandle(),
-//                        HCI_DISCONNECT_REMOTE_USER_TERM);
-//                }
-//                else if(status != OAD_SUCCESS)
-//                {
-//                    Log_info1("OAD Error: %d", status);
-//                }
-//            }
-//
-//            if(events & PZ_OAD_COMPLETE_EVT)
-//            {
-//                // Register for L2CAP Flow Control Events
-//                L2CAP_RegisterFlowCtrlTask(selfEntity);
-//            }
         }
     }
 }
@@ -1681,93 +1647,6 @@ static void ProjectZero_handleButtonPress(pzButtonState_t *pState)
 }
 
 
-
-
-/*
- * @brief   Handle a write request sent from a peer device.
- *
- *          Invoked by the Task based on a message received from a callback.
- *
- *          When we get here, the request has already been accepted by the
- *          service and is valid from a BLE protocol perspective as well as
- *          having the correct length as defined in the service implementation.
- *
- * @param   pCharData  pointer to malloc'd char write data
- *
- * @return  None.
- */
-void ProjectZero_DataService_ValueChangeHandler(
-    pzCharacteristicData_t *pCharData)
-{
-    // Value to hold the received string for printing via Log, as Log printouts
-    // happen in the Idle task, and so need to refer to a global/static variable.
-    static uint8_t received_string[DS_STREAM_START_LEN] = {0};
-
-    switch(pCharData->paramID)
-    {
-    case DS_STREAM_START_ID:
-        // Do something useful with pCharData->data here
-        // -------------------------
-        // Copy received data to holder array, ensuring NULL termination.
-        memset(received_string, 0, DS_STREAM_START_LEN);
-        memcpy(received_string, pCharData->data,
-               MIN(pCharData->dataLen, DS_STREAM_START_LEN - 1));
-        // Needed to copy before log statement, as the holder array remains after
-        // the pCharData message has been freed and reused for something else.
-        Log_info3("Value Change msg: %s %s: %s",
-                  (uintptr_t)"Data Service",
-                  (uintptr_t)"String",
-                  (uintptr_t)received_string);
-        break;
-
-    case DS_STREAM_INPUT_ID:
-        Log_info3("Value Change msg: Data Service Stream: %02x:%02x:%02x...",
-                  pCharData->data[0],
-                  pCharData->data[1],
-                  pCharData->data[2]);
-        // -------------------------
-        // Do something useful with pCharData->data here
-        break;
-
-    default:
-        return;
-    }
-}
-
-/*
- * @brief   Handle a CCCD (configuration change) write received from a peer
- *          device. This tells us whether the peer device wants us to send
- *          Notifications or Indications.
- *
- * @param   pCharData  pointer to malloc'd char write data
- *
- * @return  None.
- */
-void ProjectZero_DataService_CfgChangeHandler(pzCharacteristicData_t *pCharData)
-{
-    // Cast received data to uint16, as that's the format for CCCD writes.
-    uint16_t configValue = *(uint16_t *)pCharData->data;
-
-    switch(pCharData->paramID)
-    {
-    case DS_STREAM_OUTPUT_ID:
-
-        if (configValue) // 0x0001 and 0x0002 both indicate turned on.
-        {
-            if(stream_on != 1)
-            {
-                //GAPRole_SendUpdateParam(8, 8, 0, TIMEOUT, GAPROLE_RESEND_PARAM_UPDATE);
-                start_voice_handle();
-            }
-        }
-        else
-        {
-            stop_voice_handle();
-        }
-        break;
-    }
-}
-
 /*
  * @brief  Convenience function for updating characteristic data via pzCharacteristicData_t
  *         structured message.
@@ -2119,7 +1998,7 @@ static void buttonCallbackFxn(PIN_Handle handle, PIN_Id pinId)
  * @param  event    Event type
  * @param  pData    Pointer to message data
  */
-static status_t ProjectZero_enqueueMsg(uint8_t event, void *pData)
+status_t ProjectZero_enqueueMsg(uint8_t event, void *pData)
 {
     uint8_t success;
     pzMsg_t *pMsg = ICall_malloc(sizeof(pzMsg_t));

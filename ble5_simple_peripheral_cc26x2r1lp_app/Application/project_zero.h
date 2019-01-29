@@ -126,6 +126,7 @@ extern "C"
 #define PZ_START_ADV_EVT         7  /* Request advertisement start from task ctx   */
 #define PZ_SEND_PARAM_UPD_EVT    8  /* Request parameter update req be sent        */
 #define PZ_CONN_EVT              9  /* Connection Event End notice                 */
+#define PZ_SEND_PACKET           10  /* Connection Event End notice                 */
 
 // General discoverable mode: advertise indefinitely
 #define DEFAULT_DISCOVERABLE_MODE             GAP_ADTYPE_FLAGS_GENERAL
@@ -152,7 +153,7 @@ extern "C"
 #define DEFAULT_PARAM_UPDATE_REQ_DECISION     GAP_UPDATE_REQ_PASS_TO_APP
 
 // Delay (in ms) after connection establishment before sending a parameter update requst
-#define PZ_SEND_PARAM_UPDATE_DELAY            6000
+#define PZ_SEND_PARAM_UPDATE_DELAY            0
 
 
 
@@ -256,7 +257,9 @@ typedef struct
 
 void ProjectZero_DataService_ValueChangeHandler(pzCharacteristicData_t *pCharData);
 void ProjectZero_DataService_CfgChangeHandler( pzCharacteristicData_t *pCharData);
-
+/* Utility functions */
+status_t ProjectZero_enqueueMsg(uint8_t event,
+                                   void *pData);
 
 /*
  * Task creation function for the Project Zero.

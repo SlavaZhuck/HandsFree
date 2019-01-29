@@ -184,7 +184,7 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@$(MAKE) --no-print-directory -Onone "ble5_simple_peripheral_cc26x2r1lp_app.out"
 
 dependents:
-	-cd D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_stack_library/FlashROM_Library && $(MAKE) clean all
+	-cd D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_stack_library/FlashROM_Library && $(MAKE) all
 
 # Tool invocations
 ble5_simple_peripheral_cc26x2r1lp_app.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS) D:/HandsFree/ble5_simple_peripheral_cc26x2r1lp_stack_library/FlashROM_Library/ble5_simple_peripheral_cc26x2r1lp_stack_library.lib

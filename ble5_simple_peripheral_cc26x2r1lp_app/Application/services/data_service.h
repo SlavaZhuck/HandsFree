@@ -70,22 +70,22 @@ extern "C"
 #define DS_STREAM_START_ID                 0
 #define DS_STREAM_START_UUID               0xB001
 #define DS_STREAM_START_UUID_BASE128(uuid) 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, LO_UINT16(uuid), HI_UINT16(uuid), 0x00, 0xF0
-#define DS_STREAM_START_LEN                40
-#define DS_STREAM_START_LEN_MIN            0
+#define DS_STREAM_START_LEN                20
+#define DS_STREAM_START_LEN_MIN            20
 
 // Stream Characteristic defines
 #define DS_STREAM_INPUT_ID                 1
 #define DS_STREAM_INPUT_UUID               0xB002
 #define DS_STREAM_INPUT_UUID_BASE128(uuid) 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, LO_UINT16(uuid), HI_UINT16(uuid), 0x00, 0xF0
-#define DS_STREAM_INPUT_LEN                20
-#define DS_STREAM_INPUT_LEN_MIN            0
+#define DS_STREAM_INPUT_LEN                47
+#define DS_STREAM_INPUT_LEN_MIN            47
 
 // Stream Characteristic defines
 #define DS_STREAM_OUTPUT_ID                 2
 #define DS_STREAM_OUTPUT_UUID               0xB003
 #define DS_STREAM_OUTPUT_UUID_BASE128(uuid) 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x40, 0x51, 0x04, LO_UINT16(uuid), HI_UINT16(uuid), 0x00, 0xF0
-#define DS_STREAM_OUTPUT_LEN                20
-#define DS_STREAM_OUTPUT_LEN_MIN            0
+#define DS_STREAM_OUTPUT_LEN                47
+#define DS_STREAM_OUTPUT_LEN_MIN            47
 
 /*********************************************************************
  * TYPEDEFS

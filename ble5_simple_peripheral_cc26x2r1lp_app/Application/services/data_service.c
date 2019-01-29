@@ -169,7 +169,7 @@ static gattAttribute_t Data_ServiceAttrTbl[] =
     // STREAM_START Characteristic Value
     {
         { ATT_UUID_SIZE, ds_STREAM_STARTUUID },
-        GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+        GATT_PERMIT_READ | GATT_PERMIT_WRITE | GATT_PERMIT_WRITE,
         0,
         ds_STREAM_STARTVal
     },
@@ -327,11 +327,11 @@ bStatus_t DataService_SetParameter(uint8_t param, uint16_t len, void *value)
         Log_info2("SetParameter : %s len: %d", (uintptr_t)"String", len);
         break;
 
-    case DS_STREAM_INPUT_ID:
-        pAttrVal = ds_STREAM_INPUTVal;
-        pValLen = &ds_STREAM_INPUTValLen;
-        valMinLen = DS_STREAM_INPUT_LEN_MIN;
-        valMaxLen = DS_STREAM_INPUT_LEN;
+    case DS_STREAM_OUTPUT_ID:
+        pAttrVal = ds_STREAM_OUTPUTVal;
+        pValLen = &ds_STREAM_OUTPUTValLen;
+        valMinLen = DS_STREAM_OUTPUT_LEN_MIN;
+        valMaxLen = DS_STREAM_OUTPUT_LEN;
         sendNotiInd = TRUE;
         attrConfig = ds_STREAM_OUTPUTConfig;
         needAuth = FALSE;  // Change if authenticated link is required for sending.
