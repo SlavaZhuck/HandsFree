@@ -5,13 +5,21 @@
  *      Author: CIT_007
  */
 #include "HandsFree.h"
+#include "Noise_TRSH.h"
+#include "Uart_commands.h"
+#include "max9860_i2c.h"
 
 
+/* Timer variables ***************************************************/
 GPTimerCC26XX_Params tim_params;
 GPTimerCC26XX_Handle blink_tim_hdl = NULL;
 GPTimerCC26XX_Handle samp_tim_hdl = NULL;
 GPTimerCC26XX_Value load_val[2] = {LOW_STATE_TIME, HIGH_STATE_TIME};
+/*********************************************************************/
 
+/* I2C variables *****************************************************/
+static uint16_t i2c_read_delay;
+/*********************************************************************/
 int stream_on = 0;
 
 extern PIN_Handle buttonPinHandle;
@@ -38,6 +46,8 @@ void stop_voice_handle(void)
 
 void HandsFree_init (void)
 {
+    max9860_I2C_Init();
+    max9860_I2C_Read_Status();
     GPTimerCC26XX_Params_init(&tim_params);
     tim_params.width = GPT_CONFIG_32BIT;
     tim_params.mode = GPT_MODE_PERIODIC_UP;
@@ -133,6 +143,11 @@ void task_Handler (pzMsg_t *pMsg)
             DataService_SetParameter(DS_STREAM_OUTPUT_ID, DS_STREAM_OUTPUT_LEN, send_array);
             counter_packet_send++;
             break;
+        case PZ_I2C_Read_status:
+            max9860_I2C_Read_Status();
+            break;
+
+
         default:
             break;
       }

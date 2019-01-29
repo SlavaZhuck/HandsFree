@@ -127,6 +127,7 @@ extern "C"
 #define PZ_SEND_PARAM_UPD_EVT    8  /* Request parameter update req be sent        */
 #define PZ_CONN_EVT              9  /* Connection Event End notice                 */
 #define PZ_SEND_PACKET           10  /* Connection Event End notice                 */
+#define PZ_I2C_Read_status       11  /* Connection Event End notice                 */
 
 // General discoverable mode: advertise indefinitely
 #define DEFAULT_DISCOVERABLE_MODE             GAP_ADTYPE_FLAGS_GENERAL

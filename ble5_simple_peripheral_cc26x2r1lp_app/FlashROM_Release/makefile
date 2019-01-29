@@ -11,6 +11,10 @@ GEN_CMDS__FLAG := -l"configPkg/linker.cmd"
 
 ORDERED_OBJS += \
 "./Application/HandsFree.obj" \
+"./Application/Noise_TRSH.obj" \
+"./Application/Uart_Parser.obj" \
+"./Application/Uart_commands.obj" \
+"./Application/max9860_i2c.obj" \
 "./Application/project_zero.obj" \
 "./Application/util.obj" \
 "./Application/services/data_service.obj" \
@@ -18,6 +22,7 @@ ORDERED_OBJS += \
 "./Drivers/TRNG/TRNGCC26XX.obj" \
 "./Drivers/nv/crc.obj" \
 "./Drivers/nv/nvoctp.obj" \
+"./I2S/I2SCC26XX.obj" \
 "./ICall/icall.obj" \
 "./ICall/icall_cc2650.obj" \
 "./ICall/icall_user_config.obj" \
@@ -54,6 +59,7 @@ RMDIR := RMDIR /S/Q
 -include Drivers/ECC/subdir_vars.mk
 -include Drivers/TRNG/subdir_vars.mk
 -include Drivers/nv/subdir_vars.mk
+-include I2S/subdir_vars.mk
 -include ICall/subdir_vars.mk
 -include ICallBLE/subdir_vars.mk
 -include PROFILES/subdir_vars.mk
@@ -65,6 +71,7 @@ RMDIR := RMDIR /S/Q
 -include Drivers/ECC/subdir_rules.mk
 -include Drivers/TRNG/subdir_rules.mk
 -include Drivers/nv/subdir_rules.mk
+-include I2S/subdir_rules.mk
 -include ICall/subdir_rules.mk
 -include ICallBLE/subdir_rules.mk
 -include PROFILES/subdir_rules.mk
@@ -207,8 +214,8 @@ ble5_simple_peripheral_cc26x2r1lp_app.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_CMDS__QUOTED)$(GEN_MISC_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "Application\HandsFree.obj" "Application\project_zero.obj" "Application\util.obj" "Application\services\data_service.obj" "Drivers\ECC\ECCROMCC26XX.obj" "Drivers\TRNG\TRNGCC26XX.obj" "Drivers\nv\crc.obj" "Drivers\nv\nvoctp.obj" "ICall\icall.obj" "ICall\icall_cc2650.obj" "ICall\icall_user_config.obj" "ICallBLE\ble_user_config.obj" "ICallBLE\icall_api_lite.obj" "PROFILES\devinfoservice.obj" "PROFILES\gatt_uuid.obj" "PROFILES\gattservapp_util.obj" "PROFILES\simple_gatt_profile.obj" "Startup\board.obj" "Startup\ccfg_app_ble.obj" "Startup\main.obj" 
-	-$(RM) "Application\HandsFree.d" "Application\project_zero.d" "Application\util.d" "Application\services\data_service.d" "Drivers\ECC\ECCROMCC26XX.d" "Drivers\TRNG\TRNGCC26XX.d" "Drivers\nv\crc.d" "Drivers\nv\nvoctp.d" "ICall\icall.d" "ICall\icall_cc2650.d" "ICall\icall_user_config.d" "ICallBLE\ble_user_config.d" "ICallBLE\icall_api_lite.d" "PROFILES\devinfoservice.d" "PROFILES\gatt_uuid.d" "PROFILES\gattservapp_util.d" "PROFILES\simple_gatt_profile.d" "Startup\board.d" "Startup\ccfg_app_ble.d" "Startup\main.d" 
+	-$(RM) "Application\HandsFree.obj" "Application\Noise_TRSH.obj" "Application\Uart_Parser.obj" "Application\Uart_commands.obj" "Application\max9860_i2c.obj" "Application\project_zero.obj" "Application\util.obj" "Application\services\data_service.obj" "Drivers\ECC\ECCROMCC26XX.obj" "Drivers\TRNG\TRNGCC26XX.obj" "Drivers\nv\crc.obj" "Drivers\nv\nvoctp.obj" "I2S\I2SCC26XX.obj" "ICall\icall.obj" "ICall\icall_cc2650.obj" "ICall\icall_user_config.obj" "ICallBLE\ble_user_config.obj" "ICallBLE\icall_api_lite.obj" "PROFILES\devinfoservice.obj" "PROFILES\gatt_uuid.obj" "PROFILES\gattservapp_util.obj" "PROFILES\simple_gatt_profile.obj" "Startup\board.obj" "Startup\ccfg_app_ble.obj" "Startup\main.obj" 
+	-$(RM) "Application\HandsFree.d" "Application\Noise_TRSH.d" "Application\Uart_Parser.d" "Application\Uart_commands.d" "Application\max9860_i2c.d" "Application\project_zero.d" "Application\util.d" "Application\services\data_service.d" "Drivers\ECC\ECCROMCC26XX.d" "Drivers\TRNG\TRNGCC26XX.d" "Drivers\nv\crc.d" "Drivers\nv\nvoctp.d" "I2S\I2SCC26XX.d" "ICall\icall.d" "ICall\icall_cc2650.d" "ICall\icall_user_config.d" "ICallBLE\ble_user_config.d" "ICallBLE\icall_api_lite.d" "PROFILES\devinfoservice.d" "PROFILES\gatt_uuid.d" "PROFILES\gattservapp_util.d" "PROFILES\simple_gatt_profile.d" "Startup\board.d" "Startup\ccfg_app_ble.d" "Startup\main.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

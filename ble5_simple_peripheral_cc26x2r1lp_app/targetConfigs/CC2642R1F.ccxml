@@ -12,7 +12,7 @@
                 </choice>
             </property>
             <property Type="choicelist" Value="0" id="JTAG Signal Isolation"/>
-            <property Type="choicelist" Value="4" id="SWD Mode Settings">
+            <property Type="choicelist" Value="3" id="SWD Mode Settings">
                 <choice Name="cJTAG (1149.7) 2-pin advanced modes" value="enable">
                     <property Type="choicelist" Value="1" id="XDS110 Aux Port"/>
                 </choice>
