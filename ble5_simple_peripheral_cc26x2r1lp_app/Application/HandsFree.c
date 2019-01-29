@@ -29,6 +29,8 @@ uint16_t counter_packet_send = 0;
 uint16_t counter_packet_received = 0;
 float packet_lost = 0;
 
+uint8_t send_array[DS_STREAM_OUTPUT_LEN];
+
 void start_voice_handle(void)
 {
     stream_on = 1;
@@ -139,7 +141,7 @@ void task_Handler (pzMsg_t *pMsg)
             }
             break;
         case PZ_SEND_PACKET:
-            uint8_t send_array[DS_STREAM_OUTPUT_LEN] = {(uint8_t)counter_packet_send};
+            send_array[0] = (uint8_t)counter_packet_send;
             DataService_SetParameter(DS_STREAM_OUTPUT_ID, DS_STREAM_OUTPUT_LEN, send_array);
             counter_packet_send++;
             break;
