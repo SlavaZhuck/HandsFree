@@ -33,7 +33,7 @@ void amplify (int16_t *in, uint16_t samp_number, int16_t power)
 {
 
     power_dif = START_POWER_REDUCE-power;
-    power_average = power_average*0.95 + power_dif * 0.05;//power_dif
+    power_average = power_average*0.95 + power_dif * 0.04;//power_dif
 
     if(power_average < 0 )
     {

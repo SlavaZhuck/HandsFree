@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'LPF'.
  *
- * Model version                  : 1.66
+ * Model version                  : 1.69
  * Simulink Coder version         : 8.13 (R2017b) 24-Jul-2017
- * C/C++ source code generated on : Thu Dec 13 20:28:47 2018
+ * C/C++ source code generated on : Mon Jan 28 20:13:19 2019
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex
@@ -66,65 +66,6 @@ typedef unsigned long long ulonglong_T;
 typedef char char_T;
 typedef unsigned char uchar_T;
 typedef char_T byte_T;
-
-/*===========================================================================*
- * Complex number type definitions                                           *
- *===========================================================================*/
-#define CINT8_T
-
-typedef struct {
-  int8_T re;
-  int8_T im;
-} cint8_T;
-
-#define CUINT8_T
-
-typedef struct {
-  uint8_T re;
-  uint8_T im;
-} cuint8_T;
-
-#define CINT16_T
-
-typedef struct {
-  int16_T re;
-  int16_T im;
-} cint16_T;
-
-#define CUINT16_T
-
-typedef struct {
-  uint16_T re;
-  uint16_T im;
-} cuint16_T;
-
-#define CINT32_T
-
-typedef struct {
-  int32_T re;
-  int32_T im;
-} cint32_T;
-
-#define CUINT32_T
-
-typedef struct {
-  uint32_T re;
-  uint32_T im;
-} cuint32_T;
-
-#define CINT64_T
-
-typedef struct {
-  int64_T re;
-  int64_T im;
-} cint64_T;
-
-#define CUINT64_T
-
-typedef struct {
-  uint64_T re;
-  uint64_T im;
-} cuint64_T;
 
 /*=======================================================================*
  * Min and Max:                                                          *

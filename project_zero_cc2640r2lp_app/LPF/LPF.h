@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'LPF'.
  *
- * Model version                  : 1.66
+ * Model version                  : 1.69
  * Simulink Coder version         : 8.13 (R2017b) 24-Jul-2017
- * C/C++ source code generated on : Thu Dec 13 20:28:47 2018
+ * C/C++ source code generated on : Mon Jan 28 20:13:19 2019
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex
@@ -17,27 +17,33 @@
 
 #ifndef RTW_HEADER_LPF_h_
 #define RTW_HEADER_LPF_h_
+#include "rtwtypes.h"
 #ifndef LPF_COMMON_INCLUDES_
 # define LPF_COMMON_INCLUDES_
 #include "rtwtypes.h"
 #endif                                 /* LPF_COMMON_INCLUDES_ */
 
 /* Macros for accessing real-time model data structure */
-#ifndef rtmGetErrorStatus
-# define rtmGetErrorStatus(rtm)        ((rtm)->errorStatus)
+#ifndef SS_INT64
+#define SS_INT64                       17
 #endif
 
-#ifndef rtmSetErrorStatus
-# define rtmSetErrorStatus(rtm, val)   ((rtm)->errorStatus = (val))
+#ifndef SS_UINT64
+#define SS_UINT64                      18
 #endif
-
-/* Forward declaration for rtModel */
-typedef struct tag_RTM RT_MODEL;
 
 /* Block signals and states (auto storage) for system '<Root>' */
 typedef struct {
-  int16_T Filter_FILT_STATES[2];       /* '<Root>/Filter' */
+  int16_T Filter_states[9];            /* '<Root>/Filter' */
 } DW;
+
+/* Constant parameters (auto storage) */
+typedef struct {
+  /* Computed Parameter: Filter_Coefficients
+   * Referenced by: '<Root>/Filter'
+   */
+  int16_T Filter_Coefficients[10];
+} ConstP;
 
 /* External inputs (root inport signals with auto storage) */
 typedef struct {
@@ -49,11 +55,6 @@ typedef struct {
   int16_T Out1;                        /* '<Root>/Out1' */
 } ExtY;
 
-/* Real-time Model Data Structure */
-struct tag_RTM {
-  const char_T * volatile errorStatus;
-};
-
 /* Block signals and states (auto storage) */
 extern DW rtDW;
 
@@ -63,12 +64,12 @@ extern ExtU rtU;
 /* External outputs (root outports fed by signals with auto storage) */
 extern ExtY rtY;
 
+/* Constant parameters (auto storage) */
+extern const ConstP rtConstP;
+
 /* Model entry point functions */
 extern void LPF_initialize(void);
 extern void LPF_step(void);
-
-/* Real-time Model object */
-extern RT_MODEL *const rtM;
 
 /*-
  * The generated code includes comments that allow you to trace directly

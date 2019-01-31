@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'LPF'.
  *
- * Model version                  : 1.66
+ * Model version                  : 1.69
  * Simulink Coder version         : 8.13 (R2017b) 24-Jul-2017
- * C/C++ source code generated on : Thu Dec 13 20:28:47 2018
+ * C/C++ source code generated on : Mon Jan 28 20:13:19 2019
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex
@@ -88,59 +88,63 @@ ExtU rtU;
 /* External outputs (root outports fed by signals with auto storage) */
 ExtY rtY;
 
-/* Real-time model */
-RT_MODEL rtM_;
-RT_MODEL *const rtM = &rtM_;
-
 /* Model step function */
 void LPF_step(void)
 {
-  int32_T tmp;
-  int32_T tmp_0;
-  int32_T tmp_1;
-  int16_T tmp_2;
+  int64_T acc1;
+  int32_T j;
+  int64_T q1;
 
-  /* S-Function (sdspbiquad): '<Root>/Filter' incorporates:
+  /* DiscreteFir: '<Root>/Filter' incorporates:
    *  Inport: '<Root>/In1'
    */
-  tmp = 343 * rtU.In1;
-  tmp_0 = -18253 * rtDW.Filter_FILT_STATES[0];
-  tmp_1 = 7437 * rtDW.Filter_FILT_STATES[1];
-  tmp = ((((((tmp & 2047) != 0) + (tmp >> 11)) - ((tmp_0 & 32767) != 0)) -
-          (tmp_0 >> 15)) - (tmp_1 >> 15)) - ((tmp_1 & 32767) != 0);
-  if (rtDW.Filter_FILT_STATES[0] > 16383) {
-    tmp_2 = MAX_int16_T;
-  } else if (rtDW.Filter_FILT_STATES[0] <= -16384) {
-    tmp_2 = MIN_int16_T;
-  } else {
-    tmp_2 = (int16_T)(rtDW.Filter_FILT_STATES[0] << 1);
+  /* Consume delay line and beginning of input samples */
+  acc1 = 0LL;
+  j = 0;
+  while (j < 1) {
+    q1 = rtU.In1 * rtConstP.Filter_Coefficients[0];
+    if ((acc1 < 0LL) && (q1 < MIN_int64_T - acc1)) {
+      acc1 = MIN_int64_T;
+    } else if ((acc1 > 0LL) && (q1 > MAX_int64_T - acc1)) {
+      acc1 = MAX_int64_T;
+    } else {
+      acc1 += q1;
+    }
+
+    j = 1;
   }
 
-  tmp_0 = (int16_T)tmp + tmp_2;
-  if (tmp_0 > 32767) {
-    tmp_0 = 32767;
-  } else {
-    if (tmp_0 < -32768) {
-      tmp_0 = -32768;
+  for (j = 0; j < 9; j++) {
+    q1 = rtConstP.Filter_Coefficients[1 + j] * rtDW.Filter_states[j];
+    if ((acc1 < 0LL) && (q1 < MIN_int64_T - acc1)) {
+      acc1 = MIN_int64_T;
+    } else if ((acc1 > 0LL) && (q1 > MAX_int64_T - acc1)) {
+      acc1 = MAX_int64_T;
+    } else {
+      acc1 += q1;
     }
   }
 
-  tmp_0 += rtDW.Filter_FILT_STATES[1];
-  if (tmp_0 > 32767) {
-    tmp_0 = 32767;
+  acc1 >>= 16;
+  if (acc1 > 32767LL) {
+    acc1 = 32767LL;
   } else {
-    if (tmp_0 < -32768) {
-      tmp_0 = -32768;
+    if (acc1 < -32768LL) {
+      acc1 = -32768LL;
     }
   }
 
-  rtDW.Filter_FILT_STATES[1] = rtDW.Filter_FILT_STATES[0];
-  rtDW.Filter_FILT_STATES[0] = (int16_T)tmp;
+  /* Update delay line for next frame */
+  for (j = 7; j >= 0; j--) {
+    rtDW.Filter_states[1 + j] = rtDW.Filter_states[j];
+  }
+
+  rtDW.Filter_states[0] = rtU.In1;
 
   /* Outport: '<Root>/Out1' incorporates:
-   *  S-Function (sdspbiquad): '<Root>/Filter'
+   *  DiscreteFir: '<Root>/Filter'
    */
-  rtY.Out1 = (int16_T)tmp_0;
+  rtY.Out1 = (int16_T)acc1;
 }
 
 /* Model initialize function */
