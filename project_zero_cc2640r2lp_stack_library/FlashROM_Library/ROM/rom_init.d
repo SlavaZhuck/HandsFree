@@ -5,14 +5,14 @@ ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/in
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/comdef.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_types.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/../_common/cc26xx/_hal_types.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdint.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/stdint.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/cdefs.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_types.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_types.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_stdint.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_stdint.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdbool.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdint.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/stdint.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/cdefs.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_types.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_types.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_stdint.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_stdint.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdbool.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/inc/hal_defs.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_types.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/hw_types.h
@@ -66,14 +66,14 @@ ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc2
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/ioc.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/../inc/hw_ioc.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/icall/src/inc/icall.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdlib.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/_ti_config.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/linkage.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdlib.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/_ti_config.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/linkage.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/inc/hal_assert.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_types.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/inc/hal_sleep.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/limits.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/limits.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal_memory.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal_timers.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal_pwrmgr.h
@@ -84,12 +84,12 @@ ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/in
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/controller/cc26xx_r2/inc/ll_common.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/drivers/rf/RF.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/drivers/dpl/ClockP.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stddef.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stddef.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/drivers/dpl/SemaphoreP.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/DeviceFamily.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_common_cmd.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_mailbox.h
-ROM/rom_init.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/string.h
+ROM/rom_init.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/string.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_prop_cmd.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_ble_cmd.h
 ROM/rom_init.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/cc26xx/rf_hal.h
@@ -134,14 +134,14 @@ C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/inc/bcomdef.h:
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/comdef.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_types.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/../_common/cc26xx/_hal_types.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/cdefs.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_types.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_types.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdbool.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/cdefs.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_types.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_types.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdbool.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/inc/hal_defs.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_types.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/hw_types.h: 
@@ -195,14 +195,14 @@ C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/..
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/ioc.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/../inc/hw_ioc.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/icall/src/inc/icall.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdlib.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/_ti_config.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/linkage.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdlib.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/_ti_config.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/linkage.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/inc/hal_assert.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_types.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/inc/hal_sleep.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/limits.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/limits.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal_memory.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal_timers.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/osal/src/inc/osal_pwrmgr.h: 
@@ -213,12 +213,12 @@ C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/inc/hci.h:
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/controller/cc26xx_r2/inc/ll_common.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/drivers/rf/RF.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/drivers/dpl/ClockP.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stddef.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stddef.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/drivers/dpl/SemaphoreP.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/DeviceFamily.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_common_cmd.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_mailbox.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/string.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/string.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_prop_cmd.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/driverlib/rf_ble_cmd.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/cc26xx/rf_hal.h: 

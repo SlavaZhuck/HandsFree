@@ -2,14 +2,14 @@
 
 HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_trng_wrapper.c
 HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/hw_types.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdint.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/stdint.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/cdefs.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_types.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_types.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_stdint.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_stdint.h
-HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdbool.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdint.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/stdint.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/cdefs.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_types.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_types.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_stdint.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_stdint.h
+HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdbool.h
 HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/../inc/hw_chip_def.h
 HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/hw_sysctl.h
 HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_trng_wrapper.h
@@ -28,14 +28,14 @@ HAL/Target/CC2650/Drivers/hal_trng_wrapper.obj: C:/ti/simplelink_cc2640r2_sdk_1_
 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_trng_wrapper.c: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/hw_types.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/cdefs.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_types.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_types.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/machine/_stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/sys/_stdint.h: 
-D:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.3.LTS/include/stdbool.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/cdefs.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_types.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_types.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/machine/_stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/sys/_stdint.h: 
+C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.5.LTS/include/stdbool.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/../inc/hw_chip_def.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/devices/cc26x0r2/inc/hw_sysctl.h: 
 C:/ti/simplelink_cc2640r2_sdk_1_50_00_58/source/ti/blestack/hal/src/target/_common/hal_trng_wrapper.h: 
