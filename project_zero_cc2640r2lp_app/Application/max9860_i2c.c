@@ -33,7 +33,7 @@ void max9860_I2C_Init(void){
     i2cTxBuffer[1]  = 0x12;//!system clock                       //clock control            0x03
     i2cTxBuffer[2]  = 0x80;//!stereo audio clock control high                               0x04
     i2cTxBuffer[3]  = 0x00;//!stereo audio clock control low                                0x05
-    i2cTxBuffer[4]  = 0x50;//!interface  0x50                        //digital audio interface  0x06
+    i2cTxBuffer[4]  = 0x40;//!interface  0x50                        //digital audio interface  0x06
     i2cTxBuffer[5]  = 0x00;//!interface  0x10                                                   0x07
 #ifdef DOUBLE_DATA_RATE
     i2cTxBuffer[6]  = 0x11;//!voice filter    0x11               //digital filtering        0x08
