@@ -1,5 +1,5 @@
 #ifndef _SITENCODER_H
-#define	_SITENCODER_H 
+#define	_SITENCODER_H
 
 typedef struct gsit_state_s {
 	long yl;	/* Locked or steady state step size multiplier. */
